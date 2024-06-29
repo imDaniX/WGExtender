@@ -30,33 +30,36 @@ import wgextender.utils.CommandUtils;
 import wgextender.utils.WGRegionUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.concurrent.TimeUnit;
 
 public class RestrictCommands implements Listener {
-	private final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
+	private static final long MS_PER_TICK = 50;
 
 	protected final Config config;
-	protected volatile String[] restrictedCommands;
+	protected volatile List<String> restrictedCommands;
 
 	public RestrictCommands(Config config) {
 		this.config = config;
-		restrictedCommands = config.restrictedCommandsInRegion.toArray(new String[0]);
-		Bukkit.getScheduler().runTaskTimerAsynchronously(WGExtender.getInstance(), () -> {
+		restrictedCommands = config.restrictedCommandsInRegion;
+		startCommandRecheckTask(config);
+	}
+
+	private void startCommandRecheckTask(Config config) {
+		Bukkit.getAsyncScheduler().runAtFixedRate(WGExtender.getInstance(), (task) -> {
 			if (!config.restrictCommandsInRegionEnabled) {
 				return;
 			}
 			List<String> computedRestrictedCommands = new ArrayList<>();
 			for (String restrictedCommand : config.restrictedCommandsInRegion) {
-				String[] split = SPACE_PATTERN.split(restrictedCommand);
-				String toAdd = split.length > 1 ? String.join(" ", Arrays.copyOfRange(split, 1, split.length)) : "";
+				String[] split = restrictedCommand.split(" ", 2);
+				String toAdd = " " + split[1].trim();
 				for (String alias : CommandUtils.getCommandAliases(split[0])) {
-					computedRestrictedCommands.add(String.join(" ", alias, toAdd));
+					computedRestrictedCommands.add(alias + toAdd);
 				}
 			}
-			restrictedCommands = computedRestrictedCommands.toArray(new String[0]);
-		}, 1, 100);
+			restrictedCommands = computedRestrictedCommands;
+		}, MS_PER_TICK, 100 * MS_PER_TICK, TimeUnit.MICROSECONDS);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

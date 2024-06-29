@@ -91,12 +91,12 @@ public class PvPHandlingListener extends WGOverrideListener {
 			Entities.isAmbient(event.getEntity()) ||
 			Entities.isVehicle(event.getEntity().getType())
 		) {
-			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, combine(event)) != State.DENY);
+			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, getFlags(event)) != State.DENY);
 			what = "hit that";
 
 			/* Paintings, item frames, etc. */
 		} else if (Entities.isConsideredBuildingIfUsed(event.getEntity())) {
-			canDamage = query.testBuild(weTarget, associable, combine(event));
+			canDamage = query.testBuild(weTarget, associable, getFlags(event));
 			what = "change that";
 
 			/* PVP */
@@ -110,18 +110,18 @@ public class PvPHandlingListener extends WGOverrideListener {
 			// false - disallow pvp when flag not set
 			if (config.miscDefaultPvPFlagOperationMode == null) {
 				canDamage =
-					query.testBuild(weTarget, associable, combine(event, Flags.PVP)) &&
-					(query.queryState(weAttacker, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY) &&
-					(query.queryState(weTarget, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY);
+					query.testBuild(weTarget, associable, getFlags(event, Flags.PVP)) &&
+					(query.queryState(weAttacker, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY) &&
+					(query.queryState(weTarget, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY);
 			} else if (config.miscDefaultPvPFlagOperationMode) {
 				canDamage =
-					(query.queryState(weAttacker, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY) &&
-					(query.queryState(weTarget, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY);
+					(query.queryState(weAttacker, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY) &&
+					(query.queryState(weTarget, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY);
 			} else {
 				if (!WGRegionUtils.isInWGRegion(playerAttacker.getLocation()) && !WGRegionUtils.isInWGRegion(target)) {
 					canDamage = true;
 				} else {
-					canDamage = (query.queryState(weAttacker, localPlayerAttacker, combine(event, Flags.PVP)) == State.ALLOW) && (query.queryState(weTarget, localPlayerAttacker, combine(event, Flags.PVP)) == State.ALLOW);
+					canDamage = (query.queryState(weAttacker, localPlayerAttacker, getFlags(event, Flags.PVP)) == State.ALLOW) && (query.queryState(weTarget, localPlayerAttacker, getFlags(event, Flags.PVP)) == State.ALLOW);
 				}
 
 			}
@@ -135,17 +135,17 @@ public class PvPHandlingListener extends WGOverrideListener {
 
 			/* Player damage not caused by another player */
 		} else if (event.getEntity() instanceof Player) {
-			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, combine(event)) != State.DENY);
+			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, getFlags(event)) != State.DENY);
 			what = "damage that";
 
 			/* damage to non-hostile mobs (e.g. animals) */
 		} else if (Entities.isNonHostile(event.getEntity())) {
-			canDamage = query.testBuild(weTarget, associable, combine(event, Flags.DAMAGE_ANIMALS));
+			canDamage = query.testBuild(weTarget, associable, getFlags(event, Flags.DAMAGE_ANIMALS));
 			what = "harm that";
 
 			/* Everything else */
 		} else {
-			canDamage = query.testBuild(weTarget, associable, combine(event, Flags.INTERACT));
+			canDamage = query.testBuild(weTarget, associable, getFlags(event, Flags.INTERACT));
 			what = "hit that";
 		}
 
@@ -197,7 +197,6 @@ public class PvPHandlingListener extends WGOverrideListener {
 			long now = System.currentTimeMillis();
 			Long lastTime = WGMetadata.getIfPresent(player, DENY_MESSAGE_KEY, Long.class);
 			if ((lastTime == null) || ((now - lastTime) >= LAST_MESSAGE_DELAY)) {
-				@SuppressWarnings("deprecation")
 				String message = WGRegionUtils.REGION_QUERY.queryValue(BukkitAdapter.adapt(location), WorldGuardPlugin.inst().wrapPlayer(player), Flags.DENY_MESSAGE);
 				if (message != null && !message.isEmpty()) {
 					player.sendMessage(message.replace("%what%", what));
@@ -207,12 +206,14 @@ public class PvPHandlingListener extends WGOverrideListener {
 		}
 	}
 
-	private static StateFlag[] combine(DelegateEvent event, StateFlag... flag) {
+	private static StateFlag[] getFlags(DelegateEvent event) {
+		return event.getRelevantFlags().toArray(new StateFlag[0]);
+	}
+
+	private static StateFlag[] getFlags(DelegateEvent event, StateFlag flag) {
 		List<StateFlag> extra = event.getRelevantFlags();
-		StateFlag[] flags = Arrays.copyOf(flag, flag.length + extra.size());
-		for (int i = 0; i < extra.size(); i++) {
-			flags[flag.length + i] = extra.get(i);
-		}
-		return flags;
+		StateFlag[] result = Arrays.copyOf(getFlags(event), extra.size() + 1);
+		result[extra.size()] = flag;
+		return result;
 	}
 }

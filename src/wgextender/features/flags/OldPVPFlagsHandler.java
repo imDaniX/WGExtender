@@ -22,15 +22,20 @@ import wgextender.WGExtender;
 import wgextender.utils.WGRegionUtils;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+@Deprecated
 public class OldPVPFlagsHandler implements Listener {
-	@SuppressWarnings("deprecation")
 	private static final Set<EntityDamageEvent.DamageModifier> PVP_MODIFIERS = EnumSet.of(
 			DamageModifier.ARMOR, DamageModifier.RESISTANCE, DamageModifier.MAGIC, DamageModifier.ABSORPTION
 	);
-	private final Map<UUID, Double> oldValues = new HashMap<>();
+	private final Map<UUID, Double> oldValues = new ConcurrentHashMap<>();
 	private Field functionsField;
 
 	public void start(Plugin plugin) {
@@ -48,24 +53,27 @@ public class OldPVPFlagsHandler implements Listener {
 
 		Server server = plugin.getServer();
 		server.getPluginManager().registerEvents(this, plugin);
-		server.getScheduler().runTaskTimer(WGExtender.getInstance(), () -> {
+		server.getAsyncScheduler().runAtFixedRate(plugin, (task) -> {
 			for (Player player : Bukkit.getOnlinePlayers()) {
 				if (WGRegionUtils.isFlagTrue(player.getLocation(), WGExtenderFlags.OLDPVP_ATTACKSPEED)) {
-					if (!oldValues.containsKey(player.getUniqueId())) {
-						AttributeInstance attribute = player.getAttribute(Attribute.GENERIC_ATTACK_SPEED);
-						oldValues.put(player.getUniqueId(), attribute.getBaseValue());
-						attribute.setBaseValue(16.0);
-					}
-				} else {
-					reset(player);
+                    if (oldValues.containsKey(player.getUniqueId())) continue;
+                    player.getScheduler().run(WGExtender.getInstance(), (playerTask) -> {
+                        AttributeInstance attribute = player.getAttribute(Attribute.GENERIC_ATTACK_SPEED);
+                        oldValues.put(player.getUniqueId(), attribute.getBaseValue());
+                        attribute.setBaseValue(16.0);
+                    }, null);
+                } else {
+					player.getScheduler().run(WGExtender.getInstance(), (playerTask) -> {
+						reset(player);
+					}, null);
 				}
 			}
-		}, 0, 1);
+		}, 0, 50, TimeUnit.MICROSECONDS);
 	}
 
 	public void stop() {
 		for (Player player : Bukkit.getOnlinePlayers()) {
-			reset(player);
+			player.getScheduler().run(WGExtender.getInstance(), playerTask -> reset(player), null);
 		}
 	}
 
@@ -81,7 +89,6 @@ public class OldPVPFlagsHandler implements Listener {
 		reset(event.getPlayer());
 	}
 
-	@SuppressWarnings({"unchecked", "deprecation"})
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
 		Entity entity = event.getEntity();
@@ -92,15 +99,16 @@ public class OldPVPFlagsHandler implements Listener {
 		}
 		Map<DamageModifier, Function<Double, Double>> func;
 		try {
-			func = (Map<DamageModifier, Function<Double, Double>>) functionsField.get(event);
+            //noinspection unchecked
+            func = (Map<DamageModifier, Function<Double, Double>>) functionsField.get(event);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			WGExtender.getInstance().getLogger().log(Level.SEVERE, "Unable to recalculate blocking damage", e);
 			return;
 		}
 		double totalDamage = event.getDamage() + event.getDamage(DamageModifier.HARD_HAT);
-		//reset blocking modifier
+		// Reset blocking modifier
 		event.setDamage(DamageModifier.BLOCKING, 0);
-		//recalculate other modifiers
+		// Recalculate other modifiers
 		for (var modifier : PVP_MODIFIERS) {
 			double damage = func.get(modifier).apply(totalDamage);
 			event.setDamage(modifier, damage);

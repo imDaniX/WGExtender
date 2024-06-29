@@ -24,13 +24,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import wgextender.utils.WEUtils;
 
-public class WEWand {
-
+public class WEWand { // TODO Use PersistentData API
 	protected static final String WAND_NAME = ChatColor.LIGHT_PURPLE + "Selection wand";
 
 	protected static Material cachedWandMaterial;
 
-	protected static Material getWandMaterial() {
+	protected static Material getWandMaterial() { // TODO Rework to better handle registry
 		String weWandMaterialName = WEUtils.getWorldEditPlugin().getLocalConfiguration().wandItem.toUpperCase();
 		if ((cachedWandMaterial == null) || !cachedWandMaterial.toString().equals(weWandMaterialName)) {
 			cachedWandMaterial = Material.getMaterial(weWandMaterialName.split(":")[1]);
@@ -46,12 +45,10 @@ public class WEWand {
 		return itemstack;
 	}
 
-	public static boolean isWand(ItemStack itemstack) {
-		if (itemstack.getType().equals(getWandMaterial())) {
-			ItemMeta im = itemstack.getItemMeta();
-			if (im != null) {
-				return WAND_NAME.equals(im.getDisplayName());
-			}
+	public static boolean isWand(ItemStack item) {
+		if (item.getType().equals(getWandMaterial()) && item.hasItemMeta()) {
+			ItemMeta meta = item.getItemMeta();
+			return meta.hasDisplayName() && WAND_NAME.equals(meta.getDisplayName());
 		}
 		return false;
 	}

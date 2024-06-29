@@ -27,11 +27,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Config {
 
@@ -64,7 +60,7 @@ public class Config {
 	public Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
 
 	public boolean restrictCommandsInRegionEnabled = false;
-	public Set<String> restrictedCommandsInRegion = new HashSet<>();
+	public List<String> restrictedCommandsInRegion = new ArrayList<>();
 
 	public boolean extendedWorldEditWandEnabled = false;
 
@@ -131,7 +127,7 @@ public class Config {
 		}
 
 		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
-		restrictedCommandsInRegion = new HashSet<>(config.getStringList("restrictcommands.commands"));
+		restrictedCommandsInRegion = new ArrayList<>(config.getStringList("restrictcommands.commands"));
 
 		extendedWorldEditWandEnabled = config.getBoolean("extendedwewand", extendedWorldEditWandEnabled);
 
