@@ -18,7 +18,7 @@ public class ChorusFruitFlagHandler implements Listener {
 				!WGRegionUtils.canBypassProtection(event.getPlayer()) &&
 				!WGRegionUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.CHORUS_FRUIT_USE_FLAG)
 			) {
-				player.sendMessage(ChatColor.RED + "Вы не можете использовать фрукт телепортации в этом регионе");
+				player.sendMessage(ChatColor.RED + "Вы не можете использовать хорус в этом регионе");
 				event.setCancelled(true);
 			}
 		}

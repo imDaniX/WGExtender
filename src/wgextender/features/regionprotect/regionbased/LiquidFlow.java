@@ -38,20 +38,25 @@ public class LiquidFlow implements Listener {
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onLiquidFlow(BlockFromToEvent event) {
-		check(event.getBlock(), event.getToBlock(), event);
+		if (event.getBlock().isLiquid()) {
+			check(event.getBlock(), event.getToBlock(), event, true);
+		}
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onDispense(BlockDispenseEvent event) {
 		Block block = event.getBlock();
-		BlockData blockData = block.getState().getBlockData();
+		BlockData blockData = block.getBlockData();
 		if (blockData instanceof Directional directional) {
-			check(block, block.getRelative(directional.getFacing()), event);
+			Block relative = block.getRelative(directional.getFacing());
+			if (relative.isLiquid()) {
+				check(block, relative, event, false);
+			}
 		}
 	}
 
-	private void check(Block source, Block to, Cancellable event) {
-		if (switch (source.getType()) {
+	private void check(Block source, Block to, Cancellable event, boolean checkSource) {
+		if (switch (checkSource ? source.getType() : to.getType()) {
 			case LAVA -> config.checkLavaFlow;
 			case WATER -> config.checkWaterFlow;
 			default -> config.checkOtherLiquidFlow;

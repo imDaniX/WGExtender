@@ -18,6 +18,7 @@
 package wgextender.features.regionprotect.regionbased;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
@@ -73,8 +74,8 @@ public class Explode implements Listener {
 		if ((event.getCause() == DamageCause.BLOCK_EXPLOSION) || (event.getCause() == DamageCause.ENTITY_EXPLOSION)) {
 			Location location = event.getEntity().getLocation();
 			if (WGRegionUtils.isInWGRegion(location)) {
-				if (event instanceof EntityDamageByEntityEvent byEntityEvent) {
-					Player source = findExplosionSource(byEntityEvent.getDamager());
+				if (event instanceof EntityDamageByEntityEvent entityEvent) {
+					Player source = findExplosionSource(entityEvent.getDamager());
 					if ((source == null) || (!WGRegionUtils.canBypassProtection(source) && !WGRegionUtils.canBuild(source, location))) {
 						event.setCancelled(true);
 					}
@@ -87,14 +88,15 @@ public class Explode implements Listener {
 	}
 
 	protected static Player findExplosionSource(Entity exploded) {
+		Entity source;
 		if (exploded instanceof TNTPrimed primed) {
-			Entity source = primed.getSource();
-			if (source instanceof Player player) {
-				return player;
-			}
+			source = primed.getSource();
+		} else if (exploded instanceof Creeper creeper) {
+			source = creeper.getTarget(); // TODO Creeper can be ignited using flint and steel
+		} else {
+			return null;
 		}
-		//TODO: explosion source for creeper (last damager or target?)?
-		return null;
+		return source instanceof Player player ? player : null;
 	}
 
 }

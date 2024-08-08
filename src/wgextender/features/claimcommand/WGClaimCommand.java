@@ -37,7 +37,8 @@ public class WGClaimCommand {
         BukkitWorldConfiguration wcfg = WGRegionUtils.getWorldConfig(player);
 
 		if (wcfg.maxClaimVolume == Integer.MAX_VALUE) {
-			throw new CommandException("The maximum claim volume get in the configuration is higher than is supported. " + "Currently, it must be " + Integer.MAX_VALUE + " or smaller. Please contact a server administrator.");
+			throw new CommandException("The maximum claim volume get in the configuration is higher than is supported. " +
+					"Currently, it must be " + Integer.MAX_VALUE + " or smaller. Please contact a server administrator.");
 		}
 
 		LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);

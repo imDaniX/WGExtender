@@ -82,28 +82,28 @@ public class WGRegionCommandWrapper extends Command {
 
 	private boolean process(Player player) {
 		BlockLimits.ProcessedClaimInfo info = blockLimits.processClaimInfo(config, player);
-		switch (info.result()) {
-			default: return true;
-			case DENY_MAX_VOLUME: {
+		return switch (info.result()) {
+            case ALLOW -> true;
+			case DENY_MAX_VOLUME -> {
 				player.sendMessage(RED + "Вы не можете заприватить такой большой регион");
 				player.sendMessage(RED + "Ваш лимит: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
-				return false;
+				yield false;
 			}
-			case DENY_MIN_VOLUME: {
+			case DENY_MIN_VOLUME -> {
 				player.sendMessage(RED + "Вы не можете заприватить такой маленький регион");
 				player.sendMessage(RED + "Минимальный объем: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
-				return false;
+				yield false;
 			}
-			case DENY_HORIZONTAL: {
-				player.sendMessage(RED + "Вы не можете заприватить такой маленький регион");
+			case DENY_HORIZONTAL -> {
+				player.sendMessage(RED + "Вы не можете заприватить такой узкий регион");
 				player.sendMessage(RED + "Минимальная ширина: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
-				return false;
+				yield false;
 			}
-			case DENY_VERTICAL: {
+			case DENY_VERTICAL -> {
 				player.sendMessage(RED + "Вы не можете заприватить такой низкий регион");
 				player.sendMessage(RED + "Минимальная высота: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
-				return false;
+				yield false;
 			}
-		}
+		};
 	}
 }

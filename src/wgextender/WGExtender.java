@@ -90,7 +90,7 @@ public class WGExtender extends JavaPlugin {
 			WEWandCommandWrapper.uninject();
 			WGRegionCommandWrapper.uninject();
 			pvplistener.uninject();
-			oldpvphandler.stop();
+			oldpvphandler.stop(this);
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to uninject, shutting down", t);
 			Bukkit.shutdown();
