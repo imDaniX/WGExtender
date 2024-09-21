@@ -30,3 +30,4 @@ restrictcommands:
 extendedwewand: false
 misc:
   pvpmode: default
+  old-pvp-flags: true

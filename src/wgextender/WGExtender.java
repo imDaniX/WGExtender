@@ -76,7 +76,14 @@ public class WGExtender extends JavaPlugin {
 			pvplistener = new PvPHandlingListener(config);
 			pvplistener.inject(this);
 			oldpvphandler = new OldPVPFlagsHandler();
-			oldpvphandler.start(this);
+			if (config.miscOldPvpFlags) {
+				getLogger().warning(
+						"Enabling the old-PvP flags. Do note that they're not supported, " +
+						"as they're very out of scope of extending WG capabilities. " +
+						"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
+				);
+				oldpvphandler.start(this);
+			}
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to inject, shutting down", t);
 			t.printStackTrace();
@@ -90,7 +97,7 @@ public class WGExtender extends JavaPlugin {
 			WEWandCommandWrapper.uninject();
 			WGRegionCommandWrapper.uninject();
 			pvplistener.uninject();
-			oldpvphandler.stop();
+			oldpvphandler.stop(this);
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to uninject, shutting down", t);
 			Bukkit.shutdown();

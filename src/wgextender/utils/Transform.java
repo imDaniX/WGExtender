@@ -19,21 +19,28 @@ package wgextender.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
 public class Transform {
 
-	public static <T, O> List<T> toList(Iterable<O> list, Function<O, T> transform) {
-		List<T> transformedList = new ArrayList<>();
-		for (O element : list) {
-			transformedList.add(transform.apply(element));
-		}
-		return transformedList;
+	public static <T, O> List<T> toList(Iterable<O> iterable, Function<O, T> transform) {
+		return toList(iterable, transform, new ArrayList<>());
 	}
 
 	public static <T, O> List<T> toList(O[] array, Function<O, T> transform) {
 		return toList(Arrays.asList(array), transform);
 	}
 
+	public static <T, O> List<T> toList(Collection<O> coll, Function<O, T> transform) {
+		return toList(coll, transform, new ArrayList<>(coll.size()));
+	}
+
+	public static <T, O> List<T> toList(Iterable<O> list, Function<O, T> transform, List<T> outputList) {
+		for (O element : list) {
+			outputList.add(transform.apply(element));
+		}
+		return outputList;
+	}
 }

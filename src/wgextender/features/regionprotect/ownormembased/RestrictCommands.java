@@ -33,11 +33,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class RestrictCommands implements Listener {
 	private final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
-	private static final long TICK = 1000/20;
+	private static final long TICK = 1000 / 20;
 
 	protected final Config config;
 	protected volatile Collection<String> restrictedCommands;
@@ -45,20 +46,26 @@ public class RestrictCommands implements Listener {
 	public RestrictCommands(Config config) {
 		this.config = config;
 		restrictedCommands = config.restrictedCommandsInRegion;
-		Bukkit.getScheduler().runTaskTimerAsynchronously(WGExtender.getInstance(), () -> {
-			if (!config.restrictCommandsInRegionEnabled) {
-				return;
+        Bukkit.getAsyncScheduler().runAtFixedRate(
+                WGExtender.getInstance(),
+                (task) -> commandRecheckTask(config),
+                TICK, TICK * 100, TimeUnit.MILLISECONDS
+        );
+	}
+
+	private void commandRecheckTask(Config config) {
+		if (!config.restrictCommandsInRegionEnabled) {
+			return;
+		}
+		Set<String> computedRestrictedCommands = new HashSet<>();
+		for (String restrictedCommand : config.restrictedCommandsInRegion) {
+			String[] split = SPACE_PATTERN.split(restrictedCommand, 2);
+			String toAdd = split.length > 1 ? split[1] : "";
+			for (String alias : CommandUtils.getCommandAliases(split[0].toLowerCase(Locale.ROOT))) {
+				computedRestrictedCommands.add(alias + toAdd);
 			}
-			Set<String> computedRestrictedCommands = new HashSet<>();
-			for (String restrictedCommand : config.restrictedCommandsInRegion) {
-				String[] split = SPACE_PATTERN.split(restrictedCommand, 2);
-				String toAdd = split.length > 1 ? split[1] : "";
-				for (String alias : CommandUtils.getCommandAliases(split[0].toLowerCase(Locale.ROOT))) {
-					computedRestrictedCommands.add(alias + toAdd);
-				}
-			}
-			restrictedCommands = computedRestrictedCommands;
-		}, 1, 100);
+		}
+		restrictedCommands = computedRestrictedCommands;
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

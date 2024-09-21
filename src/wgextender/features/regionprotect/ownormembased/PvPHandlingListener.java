@@ -114,12 +114,12 @@ public class PvPHandlingListener implements Listener {
 			Entities.isAmbient(event.getEntity()) ||
 			Entities.isVehicle(event.getEntity().getType())
 		) {
-			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, combine(event)) != State.DENY);
+			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, getFlags(event)) != State.DENY);
 			what = "hit that";
 
 			/* Paintings, item frames, etc. */
 		} else if (Entities.isConsideredBuildingIfUsed(event.getEntity())) {
-			canDamage = query.testBuild(weTarget, associable, combine(event));
+			canDamage = query.testBuild(weTarget, associable, getFlags(event));
 			what = "change that";
 
 			/* PVP */
@@ -133,18 +133,18 @@ public class PvPHandlingListener implements Listener {
 			// false - disallow pvp when flag not set
 			if (config.miscDefaultPvPFlagOperationMode == null) {
 				canDamage =
-					query.testBuild(weTarget, associable, combine(event, Flags.PVP)) &&
-					(query.queryState(weAttacker, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY) &&
-					(query.queryState(weTarget, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY);
+					query.testBuild(weTarget, associable, getFlags(event, Flags.PVP)) &&
+					(query.queryState(weAttacker, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY) &&
+					(query.queryState(weTarget, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY);
 			} else if (config.miscDefaultPvPFlagOperationMode) {
 				canDamage =
-					(query.queryState(weAttacker, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY) &&
-					(query.queryState(weTarget, localPlayerAttacker, combine(event, Flags.PVP)) != State.DENY);
+					(query.queryState(weAttacker, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY) &&
+					(query.queryState(weTarget, localPlayerAttacker, getFlags(event, Flags.PVP)) != State.DENY);
 			} else {
 				if (!WGRegionUtils.isInWGRegion(playerAttacker.getLocation()) && !WGRegionUtils.isInWGRegion(target)) {
 					canDamage = true;
 				} else {
-					canDamage = (query.queryState(weAttacker, localPlayerAttacker, combine(event, Flags.PVP)) == State.ALLOW) && (query.queryState(weTarget, localPlayerAttacker, combine(event, Flags.PVP)) == State.ALLOW);
+					canDamage = (query.queryState(weAttacker, localPlayerAttacker, getFlags(event, Flags.PVP)) == State.ALLOW) && (query.queryState(weTarget, localPlayerAttacker, getFlags(event, Flags.PVP)) == State.ALLOW);
 				}
 
 			}
@@ -158,17 +158,17 @@ public class PvPHandlingListener implements Listener {
 
 			/* Player damage not caused by another player */
 		} else if (event.getEntity() instanceof Player) {
-			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, combine(event)) != State.DENY);
+			canDamage = event.getRelevantFlags().isEmpty() || (query.queryState(weTarget, associable, getFlags(event)) != State.DENY);
 			what = "damage that";
 
 			/* damage to non-hostile mobs (e.g. animals) */
 		} else if (Entities.isNonHostile(event.getEntity())) {
-			canDamage = query.testBuild(weTarget, associable, combine(event, Flags.DAMAGE_ANIMALS));
+			canDamage = query.testBuild(weTarget, associable, getFlags(event, Flags.DAMAGE_ANIMALS));
 			what = "harm that";
 
 			/* Everything else */
 		} else {
-			canDamage = query.testBuild(weTarget, associable, combine(event, Flags.INTERACT));
+			canDamage = query.testBuild(weTarget, associable, getFlags(event, Flags.INTERACT));
 			what = "hit that";
 		}
 
@@ -234,19 +234,21 @@ public class PvPHandlingListener implements Listener {
 		}
 	}
 
-	private static void formatAndSendDenyMessage(String what, LocalPlayer localPlayer, String message) {
-		if (message == null || message.isEmpty()) return;
-		message = WGRegionUtils.getPlatform().getMatcher().replaceMacros(localPlayer, message);
-		message = CommandUtils.replaceColorMacros(message);
-		localPlayer.printRaw(message.replace("%what%", what));
+    private static void formatAndSendDenyMessage(String what, LocalPlayer localPlayer, String message) {
+        if (message == null || message.isEmpty()) return;
+        message = WGRegionUtils.getPlatform().getMatcher().replaceMacros(localPlayer, message);
+        message = CommandUtils.replaceColorMacros(message);
+        localPlayer.printRaw(message.replace("%what%", what));
+    }
+
+	private static StateFlag[] getFlags(DelegateEvent event) {
+		return event.getRelevantFlags().toArray(new StateFlag[0]);
 	}
 
-	private static StateFlag[] combine(DelegateEvent event, StateFlag... flag) {
+	private static StateFlag[] getFlags(DelegateEvent event, StateFlag flag) {
 		List<StateFlag> extra = event.getRelevantFlags();
-		StateFlag[] flags = Arrays.copyOf(flag, flag.length + extra.size());
-		for (int i = 0; i < extra.size(); i++) {
-			flags[flag.length + i] = extra.get(i);
-		}
-		return flags;
+		StateFlag[] result = Arrays.copyOf(getFlags(event), extra.size() + 1);
+		result[extra.size()] = flag;
+		return result;
 	}
 }

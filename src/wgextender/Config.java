@@ -61,11 +61,13 @@ public class Config {
 	public Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
 
 	public boolean restrictCommandsInRegionEnabled = false;
-	public Set<String> restrictedCommandsInRegion = new HashSet<>();
+	public List<String> restrictedCommandsInRegion = new ArrayList<>();
 
 	public boolean extendedWorldEditWandEnabled = false;
 
 	public Boolean miscDefaultPvPFlagOperationMode = null;
+
+	public boolean miscOldPvpFlags = true;
 
 	protected static final String miscPvPFlagOperationModeAllow = "allow";
 	protected static final String miscPvPFlagOperationModeDeny = "deny";
@@ -129,7 +131,7 @@ public class Config {
 		}
 
 		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
-		restrictedCommandsInRegion = new HashSet<>(config.getStringList("restrictcommands.commands"));
+		restrictedCommandsInRegion = new ArrayList<>(config.getStringList("restrictcommands.commands"));
 
 		extendedWorldEditWandEnabled = config.getBoolean("extendedwewand", extendedWorldEditWandEnabled);
 
@@ -141,6 +143,7 @@ public class Config {
 		} else {
 			miscDefaultPvPFlagOperationMode = null;
 		}
+		miscOldPvpFlags = config.getBoolean("misc.old-pvp-flags");
 	}
 
 	private static BigInteger asBig(ConfigurationSection section, String key) {
