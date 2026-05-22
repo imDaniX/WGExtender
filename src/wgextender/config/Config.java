@@ -69,6 +69,7 @@ public class Config {
 	public Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
 
 	public boolean restrictCommandsInRegionEnabled = false;
+	public int restrictCommandsRecheckTicks = 100;
 	public List<String> restrictedCommandsInRegion = new ArrayList<>();
 
 	public boolean extendedWorldEditWandEnabled = false;
@@ -139,6 +140,7 @@ public class Config {
 		}
 
 		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
+		restrictCommandsRecheckTicks = config.getInt("restrictcommands.recheck-ticks", restrictCommandsRecheckTicks);
 		restrictedCommandsInRegion = new ArrayList<>(config.getStringList("restrictcommands.commands"));
 
 		extendedWorldEditWandEnabled = config.getBoolean("extendedwewand", extendedWorldEditWandEnabled);

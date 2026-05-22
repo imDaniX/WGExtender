@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class RestrictCommands implements Listener {
@@ -50,10 +49,10 @@ public class RestrictCommands implements Listener {
 		this.config = config;
 		this.msg = config.getMessages();
 		restrictedCommands = config.restrictedCommandsInRegion;
-        server.getAsyncScheduler().runAtFixedRate(
+        server.getGlobalRegionScheduler().runAtFixedRate(
                 WGExtender.getInstance(),
                 (task) -> commandRecheckTask(config),
-                0, 5, TimeUnit.SECONDS
+                0, config.restrictCommandsRecheckTicks
         );
 	}
 

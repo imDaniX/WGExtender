@@ -26,6 +26,7 @@ autoflags:
   flags: {}
 restrictcommands:
   enabled: false
+  recheck-ticks: 100
   commands: []
 extendedwewand: false
 misc:
