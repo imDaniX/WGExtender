@@ -18,6 +18,7 @@
 package wgextender.features.claimcommand;
 
 import com.sk89q.minecraft.util.commands.CommandException;
+import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -31,14 +32,14 @@ import static org.bukkit.ChatColor.YELLOW;
 
 public class WGRegionCommandWrapper extends Command {
 
-	public static void inject(Config config) {
-		WGRegionCommandWrapper wrapper = new WGRegionCommandWrapper(config, CommandUtils.getCommands().get("region"));
-		CommandUtils.replaceCommand(wrapper.originalCmd, wrapper);
+	public static void inject(Server server, Config config) {
+		WGRegionCommandWrapper wrapper = new WGRegionCommandWrapper(config, CommandUtils.getCommands(server).get("region"));
+		CommandUtils.replaceCommand(server, wrapper.originalCmd, wrapper);
 	}
 
-	public static void uninject() {
-		WGRegionCommandWrapper wrapper = (WGRegionCommandWrapper) CommandUtils.getCommands().get("region");
-		CommandUtils.replaceCommand(wrapper, wrapper.originalCmd);
+	public static void uninject(Server server) {
+		WGRegionCommandWrapper wrapper = (WGRegionCommandWrapper) CommandUtils.getCommands(server).get("region");
+		CommandUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
 	}
 
 	protected final Config config;

@@ -2,6 +2,7 @@ package wgextender;
 
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
@@ -21,12 +22,12 @@ public class VaultIntegration implements Listener {
 
 	public void initialize(WGExtender plugin) {
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
-		hook();
+		hook(plugin.getServer());
 	}
 
-	private void hook() {
+	private void hook(Server server) {
 		try {
-			permissions = Bukkit.getServicesManager().getRegistration(Permission.class).getProvider();
+			permissions = server.getServicesManager().getRegistration(Permission.class).getProvider();
 			if (!permissions.hasGroupSupport()) {
 				throw new IllegalStateException();
 			}
@@ -37,11 +38,11 @@ public class VaultIntegration implements Listener {
 
 	@EventHandler
 	public void onPluginEnable(PluginEnableEvent event) {
-		hook();
+		hook(Bukkit.getServer());
 	}
 
 	@EventHandler
 	public void onPluginDisable(PluginDisableEvent event) {
-		hook();
+		hook(Bukkit.getServer());
 	}
 }

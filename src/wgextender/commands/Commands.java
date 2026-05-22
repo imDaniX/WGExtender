@@ -29,14 +29,15 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import wgextender.Config;
 import wgextender.features.claimcommand.AutoFlags;
 import wgextender.utils.Transform;
@@ -54,9 +55,11 @@ import static org.bukkit.util.StringUtil.copyPartialMatches;
 //TODO: refactor
 public class Commands implements CommandExecutor, TabCompleter {
 
+	protected final Server server;
 	protected final Config config;
 
-	public Commands(Config config) {
+	public Commands(Server server, Config config) {
+		this.server = server;
 		this.config = config;
 	}
 
@@ -70,7 +73,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 	}
 
 	@Override
-	public boolean onCommand(CommandSender sender, Command arg1, String label, String[] args) {
+	public boolean onCommand(CommandSender sender, @NotNull Command arg1, @NotNull String label, String @NotNull [] args) {
 		if (!sender.hasPermission("wgextender.admin")) {
 			sender.sendMessage(RED + "Недостаточно прав");
 			return true;
@@ -110,7 +113,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 					if (args.length < 4) {
 						return false;
 					}
-					World world = Bukkit.getWorld(args[1]);
+					World world = server.getWorld(args[1]);
 					if (world == null) {
 						sender.sendMessage(BLUE + "Мир не найден");
 						return true;
@@ -139,7 +142,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 						return false;
 					}
 					boolean owner = args[0].equals("removeowner");
-					OfflinePlayer offPlayer = Bukkit.getOfflinePlayer(args[1]);
+					OfflinePlayer offPlayer = server.getOfflinePlayer(args[1]);
 					String name = (offPlayer.getName() == null ? args[1] : offPlayer.getName()).toLowerCase();
 					UUID uuid = offPlayer.getUniqueId();
 					for (RegionManager manager : WGRegionUtils.getRegionContainer().getLoaded()) {
@@ -159,7 +162,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 	}
 
 	@Override
-	public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
+	public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
 		if (args.length == 0 || !sender.hasPermission("wgextender.admin")) {
 			return Collections.emptyList();
 		}
@@ -175,7 +178,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 		if (!"setflag".equalsIgnoreCase(args[0])) return Collections.emptyList();
 		switch (args.length) {
 			case 2 -> {
-				return copyPartialMatches(args[1], Transform.toList(Bukkit.getWorlds(), World::getName), new ArrayList<>());
+				return copyPartialMatches(args[1], Transform.toList(server.getWorlds(), World::getName), new ArrayList<>());
 			}
 			case 3 -> {
 				return copyPartialMatches(args[2], Transform.toList(WorldGuard.getInstance().getFlagRegistry(), Flag::getName), new ArrayList<>());

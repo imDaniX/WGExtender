@@ -17,8 +17,8 @@
 
 package wgextender.features.regionprotect.ownormembased;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -40,16 +40,18 @@ public class RestrictCommands implements Listener {
 	private final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
 	private static final long TICK = 1000 / 20;
 
+	private final Server server;
 	protected final Config config;
 	protected volatile Collection<String> restrictedCommands;
 
-	public RestrictCommands(Config config) {
+	public RestrictCommands(Server server, Config config) {
+		this.server = server;
 		this.config = config;
 		restrictedCommands = config.restrictedCommandsInRegion;
-        Bukkit.getAsyncScheduler().runAtFixedRate(
+        server.getAsyncScheduler().runAtFixedRate(
                 WGExtender.getInstance(),
                 (task) -> commandRecheckTask(config),
-                TICK, TICK * 100, TimeUnit.MILLISECONDS
+                0, 5, TimeUnit.SECONDS
         );
 	}
 
@@ -61,7 +63,7 @@ public class RestrictCommands implements Listener {
 		for (String restrictedCommand : config.restrictedCommandsInRegion) {
 			String[] split = SPACE_PATTERN.split(restrictedCommand, 2);
 			String toAdd = split.length > 1 ? split[1] : "";
-			for (String alias : CommandUtils.getCommandAliases(split[0].toLowerCase(Locale.ROOT))) {
+			for (String alias : CommandUtils.getCommandAliases(server, split[0].toLowerCase(Locale.ROOT))) {
 				computedRestrictedCommands.add(alias + toAdd);
 			}
 		}

@@ -17,7 +17,7 @@
 
 package wgextender.utils;
 
-import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.command.Command;
 
 import java.util.ArrayList;
@@ -27,18 +27,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class CommandUtils {
-	public static Map<String, Command> getCommands() {
-		return Bukkit.getCommandMap().getKnownCommands();
+	public static Map<String, Command> getCommands(Server server) {
+		return server.getCommandMap().getKnownCommands();
 	}
 
-	public static List<String> getCommandAliases(String commandName) {
-		Command command = getCommands().get(commandName);
+	public static List<String> getCommandAliases(Server server, String commandName) {
+		Command command = getCommands(server).get(commandName);
 		if (command == null) {
 			return Collections.singletonList(commandName);
 		} else {
 			List<String> aliases = new ArrayList<>();
 			aliases.add(commandName);
-			for (Entry<String, Command> entry : getCommands().entrySet()) {
+			for (Entry<String, Command> entry : getCommands(server).entrySet()) {
 				if (entry.getValue().equals(command)) {
 					aliases.add(entry.getKey());
 				}
@@ -47,9 +47,9 @@ public class CommandUtils {
 		}
 	}
 
-	public static void replaceCommand(Command oldCommand, Command newCommand) {
+	public static void replaceCommand(Server server, Command oldCommand, Command newCommand) {
 		String cmdName = oldCommand.getName();
-		var commandMap = getCommands();
+		var commandMap = getCommands(server);
 		if (commandMap.get(cmdName).equals(oldCommand)) {
 			commandMap.put(cmdName, newCommand);
 		}

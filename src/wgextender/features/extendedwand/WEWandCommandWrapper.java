@@ -18,6 +18,7 @@
 package wgextender.features.extendedwand;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -26,14 +27,14 @@ import wgextender.utils.CommandUtils;
 
 public class WEWandCommandWrapper extends Command {
 
-	public static void inject(Config config) {
-		WEWandCommandWrapper wrapper = new WEWandCommandWrapper(config, CommandUtils.getCommands().get("/wand"));
-		CommandUtils.replaceCommand(wrapper.originalCmd, wrapper);
+	public static void inject(Server server, Config config) {
+		WEWandCommandWrapper wrapper = new WEWandCommandWrapper(config, CommandUtils.getCommands(server).get("/wand"));
+		CommandUtils.replaceCommand(server, wrapper.originalCmd, wrapper);
 	}
 
-	public static void uninject() {
-		WEWandCommandWrapper wrapper = (WEWandCommandWrapper) CommandUtils.getCommands().get("/wand");
-		CommandUtils.replaceCommand(wrapper, wrapper.originalCmd);
+	public static void uninject(Server server) {
+		WEWandCommandWrapper wrapper = (WEWandCommandWrapper) CommandUtils.getCommands(server).get("/wand");
+		CommandUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
 	}
 
 	protected final Config config;

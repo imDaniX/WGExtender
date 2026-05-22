@@ -17,7 +17,6 @@
 
 package wgextender.features.extendedwand;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -39,9 +38,7 @@ public class WEWand { // TODO Use PersistentData API
 
 	public static ItemStack getWand() {
 		ItemStack itemstack = new ItemStack(getWandMaterial());
-		ItemMeta meta = Bukkit.getItemFactory().getItemMeta(itemstack.getType());
-		meta.setDisplayName(WAND_NAME);
-		itemstack.setItemMeta(meta);
+		itemstack.editMeta(meta -> meta.setDisplayName(WAND_NAME));
 		return itemstack;
 	}
 

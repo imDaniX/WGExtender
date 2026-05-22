@@ -17,7 +17,7 @@
 
 package wgextender;
 
-import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import wgextender.commands.Commands;
@@ -59,11 +59,12 @@ public class WGExtender extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		VaultIntegration.getInstance().initialize(this);
+		Server server = getServer();
 		Config config = new Config(this);
 		config.loadConfig();
-		Objects.requireNonNull(getCommand("wgex")).setExecutor(new Commands(config));
+		Objects.requireNonNull(getCommand("wgex")).setExecutor(new Commands(server, config));
 		PluginManager pluginManager = getServer().getPluginManager();
-		pluginManager.registerEvents(new RestrictCommands(config), this);
+		pluginManager.registerEvents(new RestrictCommands(server, config), this);
 		pluginManager.registerEvents(new LiquidFlow(config), this);
 		pluginManager.registerEvents(new FireSpread(config), this);
 		pluginManager.registerEvents(new BlockBurn(config), this);
@@ -71,8 +72,8 @@ public class WGExtender extends JavaPlugin {
 		pluginManager.registerEvents(new WEWandListener(), this);
 		pluginManager.registerEvents(new ChorusFruitFlagHandler(), this);
 		try {
-			WGRegionCommandWrapper.inject(config);
-			WEWandCommandWrapper.inject(config);
+			WGRegionCommandWrapper.inject(server, config);
+			WEWandCommandWrapper.inject(server, config);
 			pvplistener = new PvPHandlingListener(config);
 			pvplistener.inject(this);
 			oldpvphandler = new OldPVPFlagsHandler();
@@ -87,20 +88,20 @@ public class WGExtender extends JavaPlugin {
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to inject, shutting down", t);
 			t.printStackTrace();
-			Bukkit.shutdown();
+			getServer().shutdown();
 		}
 	}
 
 	@Override
 	public void onDisable() {
 		try {
-			WEWandCommandWrapper.uninject();
-			WGRegionCommandWrapper.uninject();
+			WEWandCommandWrapper.uninject(getServer());
+			WGRegionCommandWrapper.uninject(getServer());
 			pvplistener.uninject();
 			oldpvphandler.stop(this);
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to uninject, shutting down", t);
-			Bukkit.shutdown();
+			getServer().shutdown();
 		}
 	}
 
