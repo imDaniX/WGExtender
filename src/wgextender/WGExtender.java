@@ -88,7 +88,6 @@ public class WGExtender extends JavaPlugin {
 			}
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to inject, shutting down", t);
-			t.printStackTrace();
 			getServer().shutdown();
 		}
 	}

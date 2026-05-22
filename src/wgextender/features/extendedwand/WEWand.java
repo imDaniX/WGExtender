@@ -17,37 +17,50 @@
 
 package wgextender.features.extendedwand;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.NotNull;
 import wgextender.utils.WEUtils;
 
-public class WEWand { // TODO Use PersistentData API
-	protected static final String WAND_NAME = ChatColor.LIGHT_PURPLE + "Selection wand";
+import java.util.Objects;
 
-	protected static Material cachedWandMaterial;
+public class WEWand {
+	public static final NamespacedKey WAND_KEY = Objects.requireNonNull(NamespacedKey.fromString("wgextender:wand"));
 
-	protected static Material getWandMaterial() { // TODO Rework to better handle registry
-		String weWandMaterialName = WEUtils.getWorldEditPlugin().getLocalConfiguration().wandItem.toUpperCase();
-		if ((cachedWandMaterial == null) || !cachedWandMaterial.toString().equals(weWandMaterialName)) {
-			cachedWandMaterial = Material.getMaterial(weWandMaterialName.split(":")[1]);
+	private static String cachedName;
+	private static Material cachedMaterial;
+
+	@SuppressWarnings("PatternValidation")
+    private static Material getWandMaterial() { // TODO Better handle registry?
+		String weName = WEUtils.getWorldEditPlugin().getLocalConfiguration().wandItem;
+		if (!weName.equals(cachedName)) {
+			if (!Key.parseable(weName)) {
+				cachedMaterial = Material.WOODEN_AXE;
+				// TODO Log
+			} else {
+				cachedMaterial = Registry.MATERIAL.get(Key.key(weName));
+				cachedName = weName;
+			}
 		}
-		return cachedWandMaterial;
+		return cachedMaterial;
 	}
 
-	public static ItemStack getWand() {
-		ItemStack itemstack = new ItemStack(getWandMaterial());
-		itemstack.editMeta(meta -> meta.setDisplayName(WAND_NAME));
-		return itemstack;
+	public static @NotNull ItemStack getWand(@NotNull Component name) {
+		ItemStack wandItem = ItemStack.of(getWandMaterial());
+		wandItem.editMeta(meta -> {
+			meta.getPersistentDataContainer().set(WAND_KEY, PersistentDataType.BOOLEAN, true);
+			meta.displayName(name);
+		});
+		return wandItem;
 	}
 
-	public static boolean isWand(ItemStack item) {
-		if (item.getType().equals(getWandMaterial()) && item.hasItemMeta()) {
-			ItemMeta meta = item.getItemMeta();
-			return meta.hasDisplayName() && WAND_NAME.equals(meta.getDisplayName());
-		}
-		return false;
-	}
+	public static boolean isWand(@NotNull ItemStack item) {
+        return item.getType().equals(getWandMaterial()) && item.getPersistentDataContainer().getOrDefault(WAND_KEY, PersistentDataType.BOOLEAN, false);
+    }
 
 }

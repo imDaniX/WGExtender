@@ -23,7 +23,7 @@ public final class Messages {
         decoder = LegacyComponentSerializer.legacyAmpersand();
     }
 
-    public void loadMessages() {
+    public void loadMessages() { // TODO Option to cache the ones with no placeholders
         if (!messagesFile.exists()) {
             try {
                 messagesFile.createNewFile();
