@@ -15,15 +15,19 @@
  *
  */
 
-package wgextender;
+package wgextender.config;
 
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.Flags;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import wgextender.WGExtender;
+import wgextender.config.message.Messages;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -32,11 +36,15 @@ import java.util.*;
 public class Config {
 
 	private final Plugin plugin;
-	protected final File configFile;
+	private final File configFile;
+	private final Messages msg;
+
 	public Config(WGExtender plugin) {
 		this.plugin = plugin;
 		configFile = new File(plugin.getDataFolder(), "config.yml");
+		msg = new Messages(plugin.getDataFolder());
 	}
+
 
 	public boolean claimExpandSelectionVertical = false;
 
@@ -69,9 +77,9 @@ public class Config {
 
 	public boolean miscOldPvpFlags = true;
 
-	protected static final String miscPvPFlagOperationModeAllow = "allow";
-	protected static final String miscPvPFlagOperationModeDeny = "deny";
-	protected static final String miscPvPFlagOperationModeDefault = "default";
+	private static final String miscPvPFlagOperationModeAllow = "allow";
+	private static final String miscPvPFlagOperationModeDeny = "deny";
+	private static final String miscPvPFlagOperationModeDefault = "default";
 
 	public void loadConfig() {
 		plugin.saveDefaultConfig();
@@ -144,6 +152,13 @@ public class Config {
 			miscDefaultPvPFlagOperationMode = null;
 		}
 		miscOldPvpFlags = config.getBoolean("misc.old-pvp-flags");
+
+		msg.setDecoder(switch (config.getString("messages.serializer", "LEGACY_AMPERSAND").toUpperCase(Locale.ROOT)) {
+			case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
+            case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
+            default -> LegacyComponentSerializer.legacyAmpersand();
+        });
+		msg.loadMessages();
 	}
 
 	private static BigInteger asBig(ConfigurationSection section, String key) {
@@ -154,5 +169,9 @@ public class Config {
 			if (value.equals("0")) return BigInteger.ZERO;
 			return new BigInteger(value);
 		}
+	}
+
+	public Messages getMessages() {
+		return this.msg;
 	}
 }

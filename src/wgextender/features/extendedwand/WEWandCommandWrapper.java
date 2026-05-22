@@ -17,12 +17,13 @@
 
 package wgextender.features.extendedwand;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import wgextender.Config;
+import wgextender.config.Config;
+import wgextender.config.message.MKey;
+import wgextender.config.message.Messages;
 import wgextender.utils.CommandUtils;
 
 public class WEWandCommandWrapper extends Command {
@@ -38,11 +39,13 @@ public class WEWandCommandWrapper extends Command {
 	}
 
 	protected final Config config;
+	protected final Messages msg;
 	protected final Command originalCmd;
 
 	protected WEWandCommandWrapper(Config config, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = config;
+		this.msg = config.getMessages();
 		this.originalCmd = originalCmd;
 	}
 
@@ -53,9 +56,8 @@ public class WEWandCommandWrapper extends Command {
 		}
 		if (sender instanceof Player player) {
 			player.getInventory().addItem(WEWand.getWand());
-			player.sendMessage(ChatColor.LIGHT_PURPLE+"Выдана вещь для выделения территории");
+			player.sendMessage(msg.rich(MKey.WAND__GIVEN));
 		}
 		return true;
 	}
-
 }

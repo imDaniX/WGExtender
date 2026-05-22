@@ -36,7 +36,9 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
-import wgextender.Config;
+import wgextender.config.Config;
+import wgextender.config.message.MKey;
+import wgextender.config.message.Messages;
 import wgextender.utils.WGRegionUtils;
 
 import java.util.Arrays;
@@ -53,15 +55,17 @@ import static wgextender.utils.WGRegionUtils.getWorldConfig;
  */
 public class PvPHandlingListener implements Listener {
 
-	private final Config config;
-
 	private static final String DENY_MESSAGE_KEY = "worldguard.region.lastMessage";
 	private static final int LAST_MESSAGE_DELAY = 500;
+
+	private final Config config;
+	private final Messages msg;
 
 	private RegisteredListener origin;
 
 	public PvPHandlingListener(Config config) {
 		this.config = config;
+		this.msg = config.getMessages();
 	}
 
 	public void inject(Plugin plugin) {
@@ -123,14 +127,14 @@ public class PvPHandlingListener implements Listener {
 		/* Hostile / ambient mob override */
 		if (Entities.isHostile(event.getEntity()) || Entities.isAmbient(event.getEntity())) {
 			canDamage = event.getRelevantFlags().isEmpty() || query.queryState(target, associable, combine(event)) != State.DENY;
-			what = "hit that";
+			what = msg.get(MKey.DAMAGE__MOB);
 		} else if (Entities.isVehicle(event.getEntity().getType())) {
 			canDamage = query.testBuild(target, associable, combine(event, Flags.DESTROY_VEHICLE));
-			what = "change that";
+			what = msg.get(MKey.DAMAGE__VEHICLE);
 			/* Paintings, item frames, etc. */
 		} else if (Entities.isConsideredBuildingIfUsed(event.getEntity())) {
 			canDamage = query.testBuild(target, associable, combine(event));
-			what = "change that";
+			what = msg.get(MKey.DAMAGE__DECORATION);
 
 			/* PVP */
 		}  else if (pvp) {
@@ -171,22 +175,22 @@ public class PvPHandlingListener implements Listener {
 				canDamage = true;
 			}
 
-			what = "PvP";
+			what = msg.get(MKey.DAMAGE__PVP);
 
 		/* Player damage not caused  by another player */
 		} else if (event.getEntity() instanceof Player) {
 			canDamage = event.getRelevantFlags().isEmpty() || query.queryState(target, associable, combine(event)) != State.DENY;
-			what = "damage that";
+			what = msg.get(MKey.DAMAGE__PLAYER);
 
 			/* damage to non-hostile mobs (e.g. animals) */
 		} else if (Entities.isNonHostile(event.getEntity())) {
 			canDamage = query.testBuild(target, associable, combine(event, Flags.DAMAGE_ANIMALS));
-			what = "harm that";
+			what = msg.get(MKey.DAMAGE__NON_HOSTILE);
 
 			/* Everything else */
 		} else {
 			canDamage = query.testBuild(target, associable, combine(event, Flags.INTERACT));
-			what = "hit that";
+			what = msg.get(MKey.DAMAGE__OTHER);
 		}
 
 		if (!canDamage) {

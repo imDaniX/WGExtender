@@ -22,7 +22,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockSpreadEvent;
-import wgextender.Config;
+import wgextender.config.Config;
 import wgextender.utils.WGRegionUtils;
 
 public class FireSpread implements Listener {

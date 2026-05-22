@@ -21,8 +21,8 @@ import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
 import org.bukkit.entity.Player;
-import wgextender.Config;
 import wgextender.VaultIntegration;
+import wgextender.config.Config;
 import wgextender.utils.WEUtils;
 
 import java.math.BigInteger;

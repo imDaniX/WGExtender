@@ -26,7 +26,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockFromToEvent;
-import wgextender.Config;
+import wgextender.config.Config;
 import wgextender.utils.WGRegionUtils;
 
 public class LiquidFlow implements Listener {

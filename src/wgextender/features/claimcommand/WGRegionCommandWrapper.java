@@ -22,13 +22,12 @@ import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import wgextender.Config;
+import wgextender.config.Config;
+import wgextender.config.message.MKey;
+import wgextender.config.message.Messages;
 import wgextender.utils.CommandUtils;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGRegionUtils;
-
-import static org.bukkit.ChatColor.RED;
-import static org.bukkit.ChatColor.YELLOW;
 
 public class WGRegionCommandWrapper extends Command {
 
@@ -43,12 +42,16 @@ public class WGRegionCommandWrapper extends Command {
 	}
 
 	protected final Config config;
+	protected final Messages msg;
 	protected final Command originalCmd;
+	protected final WGClaimCommand claimHandler;
 
 	protected WGRegionCommandWrapper(Config config, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = config;
+		this.msg = config.getMessages();
 		this.originalCmd = originalCmd;
+		this.claimHandler = new WGClaimCommand(config);
 	}
 
 	private final BlockLimits blockLimits = new BlockLimits();
@@ -58,9 +61,9 @@ public class WGRegionCommandWrapper extends Command {
 		if ((sender instanceof Player player) && (args.length >= 2) && args[0].equalsIgnoreCase("claim")) {
             String regionName = args[1];
 			if (config.claimExpandSelectionVertical) {
-				boolean result = WEUtils.expandVert((Player) sender);
+				boolean result = WEUtils.expandVert(player);
 				if (result) {
-					player.sendMessage(YELLOW + "Регион автоматически расширен по вертикали");
+					player.sendMessage(msg.rich(MKey.CLAIM__AUTO_VERT));
 				}
 			}
 			if (!process(player)) {
@@ -68,12 +71,12 @@ public class WGRegionCommandWrapper extends Command {
 			}
 			boolean hasRegion = AutoFlags.hasRegion(player.getWorld(), regionName);
 			try {
-				WGClaimCommand.claim(regionName, sender);
+				claimHandler.claim(regionName, sender);
 				if (!hasRegion && config.claimAutoFlagsEnabled) {
 					AutoFlags.setFlagsForRegion(WGRegionUtils.wrapAsPrivileged(player, config.showAutoFlagMessages), player.getWorld(), config, regionName);
 				}
 			} catch (CommandException ex) {
-				sender.sendMessage(RED + ex.getMessage());
+				sender.sendMessage(msg.rich(MKey.CLAIM__ERROR__FORMAT, ex.getMessage()));
 			}
 			return true;
 		} else {
@@ -84,25 +87,21 @@ public class WGRegionCommandWrapper extends Command {
 	private boolean process(Player player) {
 		BlockLimits.ProcessedClaimInfo info = blockLimits.processClaimInfo(config, player);
 		return switch (info.result()) {
-            case ALLOW -> true;
+			case ALLOW -> true;
 			case DENY_MAX_VOLUME -> {
-				player.sendMessage(RED + "Вы не можете заприватить такой большой регион");
-				player.sendMessage(RED + "Ваш лимит: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
+				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_MAX_VOLUME, info.assignedLimit(), info.assignedSize()));
 				yield false;
 			}
 			case DENY_MIN_VOLUME -> {
-				player.sendMessage(RED + "Вы не можете заприватить такой маленький регион");
-				player.sendMessage(RED + "Минимальный объем: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
+				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_MIN_VOLUME, info.assignedLimit(), info.assignedSize()));
 				yield false;
 			}
 			case DENY_HORIZONTAL -> {
-				player.sendMessage(RED + "Вы не можете заприватить такой узкий регион");
-				player.sendMessage(RED + "Минимальная ширина: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
+				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_HORIZONTAL, info.assignedLimit(), info.assignedSize()));
 				yield false;
 			}
 			case DENY_VERTICAL -> {
-				player.sendMessage(RED + "Вы не можете заприватить такой низкий регион");
-				player.sendMessage(RED + "Минимальная высота: "+info.assignedLimit()+", вы попытались заприватить: "+info.assignedSize());
+				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_VERTICAL, info.assignedLimit(), info.assignedSize()));
 				yield false;
 			}
 		};

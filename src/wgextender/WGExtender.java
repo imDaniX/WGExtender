@@ -21,6 +21,7 @@ import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import wgextender.commands.Commands;
+import wgextender.config.Config;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
 import wgextender.features.extendedwand.WEWandListener;
@@ -70,7 +71,7 @@ public class WGExtender extends JavaPlugin {
 		pluginManager.registerEvents(new BlockBurn(config), this);
 		pluginManager.registerEvents(new Explode(config), this);
 		pluginManager.registerEvents(new WEWandListener(), this);
-		pluginManager.registerEvents(new ChorusFruitFlagHandler(), this);
+		pluginManager.registerEvents(new ChorusFruitFlagHandler(config.getMessages()), this);
 		try {
 			WGRegionCommandWrapper.inject(server, config);
 			WEWandCommandWrapper.inject(server, config);
