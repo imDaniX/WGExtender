@@ -81,7 +81,7 @@ public class WGExtender extends JavaPlugin {
 			if (config.miscOldPvpFlags) {
 				getLogger().warning(
 						"Enabling the old-PvP flags. Do note that they're not supported, " +
-						"as they're very out of scope of extending WG capabilities. " +
+						"as they're very out of scope of extending WG capabilities and may harm performance. " +
 						"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
 				);
 				oldpvphandler.start(this);
