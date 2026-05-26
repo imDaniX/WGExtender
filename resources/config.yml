@@ -26,8 +26,8 @@ autoflags:
   flags: {}
 restrictcommands:
   enabled: false
-  recheck-ticks: 100
   commands: []
+  recheck-ticks: 100
 extendedwewand: false
 misc:
   pvpmode: default

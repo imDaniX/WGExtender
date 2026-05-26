@@ -4,12 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.hurricanegames</groupId>
-    <artifactId>wgextender</artifactId>
-    <version>3.2.2-fork-SNAPSHOT</version>
+    <groupId>me.imdanix</groupId>
+    <artifactId>wgextender-x</artifactId>
+    <version>3.2.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>WGExtender</name>
+    <name>WGExtender X</name>
 
     <properties>
         <java.version>21</java.version>
@@ -18,6 +18,7 @@
     </properties>
 
     <build>
+        <finalName>WGExtenderX-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
         <sourceDirectory>src/</sourceDirectory>
         <resources>

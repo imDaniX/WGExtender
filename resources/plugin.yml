@@ -1,8 +1,8 @@
-name: '${project.name}'
+name: 'WGExtender'
 main: wgextender.WGExtender
 api-version: '1.20'
-version: '${project.version}'
-author: _Shevchik_
+version: '${project.version}-x'
+authors: [_Shevchik_, imDaniX]
 depend: [WorldGuard, WorldEdit, Vault]
 folia-supported: true
 commands:

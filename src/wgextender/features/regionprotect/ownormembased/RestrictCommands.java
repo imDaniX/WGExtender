@@ -52,7 +52,7 @@ public class RestrictCommands implements Listener {
         server.getGlobalRegionScheduler().runAtFixedRate(
                 WGExtender.getInstance(),
                 (task) -> commandRecheckTask(config),
-                0, config.restrictCommandsRecheckTicks
+                1, config.restrictCommandsRecheckTicks
         );
 	}
 
@@ -80,7 +80,7 @@ public class RestrictCommands implements Listener {
 		if (WGRegionUtils.canBypassProtection(player)) {
 			return;
 		}
-		if (WGRegionUtils.isInWGRegion(player.getLocation()) && !WGRegionUtils.canBuild(player, player.getLocation())) {
+		if (WGRegionUtils.isInWGRegion(player.getLocation()) && !WGRegionUtils.canBuild(player, player.getLocation())) { // TODO canBuild is not a great check for commands?
 			String command = event.getMessage().substring(1).toLowerCase(Locale.ROOT);
 			for (String rcommand : restrictedCommands) {
 				if (command.startsWith(rcommand) && (command.length() == rcommand.length() || command.charAt(rcommand.length()) == ' ')) {

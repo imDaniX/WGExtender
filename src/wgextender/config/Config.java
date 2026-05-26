@@ -78,9 +78,9 @@ public class Config {
 
 	public boolean miscOldPvpFlags = true;
 
-	private static final String miscPvPFlagOperationModeAllow = "allow";
-	private static final String miscPvPFlagOperationModeDeny = "deny";
-	private static final String miscPvPFlagOperationModeDefault = "default";
+	private static final String ALLOW = "allow";
+	private static final String DENY = "deny";
+	private static final String DEFAULT = "default";
 
 	public void loadConfig() {
 		plugin.saveDefaultConfig();
@@ -145,10 +145,10 @@ public class Config {
 
 		extendedWorldEditWandEnabled = config.getBoolean("extendedwewand", extendedWorldEditWandEnabled);
 
-		String miscPvpModeStr = config.getString("misc.pvpmode", miscPvPFlagOperationModeDefault);
-		if (miscPvpModeStr.equalsIgnoreCase(miscPvPFlagOperationModeAllow)) {
+		String miscPvpModeStr = config.getString("misc.pvpmode", DEFAULT);
+		if (miscPvpModeStr.equalsIgnoreCase(ALLOW)) {
 			miscDefaultPvPFlagOperationMode = Boolean.TRUE;
-		} else if (miscPvpModeStr.equalsIgnoreCase(miscPvPFlagOperationModeDeny)) {
+		} else if (miscPvpModeStr.equalsIgnoreCase(DENY)) {
 			miscDefaultPvPFlagOperationMode = Boolean.FALSE;
 		} else {
 			miscDefaultPvPFlagOperationMode = null;
