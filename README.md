@@ -25,12 +25,12 @@ WGExtender **X** is a fork that is maintained for modern Paper versions and incl
 > [!NOTE]
 > For per-group options to work, LuckPerms users might need to set `vault-group-use-displaynames` to `false`.
 
-You can find [the default configuration](/resources/config.yml) in this repository in the resources folder.
+You can find [the default configuration](/resources/config.yml) in this repository in the `resources` folder.
 
 ### `claim`
 - `vertexpand`: Auto-expand claim selection from world top to bottom.
 - `blocklimits.enabled`: Enforce block limits per region.
-- `blocklimits.limits`: Max region block count per group. Example:
+- `blocklimits.limits`: Max region block count per group. Do note that the limit in WorldGuard's `config.yml` should be higher than specified here. Example:
 ```yaml
 limits:
   default: 50000
@@ -65,14 +65,14 @@ commands:
   - 'home'
   - 'tpa'
 ```
-- `recheck-ticks`: How often to recheck command aliases, in ticks.
+- `recheck-ticks`: How often to recheck command aliases, in ticks. Requires server restart for the changes to take effect.
 
 ### `extendedwewand`
 Allows renaming of the WorldEdit wand given by the `//wand` command via `messages.yml`. This wand is deleted when dropped.
 
 ### `misc`
 > [!WARNING]
-> Both PvP options are deprecated. While they still work, there may be issues per release, as they require manual mimicking and copying of WorldGuard logic.
+> Both PvP options are deprecated. While they still work, there may be issues per release, as they require manual mimicking and copying of WorldGuard logic. They also require a server restart for the changes to take effect.
 - `pvpmode`: Default PvP behavior for regions without an explicit flag: `allow`, `deny`, or `default` (WorldGuard behavior).
 - `old-pvp-flags`: Use legacy 1.8 PvP flag handling.
 

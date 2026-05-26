@@ -52,7 +52,7 @@ public class RestrictCommands implements Listener {
         server.getGlobalRegionScheduler().runAtFixedRate(
                 WGExtender.getInstance(),
                 (task) -> commandRecheckTask(config),
-                1, config.restrictCommandsRecheckTicks
+                1, Math.max(1, config.restrictCommandsRecheckTicks)
         );
 	}
 
