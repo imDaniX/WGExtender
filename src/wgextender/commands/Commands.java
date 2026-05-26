@@ -47,12 +47,10 @@ import wgextender.utils.WEUtils;
 import wgextender.utils.WGRegionUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.bukkit.util.StringUtil.copyPartialMatches;
 
-//TODO: refactor
+// TODO Brigadier?
 public class Commands implements CommandExecutor, TabCompleter {
 
 	protected final Server server;
@@ -65,151 +63,159 @@ public class Commands implements CommandExecutor, TabCompleter {
 		this.msg = config.getMessages();
 	}
 
-	private static List<String> getRegionsInPlayerSelection(Player player) throws IncompleteRegionException {
-		Region psel = WEUtils.getSelection(player);
-		ProtectedRegion fakerg = new ProtectedCuboidRegion("wgexfakerg", psel.getMaximumPoint(), psel.getMinimumPoint());
-		ApplicableRegionSet ars = WGRegionUtils.getRegionManager(player.getWorld()).getApplicableRegions(fakerg);
-		return StreamSupport.stream(ars.spliterator(), false)
-			.map(ProtectedRegion::getId)
-			.collect(Collectors.toList());
-	}
-
 	@Override
 	public boolean onCommand(CommandSender sender, @NotNull Command arg1, @NotNull String label, String @NotNull [] args) {
 		if (!sender.hasPermission("wgextender.admin")) {
 			msg.sendMessage(sender, MKey.COMMON__ERROR__NO_PERMISSION);
 			return true;
 		}
-		if (args.length >= 1) {
-			switch (args[0].toLowerCase()) {
-				case "help" -> {
-					msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__HELP);
-					msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__HELP);
-					msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
-					msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEOWNER__HELP);
-					msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEMEMBER__HELP);
-					return true;
-				}
-				case "reload" -> {
-					config.loadConfig();
-					msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__SUCCESS);
-					return true;
-				}
-				case "search" -> {
-					if (sender instanceof Player player) {
-						try {
-							List<String> regions = getRegionsInPlayerSelection(player);
-							if (regions.isEmpty()) {
-								msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__NOT_FOUND);
-							} else {
-								msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__FOUND, regions);
-							}
-						} catch (IncompleteRegionException e) {
-							msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__INCOMPLETE_SELECTION);
-						}
-						return true;
-					}
-					msg.sendMessage(sender, MKey.COMMON__ERROR__PLAYER_ONLY);
-					return true;
-				}
-				case "setflag" -> {
-					if (args.length < 4) {
-						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
-						return false;
-					}
-					World world = server.getWorld(args[1]);
-					if (world == null) {
-						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__WORLD_NOT_FOUND);
-						return true;
-					}
-					Flag<?> flag = Flags.fuzzyMatchFlag(WorldGuard.getInstance().getFlagRegistry(), args[2]);
-					if (flag == null) {
-						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__FLAG_NOT_FOUND);
-						return true;
-					}
-					try {
-						String value = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
-						for (ProtectedRegion region : WGRegionUtils.getRegionManager(world).getRegions().values()) {
-							if (region instanceof GlobalProtectedRegion) {
-								continue;
-							}
-							AutoFlags.setFlag(WGRegionUtils.wrapAsPrivileged(sender, false), world, region, flag, value);
-						}
-						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__SUCCESS);
-					} catch (CommandException e) {
-						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__INVALID_FORMAT, flag.getName(), e.getMessage());
-					}
-					return true;
-				}
-				case "removeowner", "removemember" -> {
-					boolean owner = args[0].equals("removeowner");
-					if (args.length != 2) {
-						msg.sendMessage(sender, owner
-								? MKey.WGEX_COMMAND__REMOVEOWNER__HELP
-								: MKey.WGEX_COMMAND__REMOVEMEMBER__HELP
-						);
-						return false;
-					}
-					OfflinePlayer offPlayer = server.getOfflinePlayer(args[1]);
-					String name = (offPlayer.getName() == null ? args[1] : offPlayer.getName()).toLowerCase();
-					UUID uuid = offPlayer.getUniqueId();
-					for (RegionManager manager : WGRegionUtils.getRegionContainer().getLoaded()) {
-						for (ProtectedRegion region : manager.getRegions().values()) {
-							DefaultDomain members = owner ? region.getOwners() : region.getMembers();
-							members.removePlayer(uuid);
-							members.removePlayer(name);
-							region.setMembers(members);
-						}
-					}
-					msg.sendMessage(sender, owner
-							? MKey.WGEX_COMMAND__REMOVEOWNER__SUCCESS
-							: MKey.WGEX_COMMAND__REMOVEMEMBER__SUCCESS
-					);
-					return true;
-				}
+        if (args.length == 0) {
+			showHelp(sender);
+            return true;
+        }
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+			case "help" -> {
+				showHelp(sender);
+				return true;
 			}
-		}
-		return false;
+            case "reload" -> {
+                config.loadConfig();
+                msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__SUCCESS);
+                return true;
+            }
+            case "search" -> {
+                if (!(sender instanceof Player player)) {
+                    msg.sendMessage(sender, MKey.COMMON__ERROR__PLAYER_ONLY);
+                    return true;
+                }
+                try {
+                    Region psel = WEUtils.getSelection(player);
+                    ProtectedRegion fakeRg = new ProtectedCuboidRegion("wgexfakerg", psel.getMaximumPoint(), psel.getMinimumPoint());
+                    ApplicableRegionSet ars = WGRegionUtils.getRegionManager(player.getWorld()).getApplicableRegions(fakeRg);
+                    List<String> regions = new ArrayList<>();
+                    for (ProtectedRegion ar : ars) {
+                        String id = ar.getId();
+                        regions.add(id);
+                    }
+                    if (regions.isEmpty()) {
+                        msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__NOT_FOUND);
+                    } else {
+                        msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__FOUND, regions);
+                    }
+                } catch (IncompleteRegionException e) {
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__INCOMPLETE_SELECTION);
+                }
+                return true;
+            }
+            case "setflag" -> {
+                if (args.length < 4) {
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
+                    return true;
+                }
+                World world = server.getWorld(args[1]);
+                if (world == null) {
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__WORLD_NOT_FOUND);
+                    return true;
+                }
+                Flag<?> flag = Flags.fuzzyMatchFlag(WorldGuard.getInstance().getFlagRegistry(), args[2]);
+                if (flag == null) {
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__FLAG_NOT_FOUND);
+                    return true;
+                }
+                try {
+                    String value = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+                    for (ProtectedRegion region : WGRegionUtils.getRegionManager(world).getRegions().values()) {
+                        if (region instanceof GlobalProtectedRegion) {
+                            continue;
+                        }
+                        AutoFlags.setFlag(WGRegionUtils.wrapAsPrivileged(sender, false), world, region, flag, value);
+                    }
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__SUCCESS);
+                } catch (CommandException e) {
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__INVALID_FORMAT, flag.getName(), e.getMessage());
+                }
+                return true;
+            }
+            case "removeowner", "removemember" -> {
+                boolean owner = args[0].equalsIgnoreCase("removeowner");
+                if (args.length != 2) {
+                    msg.sendMessage(sender, owner
+                            ? MKey.WGEX_COMMAND__REMOVEOWNER__HELP
+                            : MKey.WGEX_COMMAND__REMOVEMEMBER__HELP
+                    );
+                    return true;
+                }
+                OfflinePlayer offPlayer = server.getOfflinePlayer(args[1]);
+                String name = (offPlayer.getName() == null ? args[1] : offPlayer.getName()).toLowerCase();
+                UUID uuid = offPlayer.getUniqueId();
+                for (RegionManager manager : WGRegionUtils.getRegionContainer().getLoaded()) {
+                    for (ProtectedRegion region : manager.getRegions().values()) {
+                        DefaultDomain members = owner ? region.getOwners() : region.getMembers();
+                        members.removePlayer(uuid);
+                        members.removePlayer(name);
+                        region.setMembers(members);
+                    }
+                }
+                msg.sendMessage(sender, owner
+                        ? MKey.WGEX_COMMAND__REMOVEOWNER__SUCCESS
+                        : MKey.WGEX_COMMAND__REMOVEMEMBER__SUCCESS
+                );
+                return true;
+            }
+            default -> {
+				msg.sendMessage(sender, MKey.WGEX_COMMAND__UNKNOWN_SUBCOMMAND, args[0]);
+				showHelp(sender);
+				return true;
+			}
+        }
 	}
+
+	private void showHelp(CommandSender sender) {
+		msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__HELP);
+		msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__HELP);
+		msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
+		msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEOWNER__HELP);
+		msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEMEMBER__HELP);
+	}
+
+	private static final List<String> PLAYER_ARGS = List.of("help", "reload", "search", "setflag", "removeowner", "removemember");
+	private static final List<String> CONSOLE_ARGS = List.of("help", "reload", "setflag", "removeowner", "removemember");
+
+	private static final List<String> STATE_ARGS = List.of("ALLOW", "DENY");
+	private static final List<String> BOOLEAN_ARGS = List.of("true", "false");
 
 	@Override
 	public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
 		if (args.length == 0 || !sender.hasPermission("wgextender.admin")) {
-			return Collections.emptyList();
+			return List.of();
 		}
 		if (args.length == 1) {
 			return copyPartialMatches(
 					args[0],
-					sender instanceof Player
-							? List.of("help", "reload", "search", "setflag", "removeowner", "removemember")
-							: List.of("help", "reload", "setflag", "removeowner", "removemember"),
+					sender instanceof Player ? PLAYER_ARGS : CONSOLE_ARGS,
 					new ArrayList<>()
 			);
 		}
-		if (!"setflag".equalsIgnoreCase(args[0])) return Collections.emptyList();
-		switch (args.length) {
-			case 2 -> {
-				return copyPartialMatches(args[1], Transform.toList(server.getWorlds(), World::getName), new ArrayList<>());
-			}
-			case 3 -> {
-				return copyPartialMatches(args[2], Transform.toList(WorldGuard.getInstance().getFlagRegistry(), Flag::getName), new ArrayList<>());
-			}
+		if (!args[0].equalsIgnoreCase("setflag")) return List.of();
+		return switch (args.length) {
+            case 2 -> copyPartialMatches(args[1], Transform.toList(server.getWorlds(), World::getName), new ArrayList<>());
+            case 3 -> copyPartialMatches(args[2], Transform.toList(WorldGuard.getInstance().getFlagRegistry(), Flag::getName), new ArrayList<>());
 			case 4 -> {
 				Flag<?> flag = Flags.fuzzyMatchFlag(WorldGuard.getInstance().getFlagRegistry(), args[2]);
 				if (flag instanceof StateFlag) {
-					return copyPartialMatches(args[3], Transform.toList(State.values(), State::toString), new ArrayList<>());
+                    yield copyPartialMatches(args[3], Transform.toList(State.values(), State::toString), new ArrayList<>());
 				}
 				if (flag instanceof BooleanFlag) {
-					return copyPartialMatches(args[3], List.of("true", "false"), new ArrayList<>());
+                    yield copyPartialMatches(args[3], List.of("true", "false"), new ArrayList<>());
 				}
 				if (flag instanceof EnumFlag<?> enumFlag) {
 					try {
-						return copyPartialMatches(args[3], Transform.toList(enumFlag.getEnumClass().getEnumConstants(), Enum::toString), new ArrayList<>());
+                        yield copyPartialMatches(args[3], Transform.toList(enumFlag.getEnumClass().getEnumConstants(), Enum::toString), new ArrayList<>());
 					} catch (Exception ignored) { }
 				}
+                yield List.of();
 			}
-		}
-		return Collections.emptyList();
-	}
-
+            default -> List.of();
+		};
+    }
 }

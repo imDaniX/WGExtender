@@ -62,6 +62,7 @@ public enum MKey {
 
     RESTRICTED_COMMAND("&4Вы не можете использовать эту команду в чужом регионе."),
 
+    WGEX_COMMAND__UNKNOWN_SUBCOMMAND("&bНеизвестная подкоманда '{subcommand}'.", "subcommand"),
     WGEX_COMMAND__RELOAD__HELP("&bwgex reload - перезагрузить конфиг"),
     WGEX_COMMAND__SEARCH__HELP("&bwgex search - ищет регионы в выделенной области"),
     WGEX_COMMAND__SETFLAG__HELP("&bwgex setflag <мир> <флаг> <значение> - устанавливает флаг <флаг> со значением <значение> на все регионы в мире <мир>"),
