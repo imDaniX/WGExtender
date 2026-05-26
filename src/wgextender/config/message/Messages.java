@@ -1,5 +1,6 @@
 package wgextender.config.message;
 
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentDecoder;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -18,7 +19,7 @@ public final class Messages { // TODO Use MM placeholders properly
 
     private ComponentDecoder<String, ? extends Component> decoder;
 
-    public Messages(File dataFolder) {
+    public Messages(@NotNull File dataFolder) {
         messagesFile = new File(dataFolder, "messages.yml");
         decoder = LegacyComponentSerializer.legacyAmpersand();
     }
@@ -44,29 +45,29 @@ public final class Messages { // TODO Use MM placeholders properly
         }
     }
 
-    public void setDecoder(ComponentDecoder<String, ? extends Component> decoder) {
+    public void setDecoder(@NotNull ComponentDecoder<String, ? extends Component> decoder) {
         this.decoder = decoder;
     }
 
-    public Component decode(String msg) {
+    public @NotNull Component decode(@NotNull String msg) {
         return decoder.deserialize(msg);
     }
 
-    public String get(@NotNull MKey msg) {
+    public @NotNull String get(@NotNull MKey msg) {
         return messages.get(msg);
     }
 
-    public String get(@NotNull MKey msg, @NotNull Object ph) {
+    public @NotNull String get(@NotNull MKey msg, @NotNull Object ph) {
         return messages.get(msg).replace(msg.placeholders[0], ph.toString());
     }
 
-    public String get(@NotNull MKey msg, @NotNull Object ph1, @NotNull Object ph2) {
+    public @NotNull String get(@NotNull MKey msg, @NotNull Object ph1, @NotNull Object ph2) {
         return messages.get(msg)
                 .replace(msg.placeholders[0], ph1.toString())
                 .replace(msg.placeholders[1], ph2.toString());
     }
 
-    public String get(@NotNull MKey msg, @NotNull Object... phs) {
+    public @NotNull String get(@NotNull MKey msg, @NotNull Object @NotNull ... phs) {
         String result = messages.get(msg);
         for (int i = 0; i < phs.length; i++) {
             result = result.replace(msg.placeholders[i], phs[i].toString());
@@ -74,19 +75,35 @@ public final class Messages { // TODO Use MM placeholders properly
         return result;
     }
 
-    public Component rich(@NotNull MKey msg) {
+    public @NotNull Component rich(@NotNull MKey msg) {
         return decode(get(msg));
     }
 
-    public Component rich(@NotNull MKey msg, @NotNull Object ph) {
+    public @NotNull Component rich(@NotNull MKey msg, @NotNull Object ph) {
         return decode(get(msg, ph));
     }
 
-    public Component rich(@NotNull MKey msg, @NotNull Object ph1, @NotNull Object ph2) {
+    public @NotNull Component rich(@NotNull MKey msg, @NotNull Object ph1, @NotNull Object ph2) {
         return decode(get(msg, ph1, ph2));
     }
 
-    public Component rich(@NotNull MKey msg, @NotNull Object... phs) {
+    public @NotNull Component rich(@NotNull MKey msg, @NotNull Object @NotNull ... phs) {
         return decode(get(msg, phs));
+    }
+
+    public void sendMessage(@NotNull Audience audience, @NotNull MKey msg) {
+        audience.sendMessage(rich(msg));
+    }
+
+    public void sendMessage(@NotNull Audience audience, @NotNull MKey msg, @NotNull Object ph) {
+        audience.sendMessage(rich(msg, ph));
+    }
+
+    public void sendMessage(@NotNull Audience audience, @NotNull MKey msg, @NotNull Object ph1, @NotNull Object ph2) {
+        audience.sendMessage(rich(msg, ph1, ph2));
+    }
+
+    public void sendMessage(@NotNull Audience audience, @NotNull MKey msg, @NotNull Object @NotNull ... phs) {
+        audience.sendMessage(rich(msg, phs));
     }
 }

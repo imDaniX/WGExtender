@@ -25,7 +25,7 @@ public class ChorusFruitFlagHandler implements Listener {
 				!WGRegionUtils.canBypassProtection(event.getPlayer()) &&
 				!WGRegionUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.CHORUS_FRUIT_USE_FLAG)
 			) {
-				player.sendMessage(msg.rich(MKey.FLAGS__CHORUS_RESTRICTED));
+				msg.sendMessage(player, MKey.FLAGS__CHORUS_RESTRICTED);
 				event.setCancelled(true);
 			}
 		}

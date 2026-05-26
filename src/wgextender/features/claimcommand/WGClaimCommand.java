@@ -87,9 +87,9 @@ public class WGClaimCommand {
 		task.setOwnersInput(new String[] { player.getName() });
 		try {
 			task.call();
-			sender.sendMessage(msg.rich(MKey.CLAIM__SUCCESS, id));
+			msg.sendMessage(sender, MKey.CLAIM__SUCCESS, id);
 		} catch (Exception e) {
-			sender.sendMessage(msg.rich(MKey.CLAIM__ERROR__EXCEPTION));
+			msg.sendMessage(sender, MKey.CLAIM__ERROR__EXCEPTION);
 			e.printStackTrace();
 		}
 	}

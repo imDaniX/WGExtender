@@ -85,7 +85,7 @@ public class RestrictCommands implements Listener {
 			for (String rcommand : restrictedCommands) {
 				if (command.startsWith(rcommand) && (command.length() == rcommand.length() || command.charAt(rcommand.length()) == ' ')) {
 					event.setCancelled(true);
-					player.sendMessage(msg.rich(MKey.RESTRICTED_COMMAND));
+					msg.sendMessage(player, MKey.RESTRICTED_COMMAND);
 					return;
 				}
 			}

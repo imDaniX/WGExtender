@@ -77,22 +77,22 @@ public class Commands implements CommandExecutor, TabCompleter {
 	@Override
 	public boolean onCommand(CommandSender sender, @NotNull Command arg1, @NotNull String label, String @NotNull [] args) {
 		if (!sender.hasPermission("wgextender.admin")) {
-			sender.sendMessage(msg.rich(MKey.COMMON__ERROR__NO_PERMISSION));
+			msg.sendMessage(sender, MKey.COMMON__ERROR__NO_PERMISSION);
 			return true;
 		}
 		if (args.length >= 1) {
 			switch (args[0].toLowerCase()) {
 				case "help" -> {
-					sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__RELOAD__HELP));
-					sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SEARCH__HELP));
-					sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SETFLAG__HELP));
-					sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__REMOVEOWNER__HELP));
-					sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__REMOVEMEMBER__HELP));
+					msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__HELP);
+					msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__HELP);
+					msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
+					msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEOWNER__HELP);
+					msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEMEMBER__HELP);
 					return true;
 				}
 				case "reload" -> {
 					config.loadConfig();
-					sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__RELOAD__SUCCESS));
+					msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__SUCCESS);
 					return true;
 				}
 				case "search" -> {
@@ -100,31 +100,31 @@ public class Commands implements CommandExecutor, TabCompleter {
 						try {
 							List<String> regions = getRegionsInPlayerSelection(player);
 							if (regions.isEmpty()) {
-								sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SEARCH__NOT_FOUND));
+								msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__NOT_FOUND);
 							} else {
-								sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SEARCH__FOUND, regions));
+								msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__FOUND, regions);
 							}
 						} catch (IncompleteRegionException e) {
-							sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SEARCH__INCOMPLETE_SELECTION));
+							msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__INCOMPLETE_SELECTION);
 						}
 						return true;
 					}
-					sender.sendMessage(msg.rich(MKey.COMMON__ERROR__PLAYER_ONLY));
+					msg.sendMessage(sender, MKey.COMMON__ERROR__PLAYER_ONLY);
 					return true;
 				}
 				case "setflag" -> {
 					if (args.length < 4) {
-						sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SETFLAG__HELP));
+						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
 						return false;
 					}
 					World world = server.getWorld(args[1]);
 					if (world == null) {
-						sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SETFLAG__WORLD_NOT_FOUND));
+						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__WORLD_NOT_FOUND);
 						return true;
 					}
 					Flag<?> flag = Flags.fuzzyMatchFlag(WorldGuard.getInstance().getFlagRegistry(), args[2]);
 					if (flag == null) {
-						sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SETFLAG__FLAG_NOT_FOUND));
+						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__FLAG_NOT_FOUND);
 						return true;
 					}
 					try {
@@ -135,19 +135,19 @@ public class Commands implements CommandExecutor, TabCompleter {
 							}
 							AutoFlags.setFlag(WGRegionUtils.wrapAsPrivileged(sender, false), world, region, flag, value);
 						}
-						sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SETFLAG__SUCCESS));
+						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__SUCCESS);
 					} catch (CommandException e) {
-						sender.sendMessage(msg.rich(MKey.WGEX_COMMAND__SETFLAG__INVALID_FORMAT, flag.getName(), e.getMessage()));
+						msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__INVALID_FORMAT, flag.getName(), e.getMessage());
 					}
 					return true;
 				}
 				case "removeowner", "removemember" -> {
 					boolean owner = args[0].equals("removeowner");
 					if (args.length != 2) {
-						sender.sendMessage(msg.rich(owner
+						msg.sendMessage(sender, owner
 								? MKey.WGEX_COMMAND__REMOVEOWNER__HELP
 								: MKey.WGEX_COMMAND__REMOVEMEMBER__HELP
-						));
+						);
 						return false;
 					}
 					OfflinePlayer offPlayer = server.getOfflinePlayer(args[1]);
@@ -161,10 +161,10 @@ public class Commands implements CommandExecutor, TabCompleter {
 							region.setMembers(members);
 						}
 					}
-					sender.sendMessage(msg.rich(owner
+					msg.sendMessage(sender, owner
 							? MKey.WGEX_COMMAND__REMOVEOWNER__SUCCESS
 							: MKey.WGEX_COMMAND__REMOVEMEMBER__SUCCESS
-					));
+					);
 					return true;
 				}
 			}

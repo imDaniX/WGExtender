@@ -63,7 +63,7 @@ public class WGRegionCommandWrapper extends Command {
 			if (config.claimExpandSelectionVertical) {
 				boolean result = WEUtils.expandVert(player);
 				if (result) {
-					player.sendMessage(msg.rich(MKey.CLAIM__AUTO_VERT));
+					msg.sendMessage(player, MKey.CLAIM__AUTO_VERT);
 				}
 			}
 			if (!process(player)) {
@@ -76,7 +76,7 @@ public class WGRegionCommandWrapper extends Command {
 					AutoFlags.setFlagsForRegion(WGRegionUtils.wrapAsPrivileged(player, config.showAutoFlagMessages), player.getWorld(), config, regionName);
 				}
 			} catch (CommandException ex) {
-				sender.sendMessage(msg.rich(MKey.CLAIM__ERROR__FORMAT, ex.getMessage()));
+				msg.sendMessage(sender, MKey.CLAIM__ERROR__FORMAT, ex.getMessage());
 			}
 			return true;
 		} else {
@@ -89,19 +89,19 @@ public class WGRegionCommandWrapper extends Command {
 		return switch (info.result()) {
 			case ALLOW -> true;
 			case DENY_MAX_VOLUME -> {
-				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_MAX_VOLUME, info.assignedLimit(), info.assignedSize()));
+				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_MAX_VOLUME, info.assignedLimit(), info.assignedSize());
 				yield false;
 			}
 			case DENY_MIN_VOLUME -> {
-				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_MIN_VOLUME, info.assignedLimit(), info.assignedSize()));
+				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_MIN_VOLUME, info.assignedLimit(), info.assignedSize());
 				yield false;
 			}
 			case DENY_HORIZONTAL -> {
-				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_HORIZONTAL, info.assignedLimit(), info.assignedSize()));
+				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_HORIZONTAL, info.assignedLimit(), info.assignedSize());
 				yield false;
 			}
 			case DENY_VERTICAL -> {
-				player.sendMessage(msg.rich(MKey.CLAIM__ERROR__DENY_VERTICAL, info.assignedLimit(), info.assignedSize()));
+				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_VERTICAL, info.assignedLimit(), info.assignedSize());
 				yield false;
 			}
 		};

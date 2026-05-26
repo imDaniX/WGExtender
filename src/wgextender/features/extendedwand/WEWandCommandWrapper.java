@@ -56,7 +56,7 @@ public class WEWandCommandWrapper extends Command {
 		}
 		if (sender instanceof Player player) {
 			player.getInventory().addItem(WEWand.getWand(msg.rich(MKey.WAND__ITEM_NAME)));
-			player.sendMessage(msg.rich(MKey.WAND__GIVEN));
+			msg.sendMessage(player, MKey.WAND__GIVEN);
 		}
 		return true;
 	}
