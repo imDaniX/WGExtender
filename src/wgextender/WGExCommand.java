@@ -15,7 +15,7 @@
  *
  */
 
-package wgextender.commands;
+package wgextender;
 
 import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.worldedit.IncompleteRegionException;
@@ -41,23 +41,21 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
-import wgextender.features.claimcommand.AutoFlags;
 import wgextender.utils.Transform;
 import wgextender.utils.WEUtils;
-import wgextender.utils.WGRegionUtils;
+import wgextender.utils.WGUtils;
 
 import java.util.*;
 
 import static org.bukkit.util.StringUtil.copyPartialMatches;
 
 // TODO Brigadier?
-public class Commands implements CommandExecutor, TabCompleter {
+public final class WGExCommand implements CommandExecutor, TabCompleter {
+	private final Server server;
+	private final Config config;
+	private final Messages msg;
 
-	protected final Server server;
-	protected final Config config;
-	protected final Messages msg;
-
-	public Commands(Server server, Config config) {
+	public WGExCommand(Server server, Config config) {
 		this.server = server;
 		this.config = config;
 		this.msg = config.getMessages();
@@ -91,7 +89,7 @@ public class Commands implements CommandExecutor, TabCompleter {
                 try {
                     Region psel = WEUtils.getSelection(player);
                     ProtectedRegion fakeRg = new ProtectedCuboidRegion("wgexfakerg", psel.getMaximumPoint(), psel.getMinimumPoint());
-                    ApplicableRegionSet ars = WGRegionUtils.getRegionManager(player.getWorld()).getApplicableRegions(fakeRg);
+                    ApplicableRegionSet ars = WGUtils.getRegionManager(player.getWorld()).getApplicableRegions(fakeRg);
                     List<String> regions = new ArrayList<>();
                     for (ProtectedRegion ar : ars) {
                         String id = ar.getId();
@@ -124,11 +122,11 @@ public class Commands implements CommandExecutor, TabCompleter {
                 }
                 try {
                     String value = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
-                    for (ProtectedRegion region : WGRegionUtils.getRegionManager(world).getRegions().values()) {
+                    for (ProtectedRegion region : WGUtils.getRegionManager(world).getRegions().values()) {
                         if (region instanceof GlobalProtectedRegion) {
                             continue;
                         }
-                        AutoFlags.setFlag(WGRegionUtils.wrapAsPrivileged(sender, false), world, region, flag, value);
+                        WGUtils.setFlagNaturally(WEUtils.privilegedActor(sender, false), world, region, flag, value);
                     }
                     msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__SUCCESS);
                 } catch (CommandException e) {
@@ -148,7 +146,7 @@ public class Commands implements CommandExecutor, TabCompleter {
                 OfflinePlayer offPlayer = server.getOfflinePlayer(args[1]);
                 String name = (offPlayer.getName() == null ? args[1] : offPlayer.getName()).toLowerCase();
                 UUID uuid = offPlayer.getUniqueId();
-                for (RegionManager manager : WGRegionUtils.getRegionContainer().getLoaded()) {
+                for (RegionManager manager : WGUtils.getRegionContainer().getLoaded()) {
                     for (ProtectedRegion region : manager.getRegions().values()) {
                         DefaultDomain members = owner ? region.getOwners() : region.getMembers();
                         members.removePlayer(uuid);

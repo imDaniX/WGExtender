@@ -23,17 +23,16 @@ import org.bukkit.block.data.Directional;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockFromToEvent;
+import org.jetbrains.annotations.NotNull;
 import wgextender.config.Config;
-import wgextender.utils.WGRegionUtils;
+import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.WGUtils;
 
-public class LiquidFlow implements Listener {
-
-	protected final Config config;
-	public LiquidFlow(Config config) {
-		this.config = config;
+public final class LiquidFlow extends ConfigurableListenerBase {
+	public LiquidFlow(@NotNull Config config) {
+		super(config);
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -61,7 +60,7 @@ public class LiquidFlow implements Listener {
 			case WATER -> config.checkWaterFlow;
 			default -> config.checkOtherLiquidFlow;
 		}) {
-			if (!WGRegionUtils.isInTheSameRegionOrWild(source.getLocation(), to.getLocation())) {
+			if (!WGUtils.isInTheSameRegionOrWild(source.getLocation(), to.getLocation())) {
 				event.setCancelled(true);
 			}
 		}

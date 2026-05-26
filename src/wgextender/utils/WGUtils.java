@@ -17,52 +17,45 @@
 
 package wgextender.utils;
 
+import com.sk89q.minecraft.util.commands.Command;
+import com.sk89q.minecraft.util.commands.CommandContext;
+import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.BukkitWorldConfiguration;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.commands.region.RegionCommands;
 import com.sk89q.worldguard.internal.platform.WorldGuardPlatform;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.BooleanFlag;
+import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Proxy;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-public class WGRegionUtils {
+public final class WGUtils {
 	public static final RegionQuery REGION_QUERY = getRegionContainer().createQuery();
 
-	public static LocalPlayer wrapPlayer(Player player) {
-		return WorldGuardPlugin.inst().wrapPlayer(player);
-	}
+	private static final RegionCommands REGION_COMMANDS = new RegionCommands(WorldGuard.getInstance());
+	private static final Set<Character> FLAG_COMMAND_FLAGS = getFlagCommandFlags();
 
-	public static Actor wrapAsPrivileged(CommandSender sender, boolean showMessages) {
-		Actor actor;
-		if (sender instanceof Player player) {
-			actor = wrapPlayer(player);
-		} else {
-			actor = WorldGuardPlugin.inst().wrapCommandSender(sender);
-		}
-		return (Actor) Proxy.newProxyInstance(
-				actor.getClass().getClassLoader(),
-				actor.getClass().getInterfaces(),
-				(proxy, method, args) -> switch (method.getName()) {
-					case "print", "printRaw", "printDebug", "printError", "printInfo" ->
-							showMessages ? method.invoke(actor, args) : null;
-					case "hasPermission" -> true;
-					case "checkPermission" -> null;
-					default -> method.invoke(actor, args);
-				}
-		);
+	private WGUtils() { }
+
+	public static LocalPlayer wgPlayer(Player player) {
+		return WorldGuardPlugin.inst().wrapPlayer(player);
 	}
 
 	public static WorldGuardPlatform getPlatform() {
@@ -86,10 +79,10 @@ public class WGRegionUtils {
 	}
 
 	public static boolean canBypassProtection(Player player) {
-		return getPlatform().getSessionManager().hasBypass(wrapPlayer(player), BukkitAdapter.adapt(player.getWorld()));
+		return getPlatform().getSessionManager().hasBypass(wgPlayer(player), BukkitAdapter.adapt(player.getWorld()));
 	}
 
-	public static boolean isInWGRegion(Location location) {
+	public static boolean isInRegion(Location location) {
 		return getRegionsAt(location).size() > 0;
 	}
 
@@ -118,5 +111,41 @@ public class WGRegionUtils {
 
 	public static ApplicableRegionSet getRegionsAt(Location location) {
 		return REGION_QUERY.getApplicableRegions(BukkitAdapter.adapt(location));
+	}
+
+	public static boolean hasRegion(World world, String regionName) {
+		return getRegion(world, regionName) != null;
+	}
+
+	public static ProtectedRegion getRegion(World world, String regionName) {
+		final RegionManager rm = getRegionManager(world);
+		if (rm == null) {
+			return null;
+		}
+		return rm.getRegion(regionName);
+	}
+
+	public static <T> void setFlagNaturally(Actor actor, World world, ProtectedRegion region, Flag<T> flag, String value) throws CommandException {
+		CommandContext context = new CommandContext(String.format("flag %s -w %s %s %s", region.getId(), world.getName(), flag.getName(), value), FLAG_COMMAND_FLAGS);
+		REGION_COMMANDS.flag(context, actor);
+	}
+
+	private static Set<Character> getFlagCommandFlags() {
+		try {
+			Method method = RegionCommands.class.getMethod("flag", CommandContext.class, Actor.class);
+			Command annotation = method.getAnnotation(Command.class);
+			char[] flags = annotation.flags().toCharArray();
+			Set<Character> valueFlags = new HashSet<>();
+			for (int i = 0; i < flags.length; ++i) {
+				if ((flags.length > (i + 1)) && (flags[i + 1] == ':')) {
+					valueFlags.add(flags[i]);
+					++i;
+				}
+			}
+			return valueFlags;
+		} catch (Throwable t) {
+			t.printStackTrace();
+			return Collections.emptySet();
+		}
 	}
 }

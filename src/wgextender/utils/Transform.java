@@ -23,7 +23,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-public class Transform {
+public final class Transform {
+	private Transform() { }
 
 	public static <T, O> List<T> toList(Iterable<O> iterable, Function<O, T> transform) {
 		return toList(iterable, transform, new ArrayList<>());

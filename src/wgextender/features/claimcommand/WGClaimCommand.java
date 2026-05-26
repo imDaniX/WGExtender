@@ -21,16 +21,16 @@ import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
 import wgextender.utils.WEUtils;
-import wgextender.utils.WGRegionUtils;
+import wgextender.utils.WGUtils;
 
-public class WGClaimCommand {
+public final class WGClaimCommand {
 	private final Messages msg;
 
 	public WGClaimCommand(Config config) {
 		this.msg = config.getMessages();
 	}
 
-	protected void claim(String id, CommandSender sender) throws CommandException {
+	public void claim(String id, CommandSender sender) throws CommandException {
 		if (!(sender instanceof Player player)) {
 			throw new CommandException(msg.get(MKey.COMMON__ERROR__PLAYER_ONLY));
 		}
@@ -41,7 +41,7 @@ public class WGClaimCommand {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__RESTRICTED_SYMBOLS, id));
 		}
 
-        BukkitWorldConfiguration wcfg = WGRegionUtils.getWorldConfig(player);
+        BukkitWorldConfiguration wcfg = WGUtils.getWorldConfig(player);
 
 		if (wcfg.maxClaimVolume == Integer.MAX_VALUE) {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__CONFIG_TOO_BIG));
@@ -54,7 +54,7 @@ public class WGClaimCommand {
 			throw new CommandPermissionsException();
 		}
 
-		RegionManager manager = WGRegionUtils.getRegionManager(player.getWorld());
+		RegionManager manager = WGUtils.getRegionManager(player.getWorld());
 
 		if (manager.hasRegion(id)) {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__ALREADY_EXISTS));
@@ -100,7 +100,7 @@ public class WGClaimCommand {
 			if (selection instanceof CuboidRegion) {
 				return new ProtectedCuboidRegion(id, selection.getMinimumPoint(), selection.getMaximumPoint());
 			} else {
-				throw new CommandException(msg.get(MKey.CLAIM__ERROR__ONLY_CUBOID));
+				throw new CommandException(msg.get(MKey.CLAIM__ERROR__ONLY_CUBOID)); // TODO We still can perform some stuff
 			}
 		} catch (IncompleteRegionException e) {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__INCOMPLETE));

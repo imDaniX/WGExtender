@@ -29,11 +29,13 @@ import wgextender.utils.WEUtils;
 
 import java.util.Objects;
 
-public class WEWand {
+public final class WEWand {
 	public static final NamespacedKey WAND_KEY = Objects.requireNonNull(NamespacedKey.fromString("wgextender:wand"));
 
 	private static String cachedName;
 	private static Material cachedMaterial;
+
+	private WEWand() { }
 
 	@SuppressWarnings("PatternValidation")
     private static Material getWandMaterial() { // TODO Better handle registry?

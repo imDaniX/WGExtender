@@ -20,29 +20,28 @@ package wgextender.features.regionprotect.regionbased;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockSpreadEvent;
+import org.jetbrains.annotations.NotNull;
 import wgextender.config.Config;
-import wgextender.utils.WGRegionUtils;
+import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.WGUtils;
 
-public class FireSpread implements Listener {
-
-	protected final Config config;
-	public FireSpread(Config config) {
-		this.config = config;
+public final class FireSpread extends ConfigurableListenerBase {
+	public FireSpread(@NotNull Config config) {
+		super(config);
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onBlockIgniteBySpread(BlockSpreadEvent event) {
 		if (event.getNewState().getType() == Material.FIRE) {
 			if (config.checkFireSpreadToRegion) {
-				if (!WGRegionUtils.isInTheSameRegionOrWild(event.getSource().getLocation(), event.getBlock().getLocation())) {
+				if (!WGUtils.isInTheSameRegionOrWild(event.getSource().getLocation(), event.getBlock().getLocation())) {
 					event.setCancelled(true);
 					return;
 				}
 			}
 			if (config.disableFireSpreadInRegion) {
-				if (WGRegionUtils.isInTheSameRegion(event.getSource().getLocation(), event.getBlock().getLocation())) {
+				if (WGUtils.isInTheSameRegion(event.getSource().getLocation(), event.getBlock().getLocation())) {
 					event.setCancelled(true);
 				}
 			}

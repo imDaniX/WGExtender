@@ -19,7 +19,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.Plugin;
 import wgextender.WGExtender;
-import wgextender.utils.WGRegionUtils;
+import wgextender.utils.WGUtils;
 
 import java.lang.reflect.Field;
 import java.util.EnumSet;
@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 @Deprecated
-public class OldPVPFlagsHandler implements Listener {
+public final class OldPVPFlagsHandler implements Listener {
 	private static final Set<EntityDamageEvent.DamageModifier> PVP_MODIFIERS = EnumSet.of(
 			DamageModifier.ARMOR, DamageModifier.RESISTANCE, DamageModifier.MAGIC, DamageModifier.ABSORPTION
 	);
@@ -60,7 +60,7 @@ public class OldPVPFlagsHandler implements Listener {
 	}
 
 	private void handlePlayer(Player player) {
-		if (WGRegionUtils.isFlagTrue(player.getLocation(), WGExtenderFlags.OLDPVP_ATTACKSPEED)) {
+		if (WGUtils.isFlagTrue(player.getLocation(), WGExtenderFlags.OLDPVP_ATTACKSPEED)) {
 			if (oldValues.containsKey(player.getUniqueId())) return;
 			AttributeInstance attribute = player.getAttribute(Attribute.ATTACK_SPEED);
 			oldValues.put(player.getUniqueId(), attribute.getBaseValue());
@@ -98,7 +98,7 @@ public class OldPVPFlagsHandler implements Listener {
 		Entity entity = event.getEntity();
 		if (!(entity instanceof Player player) ||
 				!player.isBlocking() ||
-				!WGRegionUtils.isFlagTrue(entity.getLocation(), WGExtenderFlags.OLDPVP_NOSHIELDBLOCK)) {
+				!WGUtils.isFlagTrue(entity.getLocation(), WGExtenderFlags.OLDPVP_NOSHIELDBLOCK)) {
 			return;
 		}
 		Map<DamageModifier, Function<Double, Double>> func;
@@ -126,7 +126,7 @@ public class OldPVPFlagsHandler implements Listener {
 				event.getHand() == EquipmentSlot.OFF_HAND &&
 				event.getItem() != null &&
 				event.getItem().getType() == Material.BOW &&
-				WGRegionUtils.isFlagTrue(event.getPlayer().getLocation(), WGExtenderFlags.OLDPVP_NOBOW)) {
+				WGUtils.isFlagTrue(event.getPlayer().getLocation(), WGExtenderFlags.OLDPVP_NOBOW)) {
 			event.setCancelled(true);
 		}
 	}

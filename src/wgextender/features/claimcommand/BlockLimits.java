@@ -21,16 +21,19 @@ import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import wgextender.VaultIntegration;
 import wgextender.config.Config;
 import wgextender.utils.WEUtils;
 
 import java.math.BigInteger;
 
-public class BlockLimits {
+public final class BlockLimits {
 	private static final BigInteger MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
-	public ProcessedClaimInfo processClaimInfo(Config config, Player player) {
+	private BlockLimits() { }
+
+	public static @NotNull ProcessedClaimInfo processClaimInfo(Config config, Player player) {
 		Region selection;
 		try {
 			selection = WEUtils.getSelection(player);
@@ -99,11 +102,11 @@ public class BlockLimits {
 		}
 		return ProcessedClaimInfo.EMPTY_ALLOW;
 	}
-	
+
 	public record ProcessedClaimInfo(Result result, BigInteger assignedSize, BigInteger assignedLimit) {
 		public static final ProcessedClaimInfo EMPTY_ALLOW = new ProcessedClaimInfo(Result.ALLOW, BigInteger.ZERO, BigInteger.ZERO);
 	}
-	
+
 	public enum Result {
 		ALLOW, DENY_MAX_VOLUME, DENY_MIN_VOLUME, DENY_HORIZONTAL, DENY_VERTICAL
 	}

@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
 
+// TODO Multilang
 public final class Messages { // TODO Use MM placeholders properly
     private final Map<MKey, String> messages = new EnumMap<>(MKey.class);
     private final File messagesFile;

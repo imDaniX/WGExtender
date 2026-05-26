@@ -21,12 +21,13 @@ import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jspecify.annotations.NonNull;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
 import wgextender.utils.CommandUtils;
 
-public class WEWandCommandWrapper extends Command {
+public final class WEWandCommandWrapper extends Command {
 
 	public static void inject(Server server, Config config) {
 		WEWandCommandWrapper wrapper = new WEWandCommandWrapper(config, CommandUtils.getCommands(server).get("/wand"));
@@ -50,7 +51,7 @@ public class WEWandCommandWrapper extends Command {
 	}
 
 	@Override
-	public boolean execute(CommandSender sender, String label, String[] args) {
+	public boolean execute(@NonNull CommandSender sender, @NonNull String label, String @NonNull [] args) {
 		if (!config.extendedWorldEditWandEnabled) {
 			return originalCmd.execute(sender, label, args);
 		}

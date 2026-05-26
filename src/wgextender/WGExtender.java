@@ -20,7 +20,6 @@ package wgextender;
 import org.bukkit.Server;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import wgextender.commands.Commands;
 import wgextender.config.Config;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
@@ -38,7 +37,7 @@ import wgextender.features.regionprotect.regionbased.LiquidFlow;
 import java.util.Objects;
 import java.util.logging.Level;
 
-public class WGExtender extends JavaPlugin {
+public final class WGExtender extends JavaPlugin {
 
 	private static WGExtender instance;
 	public static WGExtender getInstance() {
@@ -63,7 +62,7 @@ public class WGExtender extends JavaPlugin {
 		Server server = getServer();
 		Config config = new Config(this);
 		config.loadConfig();
-		Objects.requireNonNull(getCommand("wgex")).setExecutor(new Commands(server, config));
+		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(server, config));
 		PluginManager pluginManager = getServer().getPluginManager();
 		pluginManager.registerEvents(new RestrictCommands(server, config), this);
 		pluginManager.registerEvents(new LiquidFlow(config), this);
@@ -71,7 +70,7 @@ public class WGExtender extends JavaPlugin {
 		pluginManager.registerEvents(new BlockBurn(config), this);
 		pluginManager.registerEvents(new Explode(config), this);
 		pluginManager.registerEvents(new WEWandListener(), this);
-		pluginManager.registerEvents(new ChorusFruitFlagHandler(config.getMessages()), this);
+		pluginManager.registerEvents(new ChorusFruitFlagHandler(config), this);
 		try {
 			WGRegionCommandWrapper.inject(server, config);
 			WEWandCommandWrapper.inject(server, config);

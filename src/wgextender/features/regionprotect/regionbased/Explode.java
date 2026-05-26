@@ -24,22 +24,20 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import wgextender.config.Config;
-import wgextender.utils.WGRegionUtils;
+import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.WGUtils;
 
 import java.util.function.Predicate;
 
-public class Explode implements Listener {
-
-	protected final Config config;
+public final class Explode extends ConfigurableListenerBase {
 	public Explode(Config config) {
-		this.config = config;
+		super(config);
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -50,10 +48,10 @@ public class Explode implements Listener {
 		Player source = findExplosionSource(event.getEntity());
 		Predicate<Location> shouldProtectBlockPredicate;
 		if (source != null) {
-			boolean canBypass = WGRegionUtils.canBypassProtection(source);
-			shouldProtectBlockPredicate = location -> !canBypass && !WGRegionUtils.canBuild(source, location);
+			boolean canBypass = WGUtils.canBypassProtection(source);
+			shouldProtectBlockPredicate = location -> !canBypass && !WGUtils.canBuild(source, location);
 		} else {
-			shouldProtectBlockPredicate = WGRegionUtils::isInWGRegion;
+			shouldProtectBlockPredicate = WGUtils::isInRegion;
 		}
 		event.blockList().removeIf(block -> shouldProtectBlockPredicate.test(block.getLocation()));
 	}
@@ -63,7 +61,7 @@ public class Explode implements Listener {
 		if (!config.checkExplosionBlockDamage) {
 			return;
 		}
-		event.blockList().removeIf(block -> WGRegionUtils.isInWGRegion(block.getLocation()));
+		event.blockList().removeIf(block -> WGUtils.isInRegion(block.getLocation()));
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -73,10 +71,10 @@ public class Explode implements Listener {
 		}
 		if ((event.getCause() == DamageCause.BLOCK_EXPLOSION) || (event.getCause() == DamageCause.ENTITY_EXPLOSION)) {
 			Location location = event.getEntity().getLocation();
-			if (WGRegionUtils.isInWGRegion(location)) {
+			if (WGUtils.isInRegion(location)) {
 				if (event instanceof EntityDamageByEntityEvent entityEvent) {
 					Player source = findExplosionSource(entityEvent.getDamager());
-					if ((source == null) || (!WGRegionUtils.canBypassProtection(source) && !WGRegionUtils.canBuild(source, location))) {
+					if (source == null || (!WGUtils.canBypassProtection(source) && !WGUtils.canBuild(source, location))) {
 						event.setCancelled(true);
 					}
 				} else {

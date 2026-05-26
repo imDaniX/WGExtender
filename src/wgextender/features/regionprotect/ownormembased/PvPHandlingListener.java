@@ -33,19 +33,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
-import wgextender.config.message.Messages;
-import wgextender.utils.WGRegionUtils;
+import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.WGUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static wgextender.utils.WGRegionUtils.getWorldConfig;
+import static wgextender.utils.WGUtils.getWorldConfig;
 
 @SuppressWarnings("all")
 @Deprecated
@@ -53,19 +52,15 @@ import static wgextender.utils.WGRegionUtils.getWorldConfig;
  * Most of this class is just a copy-paste of WG code.
  * This is a bad pattern, and this should either be refactored or removed entierly
  */
-public class PvPHandlingListener implements Listener {
+public final class PvPHandlingListener extends ConfigurableListenerBase {
 
 	private static final String DENY_MESSAGE_KEY = "worldguard.region.lastMessage";
 	private static final int LAST_MESSAGE_DELAY = 500;
 
-	private final Config config;
-	private final Messages msg;
-
 	private RegisteredListener origin;
 
 	public PvPHandlingListener(Config config) {
-		this.config = config;
-		this.msg = config.getMessages();
+		super(config);
 	}
 
 	public void inject(Plugin plugin) {
@@ -161,7 +156,7 @@ public class PvPHandlingListener implements Listener {
 					(query.queryState(attackerLocation, localAttacker, combine(event, Flags.PVP)) != State.DENY) &&
 					(query.queryState(target, localAttacker, combine(event, Flags.PVP)) != State.DENY);
 			} else {
-				if (!WGRegionUtils.isInWGRegion(playerAttacker.getLocation()) && !WGRegionUtils.isInWGRegion(event.getTarget())) {
+				if (!WGUtils.isInRegion(playerAttacker.getLocation()) && !WGUtils.isInRegion(event.getTarget())) {
 					canDamage = true;
 				} else {
 					canDamage =

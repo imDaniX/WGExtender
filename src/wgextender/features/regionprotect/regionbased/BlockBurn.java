@@ -19,23 +19,20 @@ package wgextender.features.regionprotect.regionbased;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBurnEvent;
 import wgextender.config.Config;
-import wgextender.utils.WGRegionUtils;
+import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.WGUtils;
 
-public class BlockBurn implements Listener {
-
-	protected final Config config;
+public final class BlockBurn extends ConfigurableListenerBase {
 	public BlockBurn(Config config) {
-		this.config = config;
+		super(config);
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onBlockBurn(BlockBurnEvent event) {
-		if (config.disableBlockBurnInRegion && WGRegionUtils.isInWGRegion(event.getBlock().getLocation())) {
+		if (config.disableBlockBurnInRegion && WGUtils.isInRegion(event.getBlock().getLocation())) {
 			event.setCancelled(true);
 		}
 	}
-
 }

@@ -19,6 +19,7 @@ package wgextender.utils;
 
 import org.bukkit.Server;
 import org.bukkit.command.Command;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,12 +27,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class CommandUtils {
-	public static Map<String, Command> getCommands(Server server) {
+public final class CommandUtils {
+	private CommandUtils() { }
+
+	public static @NotNull Map<String, Command> getCommands(@NotNull Server server) {
 		return server.getCommandMap().getKnownCommands();
 	}
 
-	public static List<String> getCommandAliases(Server server, String commandName) {
+	public static @NotNull List<String> getCommandAliases(@NotNull Server server, @NotNull String commandName) {
 		Command command = getCommands(server).get(commandName);
 		if (command == null) {
 			return Collections.singletonList(commandName);
@@ -47,7 +50,7 @@ public class CommandUtils {
 		}
 	}
 
-	public static void replaceCommand(Server server, Command oldCommand, Command newCommand) {
+	public static void replaceCommand(@NotNull Server server, @NotNull Command oldCommand, @NotNull Command newCommand) {
 		String cmdName = oldCommand.getName();
 		var commandMap = getCommands(server);
 		if (commandMap.get(cmdName).equals(oldCommand)) {

@@ -21,14 +21,13 @@ import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import wgextender.WGExtender;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
-import wgextender.config.message.Messages;
+import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.CommandUtils;
-import wgextender.utils.WGRegionUtils;
+import wgextender.utils.WGUtils;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,18 +35,15 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class RestrictCommands implements Listener {
+public final class RestrictCommands extends ConfigurableListenerBase {
 	private final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
 
 	private final Server server;
-	protected final Config config;
-	protected final Messages msg;
-	protected volatile Collection<String> restrictedCommands;
+	private Collection<String> restrictedCommands;
 
 	public RestrictCommands(Server server, Config config) {
+		super(config);
 		this.server = server;
-		this.config = config;
-		this.msg = config.getMessages();
 		restrictedCommands = config.restrictedCommandsInRegion;
         server.getGlobalRegionScheduler().runAtFixedRate(
                 WGExtender.getInstance(),
@@ -77,10 +73,10 @@ public class RestrictCommands implements Listener {
 			return;
 		}
 		Player player = event.getPlayer();
-		if (WGRegionUtils.canBypassProtection(player)) {
+		if (WGUtils.canBypassProtection(player)) {
 			return;
 		}
-		if (WGRegionUtils.isInWGRegion(player.getLocation()) && !WGRegionUtils.canBuild(player, player.getLocation())) { // TODO canBuild is not a great check for commands?
+		if (WGUtils.isInRegion(player.getLocation()) && !WGUtils.canBuild(player, player.getLocation())) { // TODO canBuild is not a great check for commands?
 			String command = event.getMessage().substring(1).toLowerCase(Locale.ROOT);
 			for (String rcommand : restrictedCommands) {
 				if (command.startsWith(rcommand) && (command.length() == rcommand.length() || command.charAt(rcommand.length()) == ' ')) {

@@ -21,22 +21,29 @@ import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
-public class WEUtils {
+import java.lang.reflect.Proxy;
+
+public final class WEUtils {
+	private WEUtils() { }
 
 	public static WorldEditPlugin getWorldEditPlugin() {
 		return JavaPlugin.getPlugin(WorldEditPlugin.class);
 	}
 
-    public static Region getSelection(Player player) throws IncompleteRegionException {
+    public static @NotNull Region getSelection(@NotNull Player player) throws IncompleteRegionException {
 		return getWorldEditPlugin().getSession(player).getSelection(BukkitAdapter.adapt(player.getWorld()));
 	}
 
-	public static boolean expandVert(Player player) {
+	public static boolean expandVert(@NotNull Player player) {
 		LocalSession session = getWorldEditPlugin().getSession(player);
 		com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(player.getWorld());
         try {
@@ -51,4 +58,23 @@ public class WEUtils {
         return false;
 	}
 
+	public static @NotNull Actor privilegedActor(@NotNull CommandSender sender, boolean showMessages) {
+		Actor actor;
+		if (sender instanceof Player player) {
+			actor = WGUtils.wgPlayer(player);
+		} else {
+			actor = WorldGuardPlugin.inst().wrapCommandSender(sender);
+		}
+		return (Actor) Proxy.newProxyInstance(
+				actor.getClass().getClassLoader(),
+				actor.getClass().getInterfaces(),
+				(proxy, method, args) -> switch (method.getName()) {
+					case "print", "printRaw", "printDebug", "printError", "printInfo" ->
+							showMessages ? method.invoke(actor, args) : null;
+					case "hasPermission" -> true;
+					case "checkPermission" -> null;
+					default -> method.invoke(actor, args);
+				}
+		);
+	}
 }

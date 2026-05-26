@@ -18,19 +18,26 @@
 package wgextender.features.claimcommand;
 
 import com.sk89q.minecraft.util.commands.CommandException;
+import com.sk89q.worldedit.extension.platform.Actor;
+import com.sk89q.worldguard.protection.flags.Flag;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
 import wgextender.utils.CommandUtils;
 import wgextender.utils.WEUtils;
-import wgextender.utils.WGRegionUtils;
+import wgextender.utils.WGUtils;
 
-public class WGRegionCommandWrapper extends Command {
+import java.util.Map;
 
+public final class WGRegionCommandWrapper extends Command {
 	public static void inject(Server server, Config config) {
 		WGRegionCommandWrapper wrapper = new WGRegionCommandWrapper(config, CommandUtils.getCommands(server).get("region"));
 		CommandUtils.replaceCommand(server, wrapper.originalCmd, wrapper);
@@ -41,12 +48,12 @@ public class WGRegionCommandWrapper extends Command {
 		CommandUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
 	}
 
-	protected final Config config;
-	protected final Messages msg;
-	protected final Command originalCmd;
-	protected final WGClaimCommand claimHandler;
+	private final Config config;
+	private final Messages msg;
+	private final Command originalCmd;
+	private final WGClaimCommand claimHandler;
 
-	protected WGRegionCommandWrapper(Config config, Command originalCmd) {
+	private WGRegionCommandWrapper(Config config, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = config;
 		this.msg = config.getMessages();
@@ -54,11 +61,9 @@ public class WGRegionCommandWrapper extends Command {
 		this.claimHandler = new WGClaimCommand(config);
 	}
 
-	private final BlockLimits blockLimits = new BlockLimits();
-
 	@Override
-	public boolean execute(CommandSender sender, String label, String[] args) {
-		if ((sender instanceof Player player) && (args.length >= 2) && args[0].equalsIgnoreCase("claim")) {
+	public boolean execute(@NonNull CommandSender sender, @NonNull String label, @NotNull String @NonNull [] args) {
+		if (sender instanceof Player player && args.length >= 2 && args[0].equalsIgnoreCase("claim")) {
             String regionName = args[1];
 			if (config.claimExpandSelectionVertical) {
 				boolean result = WEUtils.expandVert(player);
@@ -69,11 +74,23 @@ public class WGRegionCommandWrapper extends Command {
 			if (!process(player)) {
 				return true;
 			}
-			boolean hasRegion = AutoFlags.hasRegion(player.getWorld(), regionName);
+			boolean hasRegion = WGUtils.hasRegion(player.getWorld(), regionName);
 			try {
 				claimHandler.claim(regionName, sender);
 				if (!hasRegion && config.claimAutoFlagsEnabled) {
-					AutoFlags.setFlagsForRegion(WGRegionUtils.wrapAsPrivileged(player, config.showAutoFlagMessages), player.getWorld(), config, regionName);
+					Actor actor = WEUtils.privilegedActor(player, config.showAutoFlagMessages);
+					World world = player.getWorld();
+					final ProtectedRegion rg = WGUtils.getRegion(world, regionName);
+					if (rg != null) {
+						for (Map.Entry<Flag<?>, String> entry : config.claimAutoFlags.entrySet()) {
+							try {
+								WGUtils.setFlagNaturally(actor, world, rg, entry.getKey(), entry.getValue());
+							} catch (CommandException e) {
+								e.printStackTrace(); // TODO Handle properly
+							}
+						}
+					}
+
 				}
 			} catch (CommandException ex) {
 				msg.sendMessage(sender, MKey.CLAIM__ERROR__FORMAT, ex.getMessage());
@@ -84,8 +101,8 @@ public class WGRegionCommandWrapper extends Command {
 		}
 	}
 
-	private boolean process(Player player) {
-		BlockLimits.ProcessedClaimInfo info = blockLimits.processClaimInfo(config, player);
+	private boolean process(@NotNull Player player) {
+		BlockLimits.ProcessedClaimInfo info = BlockLimits.processClaimInfo(config, player);
 		return switch (info.result()) {
 			case ALLOW -> true;
 			case DENY_MAX_VOLUME -> {

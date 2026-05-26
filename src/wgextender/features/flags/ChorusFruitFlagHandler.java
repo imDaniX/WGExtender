@@ -3,18 +3,16 @@ package wgextender.features.flags;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.jetbrains.annotations.NotNull;
+import wgextender.config.Config;
 import wgextender.config.message.MKey;
-import wgextender.config.message.Messages;
-import wgextender.utils.WGRegionUtils;
+import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.WGUtils;
 
-public class ChorusFruitFlagHandler implements Listener {
-	private final Messages msg;
-
-	public ChorusFruitFlagHandler(@NotNull Messages msg) {
-		this.msg = msg;
+public final class ChorusFruitFlagHandler extends ConfigurableListenerBase {
+	public ChorusFruitFlagHandler(@NotNull Config config) {
+		super(config);
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -22,8 +20,8 @@ public class ChorusFruitFlagHandler implements Listener {
 		if (event.getItem().getType() == Material.CHORUS_FRUIT) {
 			Player player = event.getPlayer();
 			if (
-				!WGRegionUtils.canBypassProtection(event.getPlayer()) &&
-				!WGRegionUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.CHORUS_FRUIT_USE_FLAG)
+				!WGUtils.canBypassProtection(event.getPlayer()) &&
+				!WGUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.CHORUS_FRUIT_USE_FLAG)
 			) {
 				msg.sendMessage(player, MKey.FLAGS__CHORUS_RESTRICTED);
 				event.setCancelled(true);

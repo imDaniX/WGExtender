@@ -8,13 +8,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 
-public class VaultIntegration implements Listener {
-	private static final VaultIntegration instance = new VaultIntegration();
+public final class VaultIntegration implements Listener {
+	private static final VaultIntegration INSTANCE = new VaultIntegration();
+
 	public static VaultIntegration getInstance() {
-		return instance;
+		return INSTANCE;
 	}
 
 	private Permission permissions;
+
+	private VaultIntegration() { }
 
 	public Permission getPermissions() {
 		return permissions;
