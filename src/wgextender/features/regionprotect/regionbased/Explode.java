@@ -85,7 +85,7 @@ public final class Explode extends ConfigurableListenerBase {
 		}
 	}
 
-	protected static Player findExplosionSource(Entity exploded) {
+	private static Player findExplosionSource(Entity exploded) {
 		Entity source;
 		if (exploded instanceof TNTPrimed primed) {
 			source = primed.getSource();
@@ -96,5 +96,4 @@ public final class Explode extends ConfigurableListenerBase {
 		}
 		return source instanceof Player player ? player : null;
 	}
-
 }

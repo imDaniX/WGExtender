@@ -64,5 +64,4 @@ public final class WEWand {
 	public static boolean isWand(@NotNull ItemStack item) {
         return item.getType().equals(getWandMaterial()) && item.getPersistentDataContainer().getOrDefault(WAND_KEY, PersistentDataType.BOOLEAN, false);
     }
-
 }

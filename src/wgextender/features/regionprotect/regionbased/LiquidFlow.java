@@ -59,11 +59,8 @@ public final class LiquidFlow extends ConfigurableListenerBase {
 			case LAVA -> config.checkLavaFlow;
 			case WATER -> config.checkWaterFlow;
 			default -> config.checkOtherLiquidFlow;
-		}) {
-			if (!WGUtils.isInTheSameRegionOrWild(source.getLocation(), to.getLocation())) {
-				event.setCancelled(true);
-			}
+		} && !WGUtils.isInTheSameRegionOrWild(source.getLocation(), to.getLocation())) {
+			event.setCancelled(true);
 		}
 	}
-
 }

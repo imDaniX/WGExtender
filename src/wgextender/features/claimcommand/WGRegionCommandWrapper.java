@@ -51,14 +51,14 @@ public final class WGRegionCommandWrapper extends Command {
 	private final Config config;
 	private final Messages msg;
 	private final Command originalCmd;
-	private final WGClaimCommand claimHandler;
+	private final WGClaimSubcommand claimHandler;
 
 	private WGRegionCommandWrapper(Config config, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = config;
 		this.msg = config.getMessages();
 		this.originalCmd = originalCmd;
-		this.claimHandler = new WGClaimCommand(config);
+		this.claimHandler = new WGClaimSubcommand(config);
 	}
 
 	@Override
@@ -102,7 +102,7 @@ public final class WGRegionCommandWrapper extends Command {
 	}
 
 	private boolean process(@NotNull Player player) {
-		BlockLimits.ProcessedClaimInfo info = BlockLimits.processClaimInfo(config, player);
+		BlockLimitsProcessor.ProcessedClaimInfo info = BlockLimitsProcessor.processClaimInfo(config, player);
 		return switch (info.result()) {
 			case ALLOW -> true;
 			case DENY_MAX_VOLUME -> {

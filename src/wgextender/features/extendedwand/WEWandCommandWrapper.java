@@ -28,7 +28,6 @@ import wgextender.config.message.Messages;
 import wgextender.utils.CommandUtils;
 
 public final class WEWandCommandWrapper extends Command {
-
 	public static void inject(Server server, Config config) {
 		WEWandCommandWrapper wrapper = new WEWandCommandWrapper(config, CommandUtils.getCommands(server).get("/wand"));
 		CommandUtils.replaceCommand(server, wrapper.originalCmd, wrapper);

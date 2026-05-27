@@ -28,10 +28,10 @@ import wgextender.utils.WEUtils;
 
 import java.math.BigInteger;
 
-public final class BlockLimits {
+public final class BlockLimitsProcessor {
 	private static final BigInteger MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
-	private BlockLimits() { }
+	private BlockLimitsProcessor() { }
 
 	public static @NotNull ProcessedClaimInfo processClaimInfo(Config config, Player player) {
 		Region selection;
@@ -111,7 +111,7 @@ public final class BlockLimits {
 		ALLOW, DENY_MAX_VOLUME, DENY_MIN_VOLUME, DENY_HORIZONTAL, DENY_VERTICAL
 	}
 
-	private static BigInteger distance(long min, long max) {
+	private static @NotNull BigInteger distance(long min, long max) {
 		return BigInteger.valueOf(max - min + 1L);
 	}
 }

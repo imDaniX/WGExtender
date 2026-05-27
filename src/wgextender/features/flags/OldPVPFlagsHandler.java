@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.utils.WGUtils;
 
@@ -34,8 +35,13 @@ public final class OldPVPFlagsHandler implements Listener {
 	private static final Set<EntityDamageEvent.DamageModifier> PVP_MODIFIERS = EnumSet.of(
 			DamageModifier.ARMOR, DamageModifier.RESISTANCE, DamageModifier.MAGIC, DamageModifier.ABSORPTION
 	);
+	private final WGExtender plugin;
 	private final Map<UUID, Double> oldValues = new ConcurrentHashMap<>();
 	private Field functionsField;
+
+	public OldPVPFlagsHandler(@NotNull WGExtender plugin) {
+		this.plugin = plugin;
+	}
 
 	public void start(Plugin plugin) {
         try {
@@ -81,7 +87,7 @@ public final class OldPVPFlagsHandler implements Listener {
 	public void onJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		handlePlayer(player);
-		player.getScheduler().runAtFixedRate(WGExtender.getInstance(),
+		player.getScheduler().runAtFixedRate(plugin,
 				(task) -> handlePlayer(player),
 				() -> reset(player),
 				1, 1
@@ -106,7 +112,7 @@ public final class OldPVPFlagsHandler implements Listener {
             //noinspection unchecked
             func = (Map<DamageModifier, Function<Double, Double>>) functionsField.get(event);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			WGExtender.getInstance().getLogger().log(Level.SEVERE, "Unable to recalculate blocking damage", e);
+			plugin.getLogger().log(Level.SEVERE, "Unable to recalculate blocking damage", e);
 			return;
 		}
 		double totalDamage = event.getDamage() + event.getDamage(DamageModifier.HARD_HAT);

@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class WGExtenderFlags {
-    private WGExtenderFlags() {}
+    private WGExtenderFlags() { }
 
     private static final List<Flag<?>> FLAGS = new ArrayList<>();
 

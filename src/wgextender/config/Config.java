@@ -43,11 +43,10 @@ public final class Config {
 		msg = new Messages(plugin.getDataFolder());
 	}
 
-
 	public boolean claimExpandSelectionVertical = false;
 
 	public boolean claimBlockLimitsEnabled = false;
-	public Map<String, BigInteger> claimBlockLimits = new LinkedHashMap<>();
+	public final Map<String, BigInteger> claimBlockLimits = new LinkedHashMap<>();
 	public BigInteger claimBlockLimitDefault = BigInteger.ZERO;
 	public BigInteger claimBlockMinimalVolume = BigInteger.ZERO;
 	public BigInteger claimBlockMinimalHorizontal = BigInteger.ZERO;
@@ -64,7 +63,7 @@ public final class Config {
 
 	public boolean claimAutoFlagsEnabled = false;
 	public boolean showAutoFlagMessages = false;
-	public Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
+	public final Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
 
 	public boolean restrictCommandsInRegionEnabled = false;
 	public int restrictCommandsRecheckTicks = 100;

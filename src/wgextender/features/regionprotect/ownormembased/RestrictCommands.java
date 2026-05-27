@@ -41,12 +41,12 @@ public final class RestrictCommands extends ConfigurableListenerBase {
 	private final Server server;
 	private Collection<String> restrictedCommands;
 
-	public RestrictCommands(Server server, Config config) {
-		super(config);
-		this.server = server;
+	public RestrictCommands(WGExtender plugin) {
+		super(plugin.getPluginConfig());
+		this.server = plugin.getServer();
 		restrictedCommands = config.restrictedCommandsInRegion;
         server.getGlobalRegionScheduler().runAtFixedRate(
-                WGExtender.getInstance(),
+                plugin,
                 (task) -> commandRecheckTask(config),
                 1, Math.max(1, config.restrictCommandsRecheckTicks)
         );

@@ -23,10 +23,10 @@ import wgextender.config.message.Messages;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
 
-public final class WGClaimCommand {
+public final class WGClaimSubcommand {
 	private final Messages msg;
 
-	public WGClaimCommand(Config config) {
+	public WGClaimSubcommand(Config config) {
 		this.msg = config.getMessages();
 	}
 

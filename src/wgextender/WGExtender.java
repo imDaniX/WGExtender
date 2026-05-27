@@ -18,8 +18,9 @@
 package wgextender;
 
 import org.bukkit.Server;
-import org.bukkit.plugin.PluginManager;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 import wgextender.config.Config;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
@@ -39,18 +40,13 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 public final class WGExtender extends JavaPlugin {
-
-	private static WGExtender instance;
-	public static WGExtender getInstance() {
-		return instance;
-	}
-
-	public WGExtender() {
-		instance = this;
-	}
-
+	private Config config;
 	private PvPHandlingListener pvplistener;
 	private OldPVPFlagsHandler oldpvphandler;
+
+	public Config getPluginConfig() {
+		return config;
+	}
 
 	@Override
 	public void onLoad() {
@@ -59,25 +55,24 @@ public final class WGExtender extends JavaPlugin {
 
 	@Override
 	public void onEnable() {
+		config = new Config(this);
+		config.loadConfig();
 		VaultIntegration.getInstance().initialize(this);
 		Server server = getServer();
-		Config config = new Config(this);
-		config.loadConfig();
 		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(server, config));
-		PluginManager pluginManager = getServer().getPluginManager();
-		pluginManager.registerEvents(new RestrictCommands(server, config), this);
-		pluginManager.registerEvents(new LiquidFlow(config), this);
-		pluginManager.registerEvents(new FireSpread(config), this);
-		pluginManager.registerEvents(new BlockBurn(config), this);
-		pluginManager.registerEvents(new Explode(config), this);
-		pluginManager.registerEvents(new WEWandListener(), this);
-		pluginManager.registerEvents(new ConsumeFlagsHandler(config), this);
+		registerListeners(new RestrictCommands(this));
+		registerListeners(new LiquidFlow(config));
+		registerListeners(new FireSpread(config));
+		registerListeners(new BlockBurn(config));
+		registerListeners(new Explode(config));
+		registerListeners(new WEWandListener());
+		registerListeners(new ConsumeFlagsHandler(config));
 		try {
 			WGRegionCommandWrapper.inject(server, config);
 			WEWandCommandWrapper.inject(server, config);
 			pvplistener = new PvPHandlingListener(config);
 			pvplistener.inject(this);
-			oldpvphandler = new OldPVPFlagsHandler();
+			oldpvphandler = new OldPVPFlagsHandler(this);
 			if (config.miscOldPvpFlags) {
 				getLogger().warning(
 						"Enabling the old-PvP flags. Do note that they're not supported, " +
@@ -91,6 +86,10 @@ public final class WGExtender extends JavaPlugin {
 			getServer().shutdown();
 		}
 	}
+	
+	private void registerListeners(@NotNull Listener listener) {
+		getServer().getPluginManager().registerEvents(listener, this);
+	}
 
 	@Override
 	public void onDisable() {
@@ -100,9 +99,12 @@ public final class WGExtender extends JavaPlugin {
 			pvplistener.uninject();
 			oldpvphandler.stop(this);
 		} catch (Throwable t) {
-			getLogger().log(Level.SEVERE, "Unable to uninject, shutting down", t);
-			getServer().shutdown();
+			if (getServer().isStopping()) {
+				getLogger().log(Level.SEVERE, "Unable to uninject", t);
+			} else {
+				getLogger().log(Level.SEVERE, "Unable to uninject, shutting down", t);
+				getServer().shutdown();
+			}
 		}
 	}
-
 }

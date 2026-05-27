@@ -52,5 +52,4 @@ public final class WEWandListener implements Listener {
 			drop.remove();
 		}
 	}
-
 }
