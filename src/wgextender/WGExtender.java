@@ -24,7 +24,7 @@ import wgextender.config.Config;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
 import wgextender.features.extendedwand.WEWandListener;
-import wgextender.features.flags.ChorusFruitFlagHandler;
+import wgextender.features.flags.ConsumeFlagsHandler;
 import wgextender.features.flags.OldPVPFlagsHandler;
 import wgextender.features.flags.WGExtenderFlags;
 import wgextender.features.regionprotect.ownormembased.PvPHandlingListener;
@@ -33,6 +33,7 @@ import wgextender.features.regionprotect.regionbased.BlockBurn;
 import wgextender.features.regionprotect.regionbased.Explode;
 import wgextender.features.regionprotect.regionbased.FireSpread;
 import wgextender.features.regionprotect.regionbased.LiquidFlow;
+import wgextender.integration.VaultIntegration;
 
 import java.util.Objects;
 import java.util.logging.Level;
@@ -70,7 +71,7 @@ public final class WGExtender extends JavaPlugin {
 		pluginManager.registerEvents(new BlockBurn(config), this);
 		pluginManager.registerEvents(new Explode(config), this);
 		pluginManager.registerEvents(new WEWandListener(), this);
-		pluginManager.registerEvents(new ChorusFruitFlagHandler(config), this);
+		pluginManager.registerEvents(new ConsumeFlagsHandler(config), this);
 		try {
 			WGRegionCommandWrapper.inject(server, config);
 			WEWandCommandWrapper.inject(server, config);

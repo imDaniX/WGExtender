@@ -49,7 +49,7 @@ import java.util.Set;
 public final class WGUtils {
 	public static final RegionQuery REGION_QUERY = getRegionContainer().createQuery();
 
-	private static final RegionCommands REGION_COMMANDS = new RegionCommands(WorldGuard.getInstance());
+	private static final RegionCommands REGION_COMMANDS = new RegionCommands(getWorldGuard());
 	private static final Set<Character> FLAG_COMMAND_FLAGS = getFlagCommandFlags();
 
 	private WGUtils() { }
@@ -58,8 +58,12 @@ public final class WGUtils {
 		return WorldGuardPlugin.inst().wrapPlayer(player);
 	}
 
+	public static WorldGuard getWorldGuard() {
+		return WorldGuard.getInstance();
+	}
+
 	public static WorldGuardPlatform getPlatform() {
-		return WorldGuard.getInstance().getPlatform();
+		return getWorldGuard().getPlatform();
 	}
 
 	public static RegionContainer getRegionContainer() {
@@ -147,5 +151,9 @@ public final class WGUtils {
 			t.printStackTrace();
 			return Collections.emptySet();
 		}
+	}
+
+	public static Flag<?> matchFlag(String flagStr) {
+		return Flags.fuzzyMatchFlag(getWorldGuard().getFlagRegistry(), flagStr);
 	}
 }

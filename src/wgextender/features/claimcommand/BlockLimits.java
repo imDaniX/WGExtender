@@ -22,8 +22,8 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import wgextender.VaultIntegration;
 import wgextender.config.Config;
+import wgextender.integration.VaultIntegration;
 import wgextender.utils.WEUtils;
 
 import java.math.BigInteger;

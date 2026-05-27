@@ -1,4 +1,4 @@
-package wgextender;
+package wgextender.integration;
 
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
+import wgextender.WGExtender;
 
 public final class VaultIntegration implements Listener {
 	private static final VaultIntegration INSTANCE = new VaultIntegration();

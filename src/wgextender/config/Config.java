@@ -17,9 +17,7 @@
 
 package wgextender.config;
 
-import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.flags.Flag;
-import com.sk89q.worldguard.protection.flags.Flags;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
@@ -28,6 +26,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import wgextender.WGExtender;
 import wgextender.config.message.Messages;
+import wgextender.utils.WGUtils;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -131,7 +130,7 @@ public final class Config {
 		ConfigurationSection autoflagsSection = config.getConfigurationSection("autoflags.flags");
 		if (autoflagsSection != null) {
 			for (String flagStr : autoflagsSection.getKeys(false)) {
-				Flag<?> flag = Flags.fuzzyMatchFlag(WorldGuard.getInstance().getFlagRegistry(), flagStr);
+				Flag<?> flag = WGUtils.matchFlag(flagStr);
 				if (flag != null) {
 					claimAutoFlags.put(flag, autoflagsSection.getString(flagStr));
 				}

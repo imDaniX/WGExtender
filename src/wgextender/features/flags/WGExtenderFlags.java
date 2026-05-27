@@ -18,6 +18,8 @@ public final class WGExtenderFlags {
     private static final List<Flag<?>> FLAGS = new ArrayList<>();
 
     public static final StateFlag CHORUS_FRUIT_USE_FLAG = cache(new StateFlag("chorus-fruit-use", true));
+    public static final StateFlag ITEM_CONSUME_FLAG = cache(new StateFlag("item-consume", true));
+
     public static final BooleanFlag OLDPVP_ATTACKSPEED = cache(new BooleanFlag("oldpvp-attackspeed"));
     public static final BooleanFlag OLDPVP_NOBOW = cache(new BooleanFlag("oldpvp-nobow"));
     public static final BooleanFlag OLDPVP_NOSHIELDBLOCK = cache(new BooleanFlag("oldpvp-noshieldblock"));

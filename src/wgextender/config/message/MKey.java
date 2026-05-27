@@ -51,6 +51,7 @@ public enum MKey {
     WAND__ITEM_NAME("&dВыделение территории"),
 
     FLAGS__CHORUS_RESTRICTED("&4Вы не можете использовать хорус в этом регионе."),
+    FLAGS__CONSUME_RESTRICTED("&4Вы не можете употреблять предметы в этом регионе."),
 
     DAMAGE__MOB("бить это"),
     DAMAGE__VEHICLE("ломать это"),

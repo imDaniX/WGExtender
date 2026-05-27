@@ -20,11 +20,12 @@ package wgextender;
 import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.flags.*;
-import com.sk89q.worldguard.protection.flags.StateFlag.State;
+import com.sk89q.worldguard.protection.flags.BooleanFlag;
+import com.sk89q.worldguard.protection.flags.EnumFlag;
+import com.sk89q.worldguard.protection.flags.Flag;
+import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
@@ -48,6 +49,7 @@ import wgextender.utils.WGUtils;
 import java.util.*;
 
 import static org.bukkit.util.StringUtil.copyPartialMatches;
+import static wgextender.utils.WGUtils.getWorldGuard;
 
 // TODO Brigadier?
 public final class WGExCommand implements CommandExecutor, TabCompleter {
@@ -115,7 +117,7 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
                     msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__WORLD_NOT_FOUND);
                     return true;
                 }
-                Flag<?> flag = Flags.fuzzyMatchFlag(WorldGuard.getInstance().getFlagRegistry(), args[2]);
+                Flag<?> flag = WGUtils.matchFlag(args[2]);
                 if (flag == null) {
                     msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__FLAG_NOT_FOUND);
                     return true;
@@ -197,14 +199,14 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
 		if (!args[0].equalsIgnoreCase("setflag")) return List.of();
 		return switch (args.length) {
             case 2 -> copyPartialMatches(args[1], Transform.toList(server.getWorlds(), World::getName), new ArrayList<>());
-            case 3 -> copyPartialMatches(args[2], Transform.toList(WorldGuard.getInstance().getFlagRegistry(), Flag::getName), new ArrayList<>());
+            case 3 -> copyPartialMatches(args[2], Transform.toList(getWorldGuard().getFlagRegistry(), Flag::getName), new ArrayList<>());
 			case 4 -> {
-				Flag<?> flag = Flags.fuzzyMatchFlag(WorldGuard.getInstance().getFlagRegistry(), args[2]);
+				Flag<?> flag = WGUtils.matchFlag(args[2]);
 				if (flag instanceof StateFlag) {
-                    yield copyPartialMatches(args[3], Transform.toList(State.values(), State::toString), new ArrayList<>());
+                    yield copyPartialMatches(args[3], STATE_ARGS, new ArrayList<>());
 				}
 				if (flag instanceof BooleanFlag) {
-                    yield copyPartialMatches(args[3], List.of("true", "false"), new ArrayList<>());
+                    yield copyPartialMatches(args[3], BOOLEAN_ARGS, new ArrayList<>());
 				}
 				if (flag instanceof EnumFlag<?> enumFlag) {
 					try {

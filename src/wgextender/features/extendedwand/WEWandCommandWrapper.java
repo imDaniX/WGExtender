@@ -39,11 +39,11 @@ public final class WEWandCommandWrapper extends Command {
 		CommandUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
 	}
 
-	protected final Config config;
-	protected final Messages msg;
-	protected final Command originalCmd;
+	private final Config config;
+	private final Messages msg;
+	private final Command originalCmd;
 
-	protected WEWandCommandWrapper(Config config, Command originalCmd) {
+	private WEWandCommandWrapper(Config config, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = config;
 		this.msg = config.getMessages();
