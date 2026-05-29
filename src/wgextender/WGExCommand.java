@@ -153,10 +153,14 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
                 UUID uuid = offPlayer.getUniqueId();
                 for (RegionManager manager : WGUtils.getRegionContainer().getLoaded()) {
                     for (ProtectedRegion region : manager.getRegions().values()) {
-                        DefaultDomain members = owner ? region.getOwners() : region.getMembers();
-                        members.removePlayer(uuid);
-                        members.removePlayer(name);
-                        region.setMembers(members);
+                        DefaultDomain domain = owner ? region.getOwners() : region.getMembers();
+                        domain.removePlayer(uuid);
+                        domain.removePlayer(name);
+                        if (owner) {
+                            region.setOwners(domain);
+                        } else {
+                            region.setMembers(domain);
+                        }
                     }
                 }
                 msg.sendMessage(sender, owner
