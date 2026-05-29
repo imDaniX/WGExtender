@@ -51,7 +51,7 @@ public final class WGRegionCommandWrapper extends Command {
 
 	private final Config config;
 	private final Messages msg;
-	private final ClaimLimitsHandler limits;
+	private final BlockLimitsHandler limits;
 
 	private final Command originalCmd;
 	private final WGClaimSubcommand claimSubcommand;
@@ -60,7 +60,7 @@ public final class WGRegionCommandWrapper extends Command {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = plugin.getPluginConfig();
 		this.msg = config.getMessages();
-		this.limits = plugin.getClaimLimitsHandler();
+		this.limits = plugin.getBlockLimitsHandler();
 		this.originalCmd = originalCmd;
 		this.claimSubcommand = new WGClaimSubcommand(config);
 	}
@@ -106,7 +106,7 @@ public final class WGRegionCommandWrapper extends Command {
 	}
 
 	private boolean process(@NotNull Player player) {
-		ClaimLimitsHandler.EvaluationResult info = limits.evaluateClaimLimit(config, player);
+		BlockLimitsHandler.EvaluationResult info = limits.evaluateBlocksLimit(player);
 		return switch (info.type()) {
 			case ALLOW -> true;
 			case DENY_MAX_VOLUME -> {

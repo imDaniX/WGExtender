@@ -4,7 +4,8 @@ import java.util.Locale;
 
 public enum MKey {
     COMMON__ERROR__PLAYER_ONLY("Эта команда только для игроков."),
-    COMMON__ERROR__NO_PERMISSION("&4Недостаточно прав"),
+    COMMON__ERROR__NO_PERMISSION("&4Недостаточно прав."),
+    COMMON__ERROR__PLAYER_NOT_FOUND("&4Игрока {player} не существует!", "player"),
 
     CLAIM__ERROR__GLOBAL("Нельзя заприватить __global__."),
     CLAIM__ERROR__FORMAT("&4{error}", "error"),
@@ -69,6 +70,9 @@ public enum MKey {
     WGEX_COMMAND__SETFLAG__HELP("&bwgex setflag <мир> <флаг> <значение> - устанавливает флаг <флаг> со значением <значение> на все регионы в мире <мир>"),
     WGEX_COMMAND__REMOVEOWNER__HELP("&bwgex removeowner <имя> - удаляет игрока из списков владельцев всех регионов"),
     WGEX_COMMAND__REMOVEMEMBER__HELP("&bwgex removemember <имя> - удаляет игрока из списков членов всех регионов"),
+    WGEX_COMMAND__LIMITS__HELP("&bwgex limit - управление кэшем лимитов блоков"),
+    WGEX_COMMAND__LIMITS__REFRESH__HELP("&bwgex limits refresh <имя> - обновить кэш для игрока"),
+    WGEX_COMMAND__LIMITS__CLEAR__HELP("&bwgex limits clear - очистить текущий кэш"),
 
     WGEX_COMMAND__RELOAD__SUCCESS("&bКонфиг перезагружен"),
 
@@ -82,7 +86,11 @@ public enum MKey {
     WGEX_COMMAND__SETFLAG__INVALID_FORMAT("&bНеправильный формат флага {flag}: {error}", "flag", "error"),
 
     WGEX_COMMAND__REMOVEOWNER__SUCCESS("&bИгрок удалён из списков владельцев всех регионов"),
-    WGEX_COMMAND__REMOVEMEMBER__SUCCESS("&bИгрок удалён из списков участников всех регионов");
+    WGEX_COMMAND__REMOVEMEMBER__SUCCESS("&bИгрок удалён из списков участников всех регионов"),
+
+    WGEX_COMMAND__LIMITS__REFRESH__SUCCESS("&bЛимит игрока {player} обновлён: {limit}.", "player", "limit"),
+    WGEX_COMMAND__LIMITS__CLEAR__SUCCESS("&bКэш лимитов сброшен.")
+    ;
 
     final String def;
     final String[] placeholders;

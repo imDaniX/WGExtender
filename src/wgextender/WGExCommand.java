@@ -46,6 +46,7 @@ import wgextender.utils.Transform;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import static org.bukkit.util.StringUtil.copyPartialMatches;
@@ -53,31 +54,33 @@ import static wgextender.utils.WGUtils.getWorldGuard;
 
 // TODO Brigadier?
 public final class WGExCommand implements CommandExecutor, TabCompleter {
-	private final Server server;
-	private final Config config;
-	private final Messages msg;
+    private final WGExtender plugin;
+    private final Server server;
+    private final Config config;
+    private final Messages msg;
 
-	public WGExCommand(Server server, Config config) {
-		this.server = server;
-		this.config = config;
-		this.msg = config.getMessages();
-	}
+    public WGExCommand(@NotNull WGExtender plugin) {
+        this.plugin = plugin;
+        this.server = plugin.getServer();
+        this.config = plugin.getPluginConfig();
+        this.msg = config.getMessages();
+    }
 
-	@Override
-	public boolean onCommand(CommandSender sender, @NotNull Command arg1, @NotNull String label, String @NotNull [] args) {
-		if (!sender.hasPermission("wgextender.admin")) {
-			msg.sendMessage(sender, MKey.COMMON__ERROR__NO_PERMISSION);
-			return true;
-		}
-        if (args.length == 0) {
-			showHelp(sender);
+    @Override
+    public boolean onCommand(CommandSender sender, @NotNull Command arg1, @NotNull String label, String @NotNull [] args) {
+        if (!sender.hasPermission("wgextender.admin")) {
+            msg.sendMessage(sender, MKey.COMMON__ERROR__NO_PERMISSION);
             return true;
         }
-        switch (args[0].toLowerCase(Locale.ROOT)) { // TODO Working with ClaimLimits cache
-			case "help" -> {
-				showHelp(sender);
-				return true;
-			}
+        if (args.length == 0) {
+            showHelp(sender);
+            return true;
+        }
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "help" -> {
+                showHelp(sender);
+                return true;
+            }
             case "reload" -> {
                 config.loadConfig();
                 msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__SUCCESS);
@@ -146,7 +149,7 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 OfflinePlayer offPlayer = server.getOfflinePlayer(args[1]);
-                String name = (offPlayer.getName() == null ? args[1] : offPlayer.getName()).toLowerCase();
+                String name = (offPlayer.getName() == null ? args[1] : offPlayer.getName()).toLowerCase(Locale.ROOT);
                 UUID uuid = offPlayer.getUniqueId();
                 for (RegionManager manager : WGUtils.getRegionContainer().getLoaded()) {
                     for (ProtectedRegion region : manager.getRegions().values()) {
@@ -162,60 +165,130 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
                 );
                 return true;
             }
+            case "limits" -> {
+                if (args.length < 2 || args[1].equalsIgnoreCase("help")) {
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__REFRESH__HELP);
+                    msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__CLEAR__HELP);
+                    return true;
+                }
+                switch (args[1].toLowerCase(Locale.ROOT)) {
+                    case "refresh" -> {
+                        if (args.length < 3) {
+                            msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__REFRESH__HELP);
+                            return true;
+                        }
+                        boolean silent = args[args.length - 1].equalsIgnoreCase("-s");
+                        String playerName = silent ? args[2] : args[args.length - 1];
+                        if (silent && args.length == 3) {
+                            msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__REFRESH__HELP);
+                            return true;
+                        }
+                        Player target = server.getPlayer(playerName);
+                        if (target == null) {
+                            if (!silent) {
+                                msg.sendMessage(sender, MKey.COMMON__ERROR__PLAYER_NOT_FOUND);
+                            }
+                            return true;
+                        }
+                        BigInteger limit = plugin.getBlockLimitsHandler().refreshBlockLimit(target);
+                        if (!silent) {
+                            msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__REFRESH__SUCCESS, target.getName(), limit);
+                        }
+                        return true;
+                    }
+                    case "clear" -> {
+                        boolean silent = args.length > 2 && args[args.length - 1].equalsIgnoreCase("-s");
+                        plugin.getBlockLimitsHandler().clearCache();
+                        if (!silent) {
+                            msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__CLEAR__SUCCESS);
+                        }
+                        return true;
+                    }
+                    default -> {
+                        msg.sendMessage(sender, MKey.WGEX_COMMAND__UNKNOWN_SUBCOMMAND, args[0] + " " + args[1]);
+                        msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__REFRESH__HELP);
+                        msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__CLEAR__HELP);
+                        return true;
+                    }
+                }
+            }
             default -> {
-				msg.sendMessage(sender, MKey.WGEX_COMMAND__UNKNOWN_SUBCOMMAND, args[0]);
-				showHelp(sender);
-				return true;
-			}
+                msg.sendMessage(sender, MKey.WGEX_COMMAND__UNKNOWN_SUBCOMMAND, args[0]);
+                showHelp(sender);
+                return true;
+            }
         }
-	}
+    }
 
-	private void showHelp(CommandSender sender) {
-		msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__HELP);
-		msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__HELP);
-		msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
-		msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEOWNER__HELP);
-		msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEMEMBER__HELP);
-	}
+    private void showHelp(CommandSender sender) {
+        msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__HELP);
+        msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__HELP);
+        msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);
+        msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEOWNER__HELP);
+        msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEMEMBER__HELP);
+        msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__HELP);
+    }
 
-	private static final List<String> PLAYER_ARGS = List.of("help", "reload", "search", "setflag", "removeowner", "removemember");
-	private static final List<String> CONSOLE_ARGS = List.of("help", "reload", "setflag", "removeowner", "removemember");
+    private static final List<String> PLAYER_ARGS = List.of("help", "reload", "search", "setflag", "removeowner", "removemember", "limits");
+    private static final List<String> CONSOLE_ARGS = List.of("help", "reload", "setflag", "removeowner", "removemember", "limits");
 
-	private static final List<String> STATE_ARGS = List.of("ALLOW", "DENY");
-	private static final List<String> BOOLEAN_ARGS = List.of("true", "false");
+    private static final List<String> STATE_ARGS = List.of("ALLOW", "DENY");
+    private static final List<String> BOOLEAN_ARGS = List.of("true", "false");
+    private static final List<String> LIMITS_ARGS = List.of("refresh", "clear");
 
-	@Override
-	public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
-		if (args.length == 0 || !sender.hasPermission("wgextender.admin")) {
-			return List.of();
-		}
-		if (args.length == 1) {
-			return copyPartialMatches(
-					args[0],
-					sender instanceof Player ? PLAYER_ARGS : CONSOLE_ARGS,
-					new ArrayList<>()
-			);
-		}
-		if (!args[0].equalsIgnoreCase("setflag")) return List.of();
-		return switch (args.length) {
+    private static final List<String> SILENT_ARG = List.of("-s");
+
+    @Override
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
+        if (args.length == 0 || !sender.hasPermission("wgextender.admin")) {
+            return List.of();
+        }
+        if (args.length == 1) {
+            return copyPartialMatches(
+                    args[0],
+                    sender instanceof Player ? PLAYER_ARGS : CONSOLE_ARGS,
+                    new ArrayList<>()
+            );
+        }
+        if (args[0].equalsIgnoreCase("limits")) {
+            if (args.length == 2) {
+                return copyPartialMatches(args[1], LIMITS_ARGS, new ArrayList<>());
+            }
+            if (args[1].equalsIgnoreCase("refresh")) {
+                if (args.length == 3) {
+                    return null;
+                }
+                if (args.length == 4) {
+                    return copyPartialMatches(args[3], SILENT_ARG, new ArrayList<>());
+                }
+            }
+            if (args[1].equalsIgnoreCase("clear")) {
+                if (args.length == 3) {
+                    return copyPartialMatches(args[2], SILENT_ARG, new ArrayList<>());
+                }
+            }
+            return List.of();
+        }
+        if (!args[0].equalsIgnoreCase("setflag")) return List.of();
+        return switch (args.length) {
             case 2 -> copyPartialMatches(args[1], Transform.toList(server.getWorlds(), World::getName), new ArrayList<>());
             case 3 -> copyPartialMatches(args[2], Transform.toList(getWorldGuard().getFlagRegistry(), Flag::getName), new ArrayList<>());
-			case 4 -> {
-				Flag<?> flag = WGUtils.matchFlag(args[2]);
-				if (flag instanceof StateFlag) {
+            case 4 -> {
+                Flag<?> flag = WGUtils.matchFlag(args[2]);
+                if (flag instanceof StateFlag) {
                     yield copyPartialMatches(args[3], STATE_ARGS, new ArrayList<>());
-				}
-				if (flag instanceof BooleanFlag) {
+                }
+                if (flag instanceof BooleanFlag) {
                     yield copyPartialMatches(args[3], BOOLEAN_ARGS, new ArrayList<>());
-				}
-				if (flag instanceof EnumFlag<?> enumFlag) {
-					try {
+                }
+                if (flag instanceof EnumFlag<?> enumFlag) {
+                    try {
                         yield copyPartialMatches(args[3], Transform.toList(enumFlag.getEnumClass().getEnumConstants(), Enum::toString), new ArrayList<>());
-					} catch (Exception ignored) { }
-				}
+                    } catch (Exception ignored) { }
+                }
                 yield List.of();
-			}
+            }
             default -> List.of();
-		};
+        };
     }
 }

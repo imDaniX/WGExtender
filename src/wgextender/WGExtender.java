@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 import wgextender.config.Config;
-import wgextender.features.claimcommand.ClaimLimitsHandler;
+import wgextender.features.claimcommand.BlockLimitsHandler;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
 import wgextender.features.extendedwand.WEWandListener;
@@ -37,13 +37,14 @@ import wgextender.features.regionprotect.regionbased.BlockBurn;
 import wgextender.features.regionprotect.regionbased.Explode;
 import wgextender.features.regionprotect.regionbased.FireSpread;
 import wgextender.features.regionprotect.regionbased.LiquidFlow;
+import wgextender.integration.PapiIntegration;
 
 import java.util.Objects;
 import java.util.logging.Level;
 
 public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API
 	private Config config;
-	private ClaimLimitsHandler claimLimitsHandler;
+	private BlockLimitsHandler claimLimitsHandler;
 
 	private PvPHandlingListener pvpListener;
 	private OldPVPFlagsHandler oldPvpHandler;
@@ -53,7 +54,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		return config;
 	}
 
-	public @UnknownNullability ClaimLimitsHandler getClaimLimitsHandler() {
+	public @UnknownNullability BlockLimitsHandler getBlockLimitsHandler() {
 		return claimLimitsHandler;
 	}
 
@@ -69,8 +70,8 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		config = new Config(this);
 		config.loadConfig();
 		Server server = getServer();
-		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(server, config));
-		registerListeners(claimLimitsHandler = new ClaimLimitsHandler(config));
+		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(this));
+		registerListeners(claimLimitsHandler = new BlockLimitsHandler(config));
 		registerListeners(new RestrictCommands(this));
 		registerListeners(new LiquidFlow(config));
 		registerListeners(new FireSpread(config));
@@ -95,6 +96,11 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to inject, shutting down", t);
 			getServer().shutdown();
+		}
+
+
+		if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+			new PapiIntegration(this).register();
 		}
 	}
 	

@@ -105,7 +105,7 @@ public final class Config {
 			claimBlockLimitDefault = asBig(limitsSection, "default");
 			for (String group : limitsSection.getKeys(false)) {
 				claimBlockLimits.put(
-						group.toLowerCase(),
+						group.toLowerCase(Locale.ROOT),
 						asBig(limitsSection, group)
 				);
 			}

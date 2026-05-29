@@ -21,6 +21,7 @@ import com.sk89q.wepif.PermissionsResolverManager;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -36,12 +37,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class ClaimLimitsHandler extends ConfigurableListenerBase {
+public final class BlockLimitsHandler extends ConfigurableListenerBase {
 	private static final BigInteger MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
 	private final Map<UUID, BigInteger> cache;
 
-	public ClaimLimitsHandler(@NotNull Config config) {
+	public BlockLimitsHandler(@NotNull Config config) {
 		super(config);
 		this.cache = new ConcurrentHashMap<>();
 	}
@@ -55,15 +56,36 @@ public final class ClaimLimitsHandler extends ConfigurableListenerBase {
 		cache.clear();
 	}
 
-	public @NotNull BigInteger getBlocksLimit(@NotNull Player player) {
+	/**
+	 * Returns cached blocks limit or creates one
+	 * @param player player to check the limit for
+	 * @return cached or calculated limit
+	 * @see #refreshBlockLimit(Player)
+	 * @see #calculateBlocksLimit(OfflinePlayer)
+	 */
+	public @NotNull BigInteger cachedBlocksLimit(@NotNull Player player) {
 		return cache.computeIfAbsent(player.getUniqueId(), id -> calculateBlocksLimit(player));
 	}
 
+	/**
+	 * Recalculates and caches blocks limit
+	 * @param player player to recalculate the limit for
+	 * @return calculated limit
+	 * @see #cachedBlocksLimit(Player)
+	 * @see #calculateBlocksLimit(OfflinePlayer)
+	 */
 	public @NotNull BigInteger refreshBlockLimit(@NotNull Player player) {
 		return cache.compute(player.getUniqueId(), (id, old) -> calculateBlocksLimit(player));
 	}
 
-	private @NotNull BigInteger calculateBlocksLimit(@NotNull Player player) {
+	/**
+	 * Recalculates blocks limit
+	 * @param player player to recalculate the limit for
+	 * @return calculated limit
+	 * @see #cachedBlocksLimit(Player)
+	 * @see #refreshBlockLimit(Player)
+	 */
+	public @NotNull BigInteger calculateBlocksLimit(@NotNull OfflinePlayer player) {
 		String[] groups = PermissionsResolverManager.getInstance().getGroups(player);
 		if (groups.length == 0) {
 			return config.claimBlockLimitDefault;
@@ -75,7 +97,7 @@ public final class ClaimLimitsHandler extends ConfigurableListenerBase {
 		return maxBlocks;
 	}
 
-	public @NotNull ClaimLimitsHandler.EvaluationResult evaluateClaimLimit(Config config, Player player) {
+	public @NotNull BlockLimitsHandler.EvaluationResult evaluateBlocksLimit(@NotNull Player player) {
 		Region selection;
 		try {
 			selection = WEUtils.getSelection(player);
@@ -138,7 +160,7 @@ public final class ClaimLimitsHandler extends ConfigurableListenerBase {
 		return EvaluationResult.EMPTY_ALLOW;
 	}
 
-	public record EvaluationResult(@NotNull ClaimLimitsHandler.ResultType type, @NotNull BigInteger assignedSize, @NotNull BigInteger assignedLimit) {
+	public record EvaluationResult(@NotNull BlockLimitsHandler.ResultType type, @NotNull BigInteger assignedSize, @NotNull BigInteger assignedLimit) {
 		public static final EvaluationResult EMPTY_ALLOW = new EvaluationResult(ResultType.ALLOW, MAX_VALUE, MAX_VALUE);
 	}
 
