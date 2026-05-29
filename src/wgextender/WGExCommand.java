@@ -73,7 +73,7 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
 			showHelp(sender);
             return true;
         }
-        switch (args[0].toLowerCase(Locale.ROOT)) {
+        switch (args[0].toLowerCase(Locale.ROOT)) { // TODO Working with ClaimLimits cache
 			case "help" -> {
 				showHelp(sender);
 				return true;

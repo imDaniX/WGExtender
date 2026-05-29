@@ -20,8 +20,11 @@ package wgextender;
 import org.bukkit.Server;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 import wgextender.config.Config;
+import wgextender.features.claimcommand.ClaimLimitsHandler;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
 import wgextender.features.extendedwand.WEWandListener;
@@ -34,32 +37,40 @@ import wgextender.features.regionprotect.regionbased.BlockBurn;
 import wgextender.features.regionprotect.regionbased.Explode;
 import wgextender.features.regionprotect.regionbased.FireSpread;
 import wgextender.features.regionprotect.regionbased.LiquidFlow;
-import wgextender.integration.VaultIntegration;
 
 import java.util.Objects;
 import java.util.logging.Level;
 
-public final class WGExtender extends JavaPlugin {
+public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API
 	private Config config;
-	private PvPHandlingListener pvplistener;
-	private OldPVPFlagsHandler oldpvphandler;
+	private ClaimLimitsHandler claimLimitsHandler;
 
-	public Config getPluginConfig() {
+	private PvPHandlingListener pvpListener;
+	private OldPVPFlagsHandler oldPvpHandler;
+
+	@ApiStatus.Internal
+	public @UnknownNullability Config getPluginConfig() {
 		return config;
 	}
 
+	public @UnknownNullability ClaimLimitsHandler getClaimLimitsHandler() {
+		return claimLimitsHandler;
+	}
+
+	@ApiStatus.Internal
 	@Override
 	public void onLoad() {
 		WGExtenderFlags.registerFlags(getLogger());
 	}
 
+	@ApiStatus.Internal
 	@Override
 	public void onEnable() {
 		config = new Config(this);
 		config.loadConfig();
-		VaultIntegration.getInstance().initialize(this);
 		Server server = getServer();
 		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(server, config));
+		registerListeners(claimLimitsHandler = new ClaimLimitsHandler(config));
 		registerListeners(new RestrictCommands(this));
 		registerListeners(new LiquidFlow(config));
 		registerListeners(new FireSpread(config));
@@ -68,18 +79,18 @@ public final class WGExtender extends JavaPlugin {
 		registerListeners(new WEWandListener());
 		registerListeners(new ConsumeFlagsHandler(config));
 		try {
-			WGRegionCommandWrapper.inject(server, config);
-			WEWandCommandWrapper.inject(server, config);
-			pvplistener = new PvPHandlingListener(config);
-			pvplistener.inject(this);
-			oldpvphandler = new OldPVPFlagsHandler(this);
+			WGRegionCommandWrapper.inject(this); // TODO This static call can be non-static
+			WEWandCommandWrapper.inject(server, config); // TODO This static call can be non-static
+			pvpListener = new PvPHandlingListener(config);
+			pvpListener.inject(this);
+			oldPvpHandler = new OldPVPFlagsHandler(this);
 			if (config.miscOldPvpFlags) {
 				getLogger().warning(
 						"Enabling the old-PvP flags. Do note that they're not supported, " +
 						"as they're very out of scope of extending WG capabilities and may harm performance. " +
 						"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
 				);
-				oldpvphandler.start(this);
+				oldPvpHandler.start(this);
 			}
 		} catch (Throwable t) {
 			getLogger().log(Level.SEVERE, "Unable to inject, shutting down", t);
@@ -91,13 +102,14 @@ public final class WGExtender extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(listener, this);
 	}
 
+	@ApiStatus.Internal
 	@Override
 	public void onDisable() {
 		try {
 			WEWandCommandWrapper.uninject(getServer());
 			WGRegionCommandWrapper.uninject(getServer());
-			pvplistener.uninject();
-			oldpvphandler.stop(this);
+			pvpListener.uninject();
+			oldPvpHandler.stop(this);
 		} catch (Throwable t) {
 			if (getServer().isStopping()) {
 				getLogger().log(Level.SEVERE, "Unable to uninject", t);

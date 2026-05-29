@@ -28,6 +28,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
+import wgextender.WGExtender;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
@@ -38,9 +39,9 @@ import wgextender.utils.WGUtils;
 import java.util.Map;
 
 public final class WGRegionCommandWrapper extends Command {
-	public static void inject(Server server, Config config) {
-		WGRegionCommandWrapper wrapper = new WGRegionCommandWrapper(config, CommandUtils.getCommands(server).get("region"));
-		CommandUtils.replaceCommand(server, wrapper.originalCmd, wrapper);
+	public static void inject(WGExtender plugin) {
+		WGRegionCommandWrapper wrapper = new WGRegionCommandWrapper(plugin, CommandUtils.getCommands(plugin.getServer()).get("region"));
+		CommandUtils.replaceCommand(plugin.getServer(), wrapper.originalCmd, wrapper);
 	}
 
 	public static void uninject(Server server) {
@@ -50,15 +51,18 @@ public final class WGRegionCommandWrapper extends Command {
 
 	private final Config config;
 	private final Messages msg;
-	private final Command originalCmd;
-	private final WGClaimSubcommand claimHandler;
+	private final ClaimLimitsHandler limits;
 
-	private WGRegionCommandWrapper(Config config, Command originalCmd) {
+	private final Command originalCmd;
+	private final WGClaimSubcommand claimSubcommand;
+
+	private WGRegionCommandWrapper(WGExtender plugin, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
-		this.config = config;
+		this.config = plugin.getPluginConfig();
 		this.msg = config.getMessages();
+		this.limits = plugin.getClaimLimitsHandler();
 		this.originalCmd = originalCmd;
-		this.claimHandler = new WGClaimSubcommand(config);
+		this.claimSubcommand = new WGClaimSubcommand(config);
 	}
 
 	@Override
@@ -76,7 +80,7 @@ public final class WGRegionCommandWrapper extends Command {
 			}
 			boolean hasRegion = WGUtils.hasRegion(player.getWorld(), regionName);
 			try {
-				claimHandler.claim(regionName, sender);
+				claimSubcommand.claim(regionName, sender);
 				if (!hasRegion && config.claimAutoFlagsEnabled) {
 					Actor actor = WEUtils.privilegedActor(player, config.showAutoFlagMessages);
 					World world = player.getWorld();
@@ -102,8 +106,8 @@ public final class WGRegionCommandWrapper extends Command {
 	}
 
 	private boolean process(@NotNull Player player) {
-		BlockLimitsProcessor.ProcessedClaimInfo info = BlockLimitsProcessor.processClaimInfo(config, player);
-		return switch (info.result()) {
+		ClaimLimitsHandler.EvaluationResult info = limits.evaluateClaimLimit(config, player);
+		return switch (info.type()) {
 			case ALLOW -> true;
 			case DENY_MAX_VOLUME -> {
 				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_MAX_VOLUME, info.assignedLimit(), info.assignedSize());

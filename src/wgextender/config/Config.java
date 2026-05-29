@@ -24,6 +24,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.config.message.Messages;
 import wgextender.utils.WGUtils;
@@ -46,7 +47,7 @@ public final class Config {
 	public boolean claimExpandSelectionVertical = false;
 
 	public boolean claimBlockLimitsEnabled = false;
-	public final Map<String, BigInteger> claimBlockLimits = new LinkedHashMap<>();
+	public Map<String, BigInteger> claimBlockLimits = new LinkedHashMap<>();
 	public BigInteger claimBlockLimitDefault = BigInteger.ZERO;
 	public BigInteger claimBlockMinimalVolume = BigInteger.ZERO;
 	public BigInteger claimBlockMinimalHorizontal = BigInteger.ZERO;
@@ -63,7 +64,7 @@ public final class Config {
 
 	public boolean claimAutoFlagsEnabled = false;
 	public boolean showAutoFlagMessages = false;
-	public final Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
+	public Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
 
 	public boolean restrictCommandsInRegionEnabled = false;
 	public int restrictCommandsRecheckTicks = 100;
@@ -86,11 +87,19 @@ public final class Config {
 
 	private void loadAll() {
 		FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+		loadClaimLimits(config);
+		loadProtection(config);
+		loadAutoFlags(config);
+		loadMisc(config);
+		loadMessages(config);
+	}
 
+	private void loadClaimLimits(@NotNull FileConfiguration config) {
 		claimExpandSelectionVertical = config.getBoolean("claim.vertexpand", claimExpandSelectionVertical);
 
 		claimBlockLimitsEnabled = config.getBoolean("claim.blocklimits.enabled", claimBlockLimitsEnabled);
-		claimBlockLimits.clear();
+
+		Map<String, BigInteger> claimBlockLimits = new LinkedHashMap<>();
 		ConfigurationSection limitsSection = config.getConfigurationSection("claim.blocklimits.limits");
 		if (limitsSection != null) {
 			claimBlockLimitDefault = asBig(limitsSection, "default");
@@ -101,8 +110,10 @@ public final class Config {
 				);
 			}
 		} else {
-			claimBlockLimitDefault = BigInteger.ZERO;
+			claimBlockLimitDefault = BigInteger.ZERO; // TODO Default to WG or max value
 		}
+		this.claimBlockLimits = claimBlockLimits;
+
 		ConfigurationSection minLimitsSection = config.getConfigurationSection("claim.blocklimits.minimal");
 		if (minLimitsSection != null) {
 			claimBlockMinimalVolume = asBig(minLimitsSection, "volume");
@@ -113,7 +124,9 @@ public final class Config {
 			claimBlockMinimalHorizontal = BigInteger.ZERO;
 			claimBlockMinimalVertical = BigInteger.ZERO;
 		}
+	}
 
+	private void loadProtection(@NotNull FileConfiguration config) {
 		checkLavaFlow = config.getBoolean("regionprotect.flow.lava", checkLavaFlow);
 		checkWaterFlow = config.getBoolean("regionprotect.flow.water", checkWaterFlow);
 		checkOtherLiquidFlow = config.getBoolean("regionprotect.flow.other", checkOtherLiquidFlow);
@@ -123,9 +136,15 @@ public final class Config {
 		checkExplosionBlockDamage = config.getBoolean("regionprotect.explosion.block", checkExplosionBlockDamage);
 		checkExplosionEntityDamage = config.getBoolean("regionprotect.explosion.entity", checkExplosionEntityDamage);
 
+		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
+		restrictCommandsRecheckTicks = config.getInt("restrictcommands.recheck-ticks", restrictCommandsRecheckTicks);
+		restrictedCommandsInRegion = new ArrayList<>(config.getStringList("restrictcommands.commands"));
+	}
+
+	private void loadAutoFlags(@NotNull FileConfiguration config) {
 		claimAutoFlagsEnabled = config.getBoolean("autoflags.enabled", claimAutoFlagsEnabled);
 		showAutoFlagMessages = config.getBoolean("autoflags.show-messages", showAutoFlagMessages);
-		claimAutoFlags.clear();
+		Map<Flag<?>, String> claimAutoFlags = new LinkedHashMap<>();
 		ConfigurationSection autoflagsSection = config.getConfigurationSection("autoflags.flags");
 		if (autoflagsSection != null) {
 			for (String flagStr : autoflagsSection.getKeys(false)) {
@@ -135,32 +154,30 @@ public final class Config {
 				}
 			}
 		}
+		this.claimAutoFlags = claimAutoFlags;
+	}
 
-		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
-		restrictCommandsRecheckTicks = config.getInt("restrictcommands.recheck-ticks", restrictCommandsRecheckTicks);
-		restrictedCommandsInRegion = new ArrayList<>(config.getStringList("restrictcommands.commands"));
-
+	private void loadMisc(@NotNull FileConfiguration config) {
 		extendedWorldEditWandEnabled = config.getBoolean("extendedwewand", extendedWorldEditWandEnabled);
 
-		String miscPvpModeStr = config.getString("misc.pvpmode", DEFAULT);
-		if (miscPvpModeStr.equalsIgnoreCase(ALLOW)) {
-			miscDefaultPvPFlagOperationMode = Boolean.TRUE;
-		} else if (miscPvpModeStr.equalsIgnoreCase(DENY)) {
-			miscDefaultPvPFlagOperationMode = Boolean.FALSE;
-		} else {
-			miscDefaultPvPFlagOperationMode = null;
-		}
+		miscDefaultPvPFlagOperationMode = switch (config.getString("misc.pvpmode", DEFAULT).toLowerCase(Locale.ROOT)) {
+			case ALLOW -> Boolean.TRUE;
+			case DENY -> Boolean.FALSE;
+			default -> null;
+		};
 		miscOldPvpFlags = config.getBoolean("misc.old-pvp-flags");
+	}
 
+	private void loadMessages(@NotNull FileConfiguration config) {
 		msg.setDecoder(switch (config.getString("messages.serializer", "LEGACY_AMPERSAND").toUpperCase(Locale.ROOT)) {
 			case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
-            case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
-            default -> LegacyComponentSerializer.legacyAmpersand();
-        });
+			case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
+			default -> LegacyComponentSerializer.legacyAmpersand();
+		});
 		msg.loadMessages();
 	}
 
-	private static BigInteger asBig(ConfigurationSection section, String key) {
+	private static @NotNull BigInteger asBig(@NotNull ConfigurationSection section, @NotNull String key) {
 		if (section.isInt(key)) {
 			return BigInteger.valueOf(section.getInt(key));
 		} else {
@@ -170,7 +187,7 @@ public final class Config {
 		}
 	}
 
-	public Messages getMessages() {
+	public @NotNull Messages getMessages() {
 		return this.msg;
 	}
 }

@@ -29,6 +29,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.jetbrains.annotations.Nullable;
 import wgextender.config.Config;
 import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.WGUtils;
@@ -71,21 +72,21 @@ public final class Explode extends ConfigurableListenerBase {
 		}
 		if ((event.getCause() == DamageCause.BLOCK_EXPLOSION) || (event.getCause() == DamageCause.ENTITY_EXPLOSION)) {
 			Location location = event.getEntity().getLocation();
-			if (WGUtils.isInRegion(location)) {
-				if (event instanceof EntityDamageByEntityEvent entityEvent) {
-					Player source = findExplosionSource(entityEvent.getDamager());
-					if (source == null || (!WGUtils.canBypassProtection(source) && !WGUtils.canBuild(source, location))) {
-						event.setCancelled(true);
-					}
-				} else {
-					event.setCancelled(true);
-				}
-			}
-
-		}
+            if (!WGUtils.isInRegion(location)) {
+                return;
+            }
+            if (event instanceof EntityDamageByEntityEvent entityEvent) {
+                Player source = findExplosionSource(entityEvent.getDamager());
+                if (source == null || (!WGUtils.canBypassProtection(source) && !WGUtils.canBuild(source, location))) {
+                    event.setCancelled(true);
+                }
+            } else {
+                event.setCancelled(true);
+            }
+        }
 	}
 
-	private static Player findExplosionSource(Entity exploded) {
+	private static @Nullable Player findExplosionSource(@Nullable Entity exploded) {
 		Entity source;
 		if (exploded instanceof TNTPrimed primed) {
 			source = primed.getSource();
