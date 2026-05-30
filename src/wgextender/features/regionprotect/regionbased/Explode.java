@@ -86,12 +86,16 @@ public final class Explode extends ConfigurableListenerBase {
         }
 	}
 
-	private static @Nullable Player findExplosionSource(@Nullable Entity exploded) {
-		Entity source;
+	private @Nullable Player findExplosionSource(@Nullable Entity exploded) {
+		Entity source = null;
 		if (exploded instanceof TNTPrimed primed) {
-			source = primed.getSource();
-		} else if (exploded instanceof Creeper creeper) {
-			source = creeper.getTarget(); // TODO Creeper can be ignited using flint and steel
+			if (config.explosionSourceTntPrime) {
+				source = primed.getSource();
+			}
+		} else if (exploded instanceof Creeper creeper) {// TODO Creepers can be ignited using flint and steel
+			if (config.explosionSourceCreeperTarget) {
+				source = creeper.getTarget();
+			}
 		} else {
 			return null;
 		}

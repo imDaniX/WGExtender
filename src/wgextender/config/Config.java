@@ -61,6 +61,8 @@ public final class Config {
 	public boolean disableBlockBurnInRegion = false;
 	public boolean checkExplosionBlockDamage = false;
 	public boolean checkExplosionEntityDamage = false;
+	public boolean explosionSourceCreeperTarget = true;
+	public boolean explosionSourceTntPrime = false;
 
 	public boolean claimAutoFlagsEnabled = false;
 	public boolean showAutoFlagMessages = false;
@@ -135,6 +137,8 @@ public final class Config {
 		disableBlockBurnInRegion = config.getBoolean("regionprotect.fire.burn", disableBlockBurnInRegion);
 		checkExplosionBlockDamage = config.getBoolean("regionprotect.explosion.block", checkExplosionBlockDamage);
 		checkExplosionEntityDamage = config.getBoolean("regionprotect.explosion.entity", checkExplosionEntityDamage);
+		explosionSourceCreeperTarget = config.getBoolean("regionprotect.explosion.source-detection.creeper-target", explosionSourceCreeperTarget);
+		explosionSourceTntPrime = config.getBoolean("regionprotect.explosion.source-detection.tnt-prime", explosionSourceTntPrime);
 
 		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
 		restrictCommandsRecheckTicks = config.getInt("restrictcommands.recheck-ticks", restrictCommandsRecheckTicks);

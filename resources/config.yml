@@ -20,6 +20,9 @@ regionprotect:
   explosion:
     block: false
     entity: false
+    source-detection:
+      creeper-target: false
+      tnt-prime: true
 autoflags:
   enabled: false
   show-messages: false
