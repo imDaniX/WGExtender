@@ -90,7 +90,7 @@ public final class WGClaimSubcommand {
 			msg.sendMessage(sender, MKey.CLAIM__SUCCESS, id);
 		} catch (Exception e) {
 			msg.sendMessage(sender, MKey.CLAIM__ERROR__EXCEPTION);
-			e.printStackTrace();
+			e.printStackTrace(); // TODO Log properly
 		}
 	}
 

@@ -114,7 +114,7 @@ public final class PvPHandlingListener extends ConfigurableListenerBase {
 		// Block PvP like normal even if the player has an override permission
 		// because (1) this is a frequent source of confusion and
 		// (2) some users want to block PvP even with the bypass permission
-		boolean pvp = event.getEntity() instanceof Player && !playerAttacker.equals(event.getEntity());
+		boolean pvp = event.getEntity() instanceof Player && playerAttacker != null && !playerAttacker.equals(event.getEntity());
 		if (isWhitelisted(event.getCause(), event.getWorld(), pvp)) {
 			return;
 		}
