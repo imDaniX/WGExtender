@@ -1,5 +1,6 @@
 package wgextender.integration;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -39,19 +40,54 @@ public class PapiIntegration extends PlaceholderExpansion {
     }
 
     @Override
-    public @Nullable String onRequest(OfflinePlayer offPlayer, @NotNull String params) {
+    public @Nullable String onRequest(@Nullable OfflinePlayer offPlayer, @NotNull String paramsRaw) {
         if (offPlayer == null) return null;
 
         var handler = plugin.getBlockLimitsHandler();
-        return switch (params.toLowerCase(Locale.ROOT)) {
-            case "blocklimit_refresh" -> (offPlayer instanceof Player player)
+        var reader = new ParamsReader(paramsRaw);
+
+        if (!reader.next().equals("blocklimit")) return null;
+
+        return switch (reader.next()) {
+            case "refresh" -> offPlayer instanceof Player player
                     ? handler.refreshBlockLimit(player).toString()
                     : null;
-            case "blocklimit_cached", "blocklimit_cache" -> (offPlayer instanceof Player player)
-                    ? handler.cachedBlocksLimit(player).toString()
+            case "cached", "cache" -> offPlayer instanceof Player player
+                    ? handler.cachedBlockLimit(player).toString()
                     : null;
-            case "blocklimit_calc" -> handler.calculateBlocksLimit(offPlayer).toString();
+            case "calc" -> handler.calculateBlockLimit(offPlayer).toString();
+            case "group" -> {
+                String groupRaw = reader.remaining();
+                if (groupRaw.isEmpty()) yield null;
+
+                String groupName = groupRaw.contains("{")
+                        ? PlaceholderAPI.setBracketPlaceholders(offPlayer, groupRaw)
+                        : groupRaw;
+
+                yield handler.blockLimitByGroup(groupName).toString();
+            }
             default -> null;
         };
+    }
+
+    private static class ParamsReader {
+        private final String input;
+        private int index;
+
+        ParamsReader(String input) {
+            this.input = input.toLowerCase(Locale.ROOT);
+            this.index = 0;
+        }
+
+        String next() {
+            int end = input.indexOf('_', index);
+            String current = end == -1 ? input.substring(index) : input.substring(index, end);
+            index = end == -1 ? input.length() : end + 1;
+            return current.isEmpty() ? "" : current;
+        }
+
+        String remaining() {
+            return index >= input.length() ? "" : input.substring(index);
+        }
     }
 }

@@ -56,36 +56,40 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 		cache.clear();
 	}
 
+	public @NotNull BigInteger blockLimitByGroup(@NotNull String group) {
+		return config.claimBlockLimits.getOrDefault(group, config.claimBlockLimitDefault);
+	}
+
 	/**
 	 * Returns cached blocks limit or creates one
 	 * @param player player to check the limit for
 	 * @return cached or calculated limit
 	 * @see #refreshBlockLimit(Player)
-	 * @see #calculateBlocksLimit(OfflinePlayer)
+	 * @see #calculateBlockLimit(OfflinePlayer)
 	 */
-	public @NotNull BigInteger cachedBlocksLimit(@NotNull Player player) {
-		return cache.computeIfAbsent(player.getUniqueId(), id -> calculateBlocksLimit(player));
+	public @NotNull BigInteger cachedBlockLimit(@NotNull Player player) {
+		return cache.computeIfAbsent(player.getUniqueId(), id -> calculateBlockLimit(player));
 	}
 
 	/**
 	 * Recalculates and caches blocks limit
 	 * @param player player to recalculate the limit for
 	 * @return calculated limit
-	 * @see #cachedBlocksLimit(Player)
-	 * @see #calculateBlocksLimit(OfflinePlayer)
+	 * @see #cachedBlockLimit(Player)
+	 * @see #calculateBlockLimit(OfflinePlayer)
 	 */
 	public @NotNull BigInteger refreshBlockLimit(@NotNull Player player) {
-		return cache.compute(player.getUniqueId(), (id, old) -> calculateBlocksLimit(player));
+		return cache.compute(player.getUniqueId(), (id, old) -> calculateBlockLimit(player));
 	}
 
 	/**
 	 * Recalculates blocks limit
 	 * @param player player to recalculate the limit for
 	 * @return calculated limit
-	 * @see #cachedBlocksLimit(Player)
+	 * @see #cachedBlockLimit(Player)
 	 * @see #refreshBlockLimit(Player)
 	 */
-	public @NotNull BigInteger calculateBlocksLimit(@NotNull OfflinePlayer player) {
+	public @NotNull BigInteger calculateBlockLimit(@NotNull OfflinePlayer player) {
 		String[] groups = PermissionsResolverManager.getInstance().getGroups(player);
 		if (groups.length == 0) {
 			return config.claimBlockLimitDefault;
