@@ -33,7 +33,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.util.*;
 
-public final class Config {
+public final class Config { // TODO Some config framework?
 	private final Plugin plugin;
 	private final File configFile;
 	private final Messages msg;

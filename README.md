@@ -11,7 +11,9 @@
 WGExtender **X** is a fork that is maintained for modern Paper versions and includes additional features:
 - Experimental Folia support
 - Configurable minimum region claim size limits (volume, horizontal, vertical)
-- Configurable messages in `messages.yml`
+- Configurable messages in the `messages/` folder
+- New block limit PAPI placeholders
+- New `item-consume` flag
 
 ## Requirements
 
@@ -20,6 +22,34 @@ WGExtender **X** is a fork that is maintained for modern Paper versions and incl
 - WorldGuard 7
 - WorldEdit 7
 - Vault 1.7
+
+## Flags
+
+- `item-consume`: Controls whether players can eat food or drink potions inside a region.
+- `chorus-fruit-use`: Controls whether players can use chorus fruit to teleport inside a region.
+- `oldpvp-attackspeed`: When turned on in a region, attack speed changes to feel like old Minecraft (before version 1.9).
+- `oldpvp-nobow`: When turned on, players can't use a bow from their off-hand inside the region.
+- `oldpvp-noshieldblock`: When turned on, shields won't block damage properly inside the region.
+
+## PlaceholderAPI
+
+- `%wgex_blocklimit_refresh%`: For an online player, recalculates how many blocks they've placed, updates the info, and returns the new number.
+- `%wgex_blocklimit_cached%`: Shows the last saved block count for an online player. Faster but might not be up to date.
+- `%wgex_blocklimit_calc%`: Calculates a player's block limit from scratch without saving it. Works for offline players too. Good for one-time checks.
+- `%wgex_blocklimit_group_<group>%`: Shows the block limit set for a specific group. You can use a fixed group name or a placeholder that changes per player.
+
+## Commands
+`wgextender.admin` is the only permission needed to use any of the plugin's commands
+
+- `/wgex help`: Shows a list of all available commands and basic usage.
+- `/wgex reload`: Reloads the plugin settings without restarting the server.
+- `/wgex search`: For players only. Finds all WorldGuard regions that overlap with your current WorldEdit selection.
+- `/wgex setflag <world> <flag> <value>`: Adds a flag to every non-global region in a specific world. Example: `/wgex setflag world_nether pvp deny`
+- `/wgex removeowner <player>`: Removes a player from the owner list of every region in every loaded world.
+- `/wgex removemember <player>`: Removes a player from the member list of every region in every loaded world.
+- `/wgex limits refresh <player> [-s]`: Updates a player's saved block count. Add `-s` to hide success or error messages.
+- `/wgex limits clear [-s]`: Clears all saved block counts. Add `-s` to silence messages.
+
 
 ## Configuration
 
