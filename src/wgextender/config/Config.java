@@ -40,8 +40,8 @@ public final class Config {
 
 	public Config(WGExtender plugin) {
 		this.plugin = plugin;
-		configFile = new File(plugin.getDataFolder(), "config.yml");
-		msg = new Messages(plugin.getDataFolder());
+		this.configFile = new File(plugin.getDataFolder(), "config.yml");
+		this.msg = new Messages(plugin);
 	}
 
 	public boolean claimExpandSelectionVertical = false;
@@ -178,7 +178,7 @@ public final class Config {
 			case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
 			default -> LegacyComponentSerializer.legacyAmpersand();
 		});
-		msg.loadMessages();
+		msg.loadMessages(config.getString("messages.locale", "en"));
 	}
 
 	private static @NotNull BigInteger asBig(@NotNull ConfigurationSection section, @NotNull String key) {

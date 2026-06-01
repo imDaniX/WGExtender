@@ -37,3 +37,5 @@ misc:
   old-pvp-flags: true
 messages:
   serializer: LEGACY
+  locale: en
+

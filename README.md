@@ -37,9 +37,9 @@ limits:
   default: 50000
   vip: 200000
 ```
-- `blocklimits.minimal.volume`: Minimum volume (width\*height\*length).
-- `blocklimits.minimal.horizontal`: Minimum width and length.
-- `blocklimits.minimal.vertical`: Minimum height.
+- `blocklimits.minimal.volume`: Minimal volume (width\*height\*length).
+- `blocklimits.minimal.horizontal`: Minimal width and length.
+- `blocklimits.minimal.vertical`: Minimal height.
 
 ### `regionprotect`
 - `flow.lava`, `flow.water`, `flow.other`: Block liquid flow across region borders.
@@ -48,6 +48,7 @@ limits:
 - `fire.burn`: Prevent fire from destroying blocks.
 - `explosion.block`: Prevent explosions from destroying blocks.
 - `explosion.entity`: Prevent explosion damage to entities.
+- `explosion.source-detection`: Section for player source detection. If source was a member of a region, the protection is disabled.
 
 ### `autoflags`
 - `enabled`: Auto-apply defined flags to new regions.
@@ -75,18 +76,19 @@ Allows renaming of the WorldEdit wand given by the `//wand` command via `message
 > [!WARNING]
 > Both PvP options are deprecated. While they still work, there may be issues per release, as they require manual mimicking and copying of WorldGuard logic. They also require a server restart for the changes to take effect.
 - `pvpmode`: Default PvP behavior for regions without an explicit flag: `allow`, `deny`, or `default` (WorldGuard behavior).
-- `old-pvp-flags`: Use legacy 1.8 PvP flag handling.
+- `old-pvp-flags`: Enables the usage of legacy 1.8 PvP flags.
 
 ### `messages`
+- Messages are loaded from the `messages/messages_<locale>.yml` files.
 - `serializer`: Format parser. Possible values:
   - `LEGACY` (`&c`)
   - `LEGACY_SECTION` (`§c`)
   - `MINIMESSAGE` (`<red>`)
-- Messages are loaded from the `messages.yml` file.
+- `locale`: Localization to load messages from. Supported locales: `en`, `ru`.
 
 ## Building
 
-Unlike the original WGExtender, WGExtender X uses Maven instead of Gradle to simplify the build configuration.
+Unlike the original WGExtender, which uses Gradle, WGExtender X uses Maven to simplify the build configuration.
 ```bash
 git clone https://github.com/imDaniX/WGExtender.git
 cd WGExtender

@@ -1,0 +1,79 @@
+common:
+  error:
+    player-only: This command is for players only.
+    no-permission: '&4Insufficient permissions.'
+    player-not-found: '&4Player {player} does not exist!'
+claim:
+  error:
+    global: Cannot claim __global__.
+    format: '&4{error}'
+    restricted-symbols: Region name '{id}' contains forbidden symbols.
+    config-too-big: The maximum claim volume set in the configuration is higher than is supported. 
+      Currently, it must be 2147483647 or smaller. Please contact a server administrator.
+    already-exists: A region with that name already exists, please choose another.
+    too-many: You have too many regions, delete one before claiming a new one.
+    too-big: 'Region size is too large. Maximum size: {maxVolume}, your size: {volume}'
+    overlap: This region overlaps another player''s region.
+    only-inside-own: You can only claim inside your own regions.
+    only-cuboid: You can only use a cuboid selection.
+    exception: '&eAn error occurred while claiming region {id}.'
+    incomplete: 'Select an area first. Use WorldEdit to make a selection (wiki: https://worldedit.enginehub.org/).'
+    deny-max-volume: |-
+      &4You cannot claim such a large region
+      Your limit: {limit}, you attempted to claim: {volume}
+    deny-min-volume: |-
+      &4You cannot claim such a small region
+      Minimum volume: {limit}, you attempted to claim: {volume}
+    deny-horizontal: |-
+      &4You cannot claim such a narrow region
+      Minimum width: {limit}, you attempted to claim: {volume}
+    deny-vertical: |-
+      &4You cannot claim such a short region
+      Minimum height: {limit}, you attempted to claim: {volume}
+  success: '&eYou have claimed region {id}.'
+  auto-vert: '&eRegion automatically expanded vertically.'
+wand:
+  given: '&dArea selection wand given.'
+  item-name: '&dArea Selection'
+flags:
+  chorus-restricted: '&4You cannot use chorus fruit in this region.'
+  consume-restricted: '&4You cannot consume items in this region.'
+damage:
+  mob: hit that
+  vehicle: change that
+  decoration: change this
+  pvp: PvP
+  player: damage that
+  non-hostile: harm that
+  other: hit that
+restricted-command: '&4You cannot use this command in another player''s region.'
+wgex-command:
+  unknown-subcommand: '&bUnknown subcommand ''{subcommand}''.'
+  reload:
+    help: '&bwgex reload - reload the config'
+    success: '&bConfig reloaded.'
+  search:
+    help: '&bwgex search - search for regions in the selected area'
+    not-found: '&bNo regions intersecting the selected area were found.'
+    found: '&bRegions intersecting the selected area found: {regions}.'
+    incomplete-selection: '&bSelect a search area first.'
+  setflag:
+    help: '&bwgex setflag <world> <flag> <value> - sets flag <flag> with value <value> on all regions in world <world>'
+    world-not-found: '&bWorld not found.'
+    flag-not-found: '&bFlag not found.'
+    success: '&bFlags set.'
+    invalid-format: '&bInvalid flag format {flag}: {error}'
+  removeowner:
+    help: '&bwgex removeowner <name> - removes a player from the owner lists of all regions'
+    success: '&bPlayer removed from the owner lists of all regions.'
+  removemember:
+    help: '&bwgex removemember <name> - removes a player from the member lists of all regions'
+    success: '&bPlayer removed from the member lists of all regions.'
+  limits:
+    help: '&bwgex limit - manage the block limit cache'
+    refresh:
+      help: '&bwgex limits refresh <name> - refresh the cache for a player'
+      success: '&bLimit for player {player} updated: {limit}.'
+    clear:
+      help: '&bwgex limits clear - clear the current cache'
+      success: '&bLimit cache cleared.'

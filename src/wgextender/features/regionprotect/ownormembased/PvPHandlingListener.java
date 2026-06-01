@@ -67,7 +67,7 @@ public final class PvPHandlingListener extends ConfigurableListenerBase {
         if (config.miscDefaultPvPFlagOperationMode == null) {
             plugin.getLogger().info(
                     "misc.pvpmode is set to default. Changing it post-initialization will require server " +
-                    "restart, but it's recommended to not this feature because of possible inconsistencies."
+                    "restart, but it's recommended to not use this feature because of possible inconsistencies."
             );
             return;
         } else {
