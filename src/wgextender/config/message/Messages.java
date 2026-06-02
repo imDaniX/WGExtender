@@ -6,8 +6,8 @@ import net.kyori.adventure.text.serializer.ComponentDecoder;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
-import wgextender.WGExtender;
 
 import java.io.File;
 import java.util.Arrays;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 // TODO Option for per-player?
 public final class Messages { // TODO Use MM placeholders properly?
-    private final WGExtender plugin;
+    private final Plugin plugin;
     private final Map<MKey, String> messages = new EnumMap<>(MKey.class);
     private final File messagesFolder;
 
@@ -25,7 +25,7 @@ public final class Messages { // TODO Use MM placeholders properly?
 
     private ComponentDecoder<String, ? extends Component> decoder;
 
-    public Messages(@NotNull WGExtender plugin) {
+    public Messages(@NotNull Plugin plugin) {
         this.plugin = plugin;
         this.messagesFolder = new File(plugin.getDataFolder(), "messages");
         decoder = LegacyComponentSerializer.legacyAmpersand();

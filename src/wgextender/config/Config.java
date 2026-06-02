@@ -32,7 +32,6 @@ import org.spongepowered.configurate.objectmapping.meta.Setting;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
-import wgextender.WGExtender;
 import wgextender.config.message.Messages;
 import wgextender.utils.WGUtils;
 
@@ -80,7 +79,7 @@ public final class Config {
     private WorldSettings defaultWorld = new WorldSettings(RegionProtection.DEFAULTS, AutoFlags.DEFAULTS, RestrictedCommands.DEFAULTS);
     private Map<String, WorldSettings> worlds = Map.of();
 
-    public Config(@NotNull WGExtender plugin) {
+    public Config(@NotNull Plugin plugin) {
         this.plugin = plugin;
         this.configFile = new File(plugin.getDataFolder(), CONFIG_FILE);
         this.msg = new Messages(plugin);
