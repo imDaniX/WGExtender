@@ -2,7 +2,8 @@ claim:
   vertexpand: false
   blocklimits:
     enabled: false
-    limits: {}
+    limits:
+      default: 50000
     minimal:
       volume: 0
       horizontal: 0
@@ -26,10 +27,12 @@ regionprotect:
 autoflags:
   enabled: false
   show-messages: false
-  flags: {}
+  flags:
+    pvp: deny
 restrictcommands:
   enabled: false
-  commands: []
+  commands:
+    - home
   recheck-ticks: 100
 extendedwewand: false
 misc:
