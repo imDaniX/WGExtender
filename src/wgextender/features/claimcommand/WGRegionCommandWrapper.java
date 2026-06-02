@@ -19,7 +19,6 @@ package wgextender.features.claimcommand;
 
 import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.worldedit.extension.platform.Actor;
-import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -35,8 +34,6 @@ import wgextender.config.message.Messages;
 import wgextender.utils.CommandUtils;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
-
-import java.util.Map;
 
 public final class WGRegionCommandWrapper extends Command {
 	public static void inject(WGExtender plugin) {
@@ -59,7 +56,7 @@ public final class WGRegionCommandWrapper extends Command {
 	private WGRegionCommandWrapper(WGExtender plugin, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = plugin.getPluginConfig();
-		this.msg = config.getMessages();
+		this.msg = config.messages();
 		this.limits = plugin.getBlockLimitsHandler();
 		this.originalCmd = originalCmd;
 		this.claimSubcommand = new WGClaimSubcommand(config);
@@ -69,7 +66,7 @@ public final class WGRegionCommandWrapper extends Command {
 	public boolean execute(@NonNull CommandSender sender, @NonNull String label, @NotNull String @NonNull [] args) {
 		if (sender instanceof Player player && args.length >= 2 && args[0].equalsIgnoreCase("claim")) {
             String regionName = args[1];
-			if (config.claimExpandSelectionVertical) {
+			if (config.claim().expandSelectionVertical()) {
 				boolean result = WEUtils.expandVert(player);
 				if (result) {
 					msg.sendMessage(player, MKey.CLAIM__AUTO_VERT);
@@ -81,12 +78,13 @@ public final class WGRegionCommandWrapper extends Command {
 			boolean hasRegion = WGUtils.hasRegion(player.getWorld(), regionName);
 			try {
 				claimSubcommand.claim(regionName, sender);
-				if (!hasRegion && config.claimAutoFlagsEnabled) {
-					Actor actor = WEUtils.privilegedActor(player, config.showAutoFlagMessages);
+				var autoFlags = config.forWorld(player.getWorld()).autoFlags();
+				if (!hasRegion && autoFlags.enabled()) {
+					Actor actor = WEUtils.privilegedActor(player, autoFlags.showMessages());
 					World world = player.getWorld();
 					final ProtectedRegion rg = WGUtils.getRegion(world, regionName);
 					if (rg != null) {
-						for (Map.Entry<Flag<?>, String> entry : config.claimAutoFlags.entrySet()) {
+						for (var entry : autoFlags.resolvedFlags().entrySet()) {
 							try {
 								WGUtils.setFlagNaturally(actor, world, rg, entry.getKey(), entry.getValue());
 							} catch (CommandException e) {

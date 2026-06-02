@@ -27,7 +27,7 @@ public final class WGClaimSubcommand {
 	private final Messages msg;
 
 	public WGClaimSubcommand(Config config) {
-		this.msg = config.getMessages();
+		this.msg = config.messages();
 	}
 
 	public void claim(String id, CommandSender sender) throws CommandException {

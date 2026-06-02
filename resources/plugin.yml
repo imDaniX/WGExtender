@@ -9,3 +9,5 @@ folia-supported: true
 commands:
   wgextender:
     aliases: [wgex]
+libraries:
+  - 'org.spongepowered:configurate-yaml:4.2.0'

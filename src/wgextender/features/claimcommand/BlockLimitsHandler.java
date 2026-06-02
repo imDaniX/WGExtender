@@ -32,7 +32,6 @@ import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.WEUtils;
 
 import java.math.BigInteger;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,7 +56,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 	}
 
 	public @NotNull BigInteger blockLimitByGroup(@NotNull String group) {
-		return config.claimBlockLimits.getOrDefault(group, config.claimBlockLimitDefault);
+		return config.claim().limitFor(group);
 	}
 
 	/**
@@ -92,11 +91,11 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 	public @NotNull BigInteger calculateBlockLimit(@NotNull OfflinePlayer player) {
 		String[] groups = PermissionsResolverManager.getInstance().getGroups(player);
 		if (groups.length == 0) {
-			return config.claimBlockLimitDefault;
+			return config.claim().blockLimitDefault();
 		}
 		BigInteger maxBlocks = BigInteger.ZERO;
 		for (String group : groups) {
-			maxBlocks = maxBlocks.max(config.claimBlockLimits.getOrDefault(group.toLowerCase(Locale.ROOT), BigInteger.ZERO));
+			maxBlocks = maxBlocks.max(config.claim().limitFor(group, BigInteger.ZERO));
 		}
 		return maxBlocks;
 	}
@@ -127,29 +126,30 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 					MAX_VALUE
 			);
 		}
-		if (config.claimBlockLimitsEnabled) {
+		var blockLimits = config.claim().blocklimits();
+		if (blockLimits.enabled()) {
 			if (player.hasPermission("worldguard.region.unlimited")) {
 				return EvaluationResult.EMPTY_ALLOW;
 			}
-			if (volume.compareTo(config.claimBlockMinimalVolume) < 0) {
+			if (volume.compareTo(blockLimits.minimal().volume()) < 0) {
 				return new EvaluationResult(
 						ResultType.DENY_MIN_VOLUME,
 						volume,
-						config.claimBlockMinimalVolume
+						blockLimits.minimal().volume()
 				);
 			}
-			if (minHorizontal.compareTo(config.claimBlockMinimalHorizontal) < 0) {
+			if (minHorizontal.compareTo(blockLimits.minimal().horizontal()) < 0) {
 				return new EvaluationResult(
 						ResultType.DENY_MIN_VOLUME,
 						minHorizontal,
-						config.claimBlockMinimalHorizontal
+						blockLimits.minimal().horizontal()
 				);
 			}
-			if (yDistance.compareTo(config.claimBlockMinimalVertical) < 0) {
+			if (yDistance.compareTo(blockLimits.minimal().vertical()) < 0) {
 				return new EvaluationResult(
 						ResultType.DENY_VERTICAL,
 						yDistance,
-						config.claimBlockMinimalVertical
+						blockLimits.minimal().vertical()
 				);
 			}
 			BigInteger maxBlocks = refreshBlockLimit(player);

@@ -55,10 +55,11 @@ public final class LiquidFlow extends ConfigurableListenerBase {
 	}
 
 	private void check(Block source, Block to, Cancellable event, boolean checkSource) {
+		var flow = config.forWorld(source.getWorld()).regionProtection().flow();
 		if (switch (checkSource ? source.getType() : to.getType()) {
-			case LAVA -> config.checkLavaFlow;
-			case WATER -> config.checkWaterFlow;
-			default -> config.checkOtherLiquidFlow;
+			case LAVA -> flow.lava();
+			case WATER -> flow.water();
+			default -> flow.other();
 		} && !WGUtils.isInTheSameRegionOrWild(source.getLocation(), to.getLocation())) {
 			event.setCancelled(true);
 		}

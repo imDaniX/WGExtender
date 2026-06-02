@@ -45,13 +45,13 @@ public final class WEWandCommandWrapper extends Command {
 	private WEWandCommandWrapper(Config config, Command originalCmd) {
 		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
 		this.config = config;
-		this.msg = config.getMessages();
+		this.msg = config.messages();
 		this.originalCmd = originalCmd;
 	}
 
 	@Override
 	public boolean execute(@NonNull CommandSender sender, @NonNull String label, String @NonNull [] args) {
-		if (!config.extendedWorldEditWandEnabled) {
+		if (!config.extendedWorldEditWand()) {
 			return originalCmd.execute(sender, label, args);
 		}
 		if (sender instanceof Player player) {

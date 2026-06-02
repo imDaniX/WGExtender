@@ -11,6 +11,6 @@ public abstract class ConfigurableListenerBase implements Listener {
 
     protected ConfigurableListenerBase(@NotNull Config config) {
         this.config = config;
-        this.msg = config.getMessages();
+        this.msg = config.messages();
     }
 }

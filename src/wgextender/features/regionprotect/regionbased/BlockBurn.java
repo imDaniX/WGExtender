@@ -31,7 +31,10 @@ public final class BlockBurn extends ConfigurableListenerBase {
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onBlockBurn(BlockBurnEvent event) {
-		if (config.disableBlockBurnInRegion && WGUtils.isInRegion(event.getBlock().getLocation())) {
+		if (
+				config.forWorld(event.getBlock().getWorld()).regionProtection().fire().burn() &&
+				WGUtils.isInRegion(event.getBlock().getLocation())
+		) {
 			event.setCancelled(true);
 		}
 	}

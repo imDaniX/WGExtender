@@ -64,15 +64,15 @@ public final class PvPHandlingListener extends ConfigurableListenerBase {
 	}
 
 	public void inject(Plugin plugin) {
-        if (config.miscDefaultPvPFlagOperationMode == null) {
+        if (config.misc().pvpFlagMode() == null) {
             plugin.getLogger().info(
-                    "misc.pvpmode is set to default. Changing it post-initialization will require server " +
+                    "misc.pvpMode is set to default. Changing it post-initialization will require server " +
                     "restart, but it's recommended to not use this feature because of possible inconsistencies."
             );
             return;
         } else {
             plugin.getLogger().warning(
-                    "misc.pvpmode is set to '" + config.miscDefaultPvPFlagOperationMode + "'. This may or " +
+                    "misc.pvpMode is set to '" + config.misc().pvpFlagMode() + "'. This may or " +
                     "may not result in inconsistency with the default WG behavior, since the feature requires " +
                     "manual copying of WG code."
             );
@@ -146,12 +146,12 @@ public final class PvPHandlingListener extends ConfigurableListenerBase {
 			// null - default wg pvp logic
 			// true - allow pvp when flag not set
 			// false - disallow pvp when flag not set
-			if (config.miscDefaultPvPFlagOperationMode == null) {
+			if (config.misc().pvpFlagMode() == null) {
 				canDamage =
 					query.testBuild(target, associable, combine(event, Flags.PVP)) &&
 					(query.queryState(attackerLocation, localAttacker, combine(event, Flags.PVP)) != State.DENY) &&
 					(query.queryState(target, localAttacker, combine(event, Flags.PVP)) != State.DENY);
-			} else if (config.miscDefaultPvPFlagOperationMode) {
+			} else if (config.misc().pvpFlagMode()) {
 				canDamage =
 					(query.queryState(attackerLocation, localAttacker, combine(event, Flags.PVP)) != State.DENY) &&
 					(query.queryState(target, localAttacker, combine(event, Flags.PVP)) != State.DENY);

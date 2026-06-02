@@ -20,178 +20,405 @@ package wgextender.config;
 import com.sk89q.worldguard.protection.flags.Flag;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.configurate.CommentedConfigurationNode;
+import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.serialize.TypeSerializer;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import wgextender.WGExtender;
 import wgextender.config.message.Messages;
 import wgextender.utils.WGUtils;
 
-import java.io.File;
+import java.io.*;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Level;
 
-public final class Config { // TODO Some config framework?
-	private final Plugin plugin;
-	private final File configFile;
-	private final Messages msg;
+public final class Config {
+    private static final String VERSION_KEY = "_version";
+    private static final String RESOURCE = "config.yml";
 
-	public Config(WGExtender plugin) {
-		this.plugin = plugin;
-		this.configFile = new File(plugin.getDataFolder(), "config.yml");
-		this.msg = new Messages(plugin);
-	}
+    private static final TypeSerializer<BigInteger> BIG_INTEGER_SERIALIZER = TypeSerializer.of(
+            BigInteger.class,
+            (value, typeSupported) -> value.toString(),
+            raw -> switch (raw) {
+                case BigInteger bigInteger -> bigInteger;
+                case Number number -> BigInteger.valueOf(number.longValue());
+                case String text -> {
+                    if (text.isEmpty()) {
+                        yield  BigInteger.ZERO;
+                    }
+                    try {
+                        yield new BigInteger(text);
+                    } catch (NumberFormatException e) {
+                        throw new SerializationException("Invalid integer value: " + raw);
+                    }
+                }
+                default -> BigInteger.ZERO;
+            }
+    );
 
-	public boolean claimExpandSelectionVertical = false;
+    private final Plugin plugin;
+    private final File configFile;
+    private final Messages msg;
 
-	public boolean claimBlockLimitsEnabled = false;
-	public Map<String, BigInteger> claimBlockLimits = new LinkedHashMap<>();
-	public BigInteger claimBlockLimitDefault = BigInteger.ZERO;
-	public BigInteger claimBlockMinimalVolume = BigInteger.ZERO;
-	public BigInteger claimBlockMinimalHorizontal = BigInteger.ZERO;
-	public BigInteger claimBlockMinimalVertical = BigInteger.ZERO;
+    private ClaimSettings claim = ClaimSettings.DEFAULTS;
+    private MiscSettings misc = MiscSettings.DEFAULTS;
+    private boolean extendedWorldEditWand = false;
+    private WorldSettings defaultWorld = new WorldSettings(RegionProtection.DEFAULTS, AutoFlags.DEFAULTS, RestrictedCommands.DEFAULTS);
+    private Map<String, WorldSettings> worlds = Map.of();
 
-	public boolean checkLavaFlow = false;
-	public boolean checkWaterFlow = false;
-	public boolean checkOtherLiquidFlow = false;
-	public boolean checkFireSpreadToRegion = false;
-	public boolean disableFireSpreadInRegion = false;
-	public boolean disableBlockBurnInRegion = false;
-	public boolean checkExplosionBlockDamage = false;
-	public boolean checkExplosionEntityDamage = false;
-	public boolean explosionSourceCreeperTarget = true;
-	public boolean explosionSourceTntPrime = false;
+    public Config(@NotNull WGExtender plugin) {
+        this.plugin = plugin;
+        this.configFile = new File(plugin.getDataFolder(), RESOURCE);
+        this.msg = new Messages(plugin);
+    }
 
-	public boolean claimAutoFlagsEnabled = false;
-	public boolean showAutoFlagMessages = false;
-	public Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
+    public void loadConfig() {
+        ensureExists();
+        try {
+            loadAndMigrate();
+        } catch (ConfigurateException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to load config.yml", e);
+        }
+    }
 
-	public boolean restrictCommandsInRegionEnabled = false;
-	public int restrictCommandsRecheckTicks = 100;
-	public List<String> restrictedCommandsInRegion = new ArrayList<>();
+    public void reload() {
+        loadConfig();
+    }
 
-	public boolean extendedWorldEditWandEnabled = false;
+    public @NotNull ClaimSettings claim() {
+        return claim;
+    }
 
-	public Boolean miscDefaultPvPFlagOperationMode = null;
+    public @NotNull MiscSettings misc() {
+        return misc;
+    }
 
-	public boolean miscOldPvpFlags = true;
+    public boolean extendedWorldEditWand() {
+        return extendedWorldEditWand;
+    }
 
-	private static final String ALLOW = "allow";
-	private static final String DENY = "deny";
-	private static final String DEFAULT = "default";
+    public @NotNull WorldSettings forWorld(@NotNull String world) {
+        WorldSettings ws = worlds.get(world.toLowerCase(Locale.ROOT));
+        return ws != null ? ws : defaultWorld;
+    }
 
-	public void loadConfig() {
-		plugin.saveDefaultConfig();
-		loadAll();
-	}
+    public @NotNull WorldSettings forWorld(@NotNull World world) {
+        return forWorld(world.getName());
+    }
 
-	private void loadAll() {
-		FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-		loadClaimLimits(config);
-		loadProtection(config);
-		loadAutoFlags(config);
-		loadMisc(config);
-		loadMessages(config);
-	}
+    public @NotNull WorldSettings defaultWorld() {
+        return defaultWorld;
+    }
 
-	private void loadClaimLimits(@NotNull FileConfiguration config) {
-		claimExpandSelectionVertical = config.getBoolean("claim.vertexpand", claimExpandSelectionVertical);
+    public @NotNull Messages messages() {
+        return msg;
+    }
 
-		claimBlockLimitsEnabled = config.getBoolean("claim.blocklimits.enabled", claimBlockLimitsEnabled);
+    private @NotNull YamlConfigurationLoader loader() {
+        return YamlConfigurationLoader.builder()
+                .path(configFile.toPath())
+                .defaultOptions(opt -> opt.serializers(ser -> ser.register(BigInteger.class, BIG_INTEGER_SERIALIZER)))
+                .build();
+    }
 
-		Map<String, BigInteger> claimBlockLimits = new LinkedHashMap<>();
-		ConfigurationSection limitsSection = config.getConfigurationSection("claim.blocklimits.limits");
-		if (limitsSection != null) {
-			claimBlockLimitDefault = asBig(limitsSection, "default");
-			for (String group : limitsSection.getKeys(false)) {
-				claimBlockLimits.put(
-						group.toLowerCase(Locale.ROOT),
-						asBig(limitsSection, group)
-				);
-			}
-		} else {
-			claimBlockLimitDefault = BigInteger.ZERO; // TODO Default to WG or max value
+    private void loadAndMigrate() throws ConfigurateException {
+        YamlConfigurationLoader loader = loader();
+        CommentedConfigurationNode root = migrate(loader, loader.load());
+
+        this.claim = root.node("claim").get(ClaimSettings.class, ClaimSettings.DEFAULTS);
+        this.misc = root.node("misc").get(MiscSettings.class, MiscSettings.DEFAULTS);
+        this.extendedWorldEditWand = root.node("extendedwewand").getBoolean(false);
+        loadWorlds(root);
+        loadMessages(root);
+    }
+
+    private void loadWorlds(@NotNull ConfigurationNode root) throws ConfigurateException {
+        ConfigurationNode regionNode = root.node("regionprotect");
+        ConfigurationNode autoNode = root.node("autoflags");
+        ConfigurationNode restrictNode = root.node("restrictcommands");
+
+        RegionProtection regionDef = regionNode.get(RegionProtection.class, RegionProtection.DEFAULTS);
+        AutoFlags autoDef = autoNode.get(AutoFlags.class, AutoFlags.DEFAULTS);
+        RestrictedCommands restrictDef = restrictNode.get(RestrictedCommands.class, RestrictedCommands.DEFAULTS);
+
+        Map<String, RegionProtection> regionPer = loadPerWorld(regionNode, RegionProtection.class, regionDef);
+        Map<String, AutoFlags> autoPer = loadPerWorld(autoNode, AutoFlags.class, autoDef);
+        Map<String, RestrictedCommands> restrictPer = loadPerWorld(restrictNode, RestrictedCommands.class, restrictDef);
+
+        Set<String> names = new HashSet<>();
+        names.addAll(regionPer.keySet());
+        names.addAll(autoPer.keySet());
+        names.addAll(restrictPer.keySet());
+
+        Map<String, WorldSettings> map = new HashMap<>();
+        for (String name : names) {
+            map.put(name, new WorldSettings(
+                    regionPer.getOrDefault(name, regionDef),
+                    autoPer.getOrDefault(name, autoDef),
+                    restrictPer.getOrDefault(name, restrictDef)
+            ));
+        }
+
+        this.defaultWorld = new WorldSettings(regionDef, autoDef, restrictDef);
+        this.worlds = Map.copyOf(map);
+    }
+
+    private <T> @NotNull Map<String, T> loadPerWorld(@NotNull ConfigurationNode feature, @NotNull Class<T> type, @NotNull T fallback) throws ConfigurateException {
+        Map<String, T> map = new HashMap<>();
+        for (Map.Entry<Object, ? extends ConfigurationNode> e : feature.node("per-world").childrenMap().entrySet()) {
+            ConfigurationNode merged = e.getValue().copy().mergeFrom(feature);
+            map.put(String.valueOf(e.getKey()).toLowerCase(Locale.ROOT), merged.get(type, fallback));
+        }
+        return map;
+    }
+
+    private void loadMessages(@NotNull ConfigurationNode config) {
+        msg.setDecoder(switch (config.node("messages", "serializer").getString("LEGACY_AMPERSAND").toUpperCase(Locale.ROOT)) {
+            case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
+            case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
+            default -> LegacyComponentSerializer.legacyAmpersand();
+        });
+        msg.loadMessages(config.node("messages", "locale").getString("en"));
+    }
+
+    private void ensureExists() {
+        if (configFile.exists()) return;
+        InputStream in = plugin.getResource(RESOURCE);
+        if (in == null) {
+            plugin.getLogger().warning("Bundled " + RESOURCE + " not found; cannot create default config.");
+            return;
+        }
+        try (InputStream src = in) {
+            Files.createDirectories(configFile.getParentFile().toPath());
+            Files.copy(src, configFile.toPath());
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to write default config.yml", e);
+        }
+    }
+
+    private @NotNull CommentedConfigurationNode migrate(@NotNull YamlConfigurationLoader loader, @NotNull CommentedConfigurationNode root) throws ConfigurateException {
+        CommentedConfigurationNode bundled = loadBundledDefaults();
+        if (bundled == null) return root;
+
+        int currentVersion = root.node(VERSION_KEY).getInt(0);
+        int bundledVersion = bundled.node(VERSION_KEY).getInt(0);
+        if (bundledVersion <= currentVersion) return root;
+
+        plugin.getLogger().info("Updating config.yml: v" + currentVersion + " -> v" + bundledVersion);
+        if (!backupConfig(currentVersion)) return root;
+
+        root.mergeFrom(bundled);
+        root.node(VERSION_KEY).set(bundledVersion);
+        loader.save(root);
+        return root;
+    }
+
+    private @Nullable CommentedConfigurationNode loadBundledDefaults() {
+        InputStream in = plugin.getResource(RESOURCE);
+        if (in == null) {
+            plugin.getLogger().warning("Bundled " + RESOURCE + " not found; skipping migration.");
+            return null;
+        }
+        YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
+                .source(() -> new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)))
+                .build();
+        try {
+            return loader.load();
+        } catch (ConfigurateException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to read bundled " + RESOURCE, e);
+            return null;
+        }
+    }
+
+    private boolean backupConfig(int oldVersion) {
+        String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        File backup = new File(plugin.getDataFolder(), "config-v" + oldVersion + "-" + stamp + ".yml.bak");
+        if (backup.exists()) {
+            plugin.getLogger().info("Backup " + backup.getName() + " already exists; keeping it.");
+            return true;
+        }
+        try {
+            Files.copy(configFile.toPath(), backup.toPath());
+            plugin.getLogger().info("Backed up old config to " + backup.getName());
+            return true;
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to back up config.yml; aborting migration", e);
+            return false;
+        }
+    }
+
+    @ConfigSerializable
+    public record ClaimSettings(
+            @Setting("vertexpand") boolean expandSelectionVertical,
+            BlockLimits blocklimits
+    ) {
+        public static final ClaimSettings DEFAULTS = new ClaimSettings(false, BlockLimits.DEFAULTS);
+
+        public ClaimSettings {
+            if (blocklimits == null) blocklimits = BlockLimits.DEFAULTS;
+        }
+
+        public @NotNull BigInteger blockLimitDefault() {
+            return blocklimits.limits().getOrDefault("default", BigInteger.ZERO);
+        }
+
+		public @NotNull BigInteger limitFor(@NotNull String group, @NotNull BigInteger def) {
+			BigInteger value = blocklimits.limits().get(group.toLowerCase(Locale.ROOT));
+			return value != null ? value : def;
 		}
-		this.claimBlockLimits = claimBlockLimits;
 
-		ConfigurationSection minLimitsSection = config.getConfigurationSection("claim.blocklimits.minimal");
-		if (minLimitsSection != null) {
-			claimBlockMinimalVolume = asBig(minLimitsSection, "volume");
-			claimBlockMinimalHorizontal = asBig(minLimitsSection, "horizontal");
-			claimBlockMinimalVertical = asBig(minLimitsSection, "vertical");
-		} else {
-			claimBlockMinimalVolume = BigInteger.ZERO;
-			claimBlockMinimalHorizontal = BigInteger.ZERO;
-			claimBlockMinimalVertical = BigInteger.ZERO;
-		}
-	}
+        public @NotNull BigInteger limitFor(@NotNull String group) {
+			BigInteger value = blocklimits.limits().get(group.toLowerCase(Locale.ROOT));
+			return value != null ? value : blockLimitDefault();
+        }
 
-	private void loadProtection(@NotNull FileConfiguration config) {
-		checkLavaFlow = config.getBoolean("regionprotect.flow.lava", checkLavaFlow);
-		checkWaterFlow = config.getBoolean("regionprotect.flow.water", checkWaterFlow);
-		checkOtherLiquidFlow = config.getBoolean("regionprotect.flow.other", checkOtherLiquidFlow);
-		checkFireSpreadToRegion = config.getBoolean("regionprotect.fire.spread.toregion", checkFireSpreadToRegion);
-		disableFireSpreadInRegion = config.getBoolean("regionprotect.fire.spread.inregion", disableFireSpreadInRegion);
-		disableBlockBurnInRegion = config.getBoolean("regionprotect.fire.burn", disableBlockBurnInRegion);
-		checkExplosionBlockDamage = config.getBoolean("regionprotect.explosion.block", checkExplosionBlockDamage);
-		checkExplosionEntityDamage = config.getBoolean("regionprotect.explosion.entity", checkExplosionEntityDamage);
-		explosionSourceCreeperTarget = config.getBoolean("regionprotect.explosion.source-detection.creeper-target", explosionSourceCreeperTarget);
-		explosionSourceTntPrime = config.getBoolean("regionprotect.explosion.source-detection.tnt-prime", explosionSourceTntPrime);
+        @ConfigSerializable
+        public record BlockLimits(boolean enabled, Map<String, BigInteger> limits, Minimal minimal) {
+            public static final BlockLimits DEFAULTS = new BlockLimits(false, Map.of(), Minimal.DEFAULTS);
 
-		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
-		restrictCommandsRecheckTicks = config.getInt("restrictcommands.recheck-ticks", restrictCommandsRecheckTicks);
-		restrictedCommandsInRegion = new ArrayList<>(config.getStringList("restrictcommands.commands"));
-	}
+            public BlockLimits {
+                if (limits == null) limits = new LinkedHashMap<>();
+                if (minimal == null) minimal = Minimal.DEFAULTS;
+            }
+        }
 
-	private void loadAutoFlags(@NotNull FileConfiguration config) {
-		claimAutoFlagsEnabled = config.getBoolean("autoflags.enabled", claimAutoFlagsEnabled);
-		showAutoFlagMessages = config.getBoolean("autoflags.show-messages", showAutoFlagMessages);
-		Map<Flag<?>, String> claimAutoFlags = new LinkedHashMap<>();
-		ConfigurationSection autoflagsSection = config.getConfigurationSection("autoflags.flags");
-		if (autoflagsSection != null) {
-			for (String flagStr : autoflagsSection.getKeys(false)) {
-				Flag<?> flag = WGUtils.matchFlag(flagStr);
-				if (flag != null) {
-					claimAutoFlags.put(flag, autoflagsSection.getString(flagStr));
-				}
-			}
-		}
-		this.claimAutoFlags = claimAutoFlags;
-	}
+        @ConfigSerializable
+        public record Minimal(BigInteger volume, BigInteger horizontal, BigInteger vertical) {
+            public static final Minimal DEFAULTS = new Minimal(BigInteger.ZERO, BigInteger.ZERO, BigInteger.ZERO);
 
-	private void loadMisc(@NotNull FileConfiguration config) {
-		extendedWorldEditWandEnabled = config.getBoolean("extendedwewand", extendedWorldEditWandEnabled);
+            public Minimal {
+                if (volume == null) volume = BigInteger.ZERO;
+                if (horizontal == null) horizontal = BigInteger.ZERO;
+                if (vertical == null) vertical = BigInteger.ZERO;
+            }
+        }
+    }
 
-		miscDefaultPvPFlagOperationMode = switch (config.getString("misc.pvpmode", DEFAULT).toLowerCase(Locale.ROOT)) {
-			case ALLOW -> Boolean.TRUE;
-			case DENY -> Boolean.FALSE;
-			default -> null;
-		};
-		miscOldPvpFlags = config.getBoolean("misc.old-pvp-flags");
-	}
+    @ConfigSerializable
+    public record MiscSettings(
+			@Setting("pvpmode") String pvpMode,
+			@Setting("old-pvp-flags") boolean oldPvpFlags
+	) {
+        public static final MiscSettings DEFAULTS = new MiscSettings("default", true);
 
-	private void loadMessages(@NotNull FileConfiguration config) {
-		msg.setDecoder(switch (config.getString("messages.serializer", "LEGACY_AMPERSAND").toUpperCase(Locale.ROOT)) {
-			case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
-			case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
-			default -> LegacyComponentSerializer.legacyAmpersand();
-		});
-		msg.loadMessages(config.getString("messages.locale", "en"));
-	}
+        public MiscSettings {
+            if (pvpMode == null) pvpMode = "default";
+        }
 
-	private static @NotNull BigInteger asBig(@NotNull ConfigurationSection section, @NotNull String key) {
-		if (section.isInt(key)) {
-			return BigInteger.valueOf(section.getInt(key));
-		} else {
-			String value = section.getString(key, "0");
-			if (value.equals("0")) return BigInteger.ZERO;
-			return new BigInteger(value);
-		}
-	}
+        public @Nullable Boolean pvpFlagMode() {
+            return switch (pvpMode.toLowerCase(Locale.ROOT)) {
+                case "allow" -> Boolean.TRUE;
+                case "deny" -> Boolean.FALSE;
+                default -> null;
+            };
+        }
+    }
 
-	public @NotNull Messages getMessages() {
-		return this.msg;
-	}
+    public record WorldSettings(
+            RegionProtection regionProtection,
+            AutoFlags autoFlags,
+            RestrictedCommands restrictedCommands
+    ) { }
+
+    @ConfigSerializable
+    public record RegionProtection(Flow flow, Fire fire, Explosion explosion) {
+        public static final RegionProtection DEFAULTS = new RegionProtection(Flow.DEFAULTS, Fire.DEFAULTS, Explosion.DEFAULTS);
+
+        public RegionProtection {
+            if (flow == null) flow = Flow.DEFAULTS;
+            if (fire == null) fire = Fire.DEFAULTS;
+            if (explosion == null) explosion = Explosion.DEFAULTS;
+        }
+
+        @ConfigSerializable
+        public record Flow(boolean lava, boolean water, boolean other) {
+            public static final Flow DEFAULTS = new Flow(false, false, false);
+        }
+
+        @ConfigSerializable
+        public record Fire(Spread spread, boolean burn) {
+            public static final Fire DEFAULTS = new Fire(Spread.DEFAULTS, false);
+
+            public Fire {
+                if (spread == null) spread = Spread.DEFAULTS;
+            }
+
+            @ConfigSerializable
+            public record Spread(boolean toregion, boolean inregion) {
+                public static final Spread DEFAULTS = new Spread(false, false);
+            }
+        }
+
+        @ConfigSerializable
+        public record Explosion(
+				boolean block,
+				boolean entity,
+				@Setting("source-detection") SourceDetection sourceDetection
+		) {
+            public static final Explosion DEFAULTS = new Explosion(false, false, SourceDetection.DEFAULTS);
+
+            public Explosion {
+                if (sourceDetection == null) sourceDetection = SourceDetection.DEFAULTS;
+            }
+
+            @ConfigSerializable
+            public record SourceDetection(
+					@Setting("creeper-target") boolean creeperTarget,
+					@Setting("tnt-prime") boolean tntPrime
+			) {
+                public static final SourceDetection DEFAULTS = new SourceDetection(false, true);
+            }
+        }
+    }
+
+    @ConfigSerializable
+    public record AutoFlags(
+			boolean enabled,
+			@Setting("show-messages") boolean showMessages,
+			Map<String, String> flags
+	) {
+        public static final AutoFlags DEFAULTS = new AutoFlags(false, false, Map.of());
+
+        public AutoFlags {
+            if (flags == null) flags = new LinkedHashMap<>();
+        }
+
+        public @NotNull Map<Flag<?>, String> resolvedFlags() {
+            Map<Flag<?>, String> resolved = new LinkedHashMap<>();
+            for (Map.Entry<String, String> e : flags.entrySet()) {
+                Flag<?> flag = WGUtils.matchFlag(e.getKey());
+                if (flag != null) {
+                    resolved.put(flag, e.getValue());
+                }
+            }
+            return resolved;
+        }
+    }
+
+    @ConfigSerializable
+    public record RestrictedCommands(
+			boolean enabled,
+			@Setting("recheck-ticks") int recheckTicks,
+			List<String> commands
+	) {
+        public static final RestrictedCommands DEFAULTS = new RestrictedCommands(false, 100, List.of());
+
+        public RestrictedCommands {
+            if (recheckTicks <= 0) recheckTicks = 100;
+            if (commands == null) commands = new ArrayList<>();
+        }
+    }
 }

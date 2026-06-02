@@ -18,6 +18,7 @@
 package wgextender.features.regionprotect.regionbased;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -29,6 +30,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import wgextender.config.Config;
 import wgextender.features.ConfigurableListenerBase;
@@ -41,9 +43,13 @@ public final class Explode extends ConfigurableListenerBase {
 		super(config);
 	}
 
+	private @NotNull Config.RegionProtection.Explosion explosionConfig(@NotNull World world) {
+		return config.forWorld(world).regionProtection().explosion();
+	}
+
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onEntityExplode(EntityExplodeEvent event) {
-		if (!config.checkExplosionBlockDamage) {
+		if (!explosionConfig(event.getEntity().getWorld()).block()) {
 			return;
 		}
 		Player source = findExplosionSource(event.getEntity());
@@ -59,7 +65,7 @@ public final class Explode extends ConfigurableListenerBase {
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onBlockExplode(BlockExplodeEvent event) {
-		if (!config.checkExplosionBlockDamage) {
+		if (!explosionConfig(event.getBlock().getWorld()).block()) {
 			return;
 		}
 		event.blockList().removeIf(block -> WGUtils.isInRegion(block.getLocation()));
@@ -67,7 +73,7 @@ public final class Explode extends ConfigurableListenerBase {
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onEntityDamageByExplosion(EntityDamageEvent event) {
-		if (!config.checkExplosionEntityDamage) {
+		if (!explosionConfig(event.getEntity().getWorld()).entity()) {
 			return;
 		}
 		if ((event.getCause() == DamageCause.BLOCK_EXPLOSION) || (event.getCause() == DamageCause.ENTITY_EXPLOSION)) {
@@ -89,11 +95,11 @@ public final class Explode extends ConfigurableListenerBase {
 	private @Nullable Player findExplosionSource(@Nullable Entity exploded) {
 		Entity source = null;
 		if (exploded instanceof TNTPrimed primed) {
-			if (config.explosionSourceTntPrime) {
+			if (explosionConfig(exploded.getWorld()).sourceDetection().tntPrime()) {
 				source = primed.getSource();
 			}
 		} else if (exploded instanceof Creeper creeper) {// TODO Creepers can be ignited using flint and steel
-			if (config.explosionSourceCreeperTarget) {
+			if (explosionConfig(exploded.getWorld()).sourceDetection().creeperTarget()) {
 				source = creeper.getTarget();
 			}
 		} else {

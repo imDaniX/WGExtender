@@ -63,7 +63,7 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
         this.plugin = plugin;
         this.server = plugin.getServer();
         this.config = plugin.getPluginConfig();
-        this.msg = config.getMessages();
+        this.msg = config.messages();
     }
 
     @Override

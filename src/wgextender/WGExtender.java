@@ -85,7 +85,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 			pvpListener = new PvPHandlingListener(config);
 			pvpListener.inject(this);
 			oldPvpHandler = new OldPVPFlagsHandler(this);
-			if (config.miscOldPvpFlags) {
+			if (config.misc().oldPvpFlags()) {
 				getLogger().warning(
 						"Enabling the old-PvP flags. Do note that they're not supported, " +
 						"as they're very out of scope of extending WG capabilities and may harm performance. " +
