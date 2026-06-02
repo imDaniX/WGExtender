@@ -18,6 +18,7 @@
 package wgextender.features.regionprotect.ownormembased;
 
 import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -29,54 +30,56 @@ import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.CommandUtils;
 import wgextender.utils.WGUtils;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public final class RestrictCommands extends ConfigurableListenerBase {
 	private final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
 
 	private final Server server;
-	private Collection<String> restrictedCommands;
+	private final Map<String, Collection<String>> restrictedCommandsPerWorld = new ConcurrentHashMap<>();
 
 	public RestrictCommands(WGExtender plugin) {
 		super(plugin.getPluginConfig());
 		this.server = plugin.getServer();
-		restrictedCommands = config.restrictedCommandsInRegion;
-        server.getGlobalRegionScheduler().runAtFixedRate(
-                plugin,
-                (task) -> commandRecheckTask(config),
-                1, Math.max(1, config.restrictCommandsRecheckTicks)
-        );
+		server.getGlobalRegionScheduler().runAtFixedRate(
+				plugin,
+				(task) -> commandRecheckTask(),
+				1, config.forWorld("").restrictedCommands().recheckTicks()
+		);
 	}
 
-	private void commandRecheckTask(Config config) {
-		if (!config.restrictCommandsInRegionEnabled) {
-			return;
-		}
-		Set<String> computedRestrictedCommands = new HashSet<>();
-		for (String restrictedCommand : config.restrictedCommandsInRegion) {
-			String[] split = SPACE_PATTERN.split(restrictedCommand, 2);
-			String toAdd = split.length > 1 ? split[1] : "";
-			for (String alias : CommandUtils.getCommandAliases(server, split[0].toLowerCase(Locale.ROOT))) {
-				computedRestrictedCommands.add(alias + toAdd);
+	private void commandRecheckTask() {
+		for (World world : server.getWorlds()) {
+			Config.RestrictedCommands rc = config.forWorld(world).restrictedCommands();
+			if (!rc.enabled()) {
+				restrictedCommandsPerWorld.remove(world.getName());
+				continue;
 			}
+			Set<String> computed = new HashSet<>();
+			for (String restrictedCommand : rc.commands()) {
+				String[] split = SPACE_PATTERN.split(restrictedCommand, 2);
+				String toAdd = split.length > 1 ? split[1] : "";
+				for (String alias : CommandUtils.getCommandAliases(server, split[0].toLowerCase(Locale.ROOT))) {
+					computed.add(alias + toAdd);
+				}
+			}
+			restrictedCommandsPerWorld.put(world.getName(), computed);
 		}
-		restrictedCommands = computedRestrictedCommands;
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
-		if (!config.restrictCommandsInRegionEnabled) {
+		Player player = event.getPlayer();
+		if (!config.forWorld(player.getWorld()).restrictedCommands().enabled()) {
 			return;
 		}
-		Player player = event.getPlayer();
 		if (WGUtils.canBypassProtection(player)) {
 			return;
 		}
 		if (WGUtils.isInRegion(player.getLocation()) && !WGUtils.canBuild(player, player.getLocation())) { // TODO canBuild is not a great check for commands?
+			Collection<String> restrictedCommands = restrictedCommandsPerWorld.getOrDefault(player.getWorld().getName(), List.of());
 			String command = event.getMessage().substring(1).toLowerCase(Locale.ROOT);
 			for (String rcommand : restrictedCommands) {
 				if (command.startsWith(rcommand) && (command.length() == rcommand.length() || command.charAt(rcommand.length()) == ' ')) {

@@ -46,8 +46,9 @@ import java.util.*;
 import java.util.logging.Level;
 
 public final class Config {
+    private static final DateTimeFormatter BACKUP_FROMATTER = DateTimeFormatter.ofPattern("ddMMyyyy-HHmmss");
     private static final String VERSION_KEY = "_version";
-    private static final String RESOURCE = "config.yml";
+    private static final String CONFIG_FILE = "config.yml";
 
     private static final TypeSerializer<BigInteger> BIG_INTEGER_SERIALIZER = TypeSerializer.of(
             BigInteger.class,
@@ -57,12 +58,12 @@ public final class Config {
                 case Number number -> BigInteger.valueOf(number.longValue());
                 case String text -> {
                     if (text.isEmpty()) {
-                        yield  BigInteger.ZERO;
+                        yield BigInteger.ZERO;
                     }
                     try {
                         yield new BigInteger(text);
                     } catch (NumberFormatException e) {
-                        throw new SerializationException("Invalid integer value: " + raw);
+                        throw new SerializationException(e);
                     }
                 }
                 default -> BigInteger.ZERO;
@@ -81,7 +82,7 @@ public final class Config {
 
     public Config(@NotNull WGExtender plugin) {
         this.plugin = plugin;
-        this.configFile = new File(plugin.getDataFolder(), RESOURCE);
+        this.configFile = new File(plugin.getDataFolder(), CONFIG_FILE);
         this.msg = new Messages(plugin);
     }
 
@@ -92,10 +93,6 @@ public final class Config {
         } catch (ConfigurateException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to load config.yml", e);
         }
-    }
-
-    public void reload() {
-        loadConfig();
     }
 
     public @NotNull ClaimSettings claim() {
@@ -117,10 +114,6 @@ public final class Config {
 
     public @NotNull WorldSettings forWorld(@NotNull World world) {
         return forWorld(world.getName());
-    }
-
-    public @NotNull WorldSettings defaultWorld() {
-        return defaultWorld;
     }
 
     public @NotNull Messages messages() {
@@ -196,9 +189,9 @@ public final class Config {
 
     private void ensureExists() {
         if (configFile.exists()) return;
-        InputStream in = plugin.getResource(RESOURCE);
+        InputStream in = plugin.getResource(CONFIG_FILE);
         if (in == null) {
-            plugin.getLogger().warning("Bundled " + RESOURCE + " not found; cannot create default config.");
+            plugin.getLogger().warning("Bundled " + CONFIG_FILE + " not found; cannot create default config.");
             return;
         }
         try (InputStream src = in) {
@@ -227,9 +220,9 @@ public final class Config {
     }
 
     private @Nullable CommentedConfigurationNode loadBundledDefaults() {
-        InputStream in = plugin.getResource(RESOURCE);
+        InputStream in = plugin.getResource(CONFIG_FILE);
         if (in == null) {
-            plugin.getLogger().warning("Bundled " + RESOURCE + " not found; skipping migration.");
+            plugin.getLogger().warning("Bundled " + CONFIG_FILE + " not found; skipping migration.");
             return null;
         }
         YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
@@ -238,14 +231,13 @@ public final class Config {
         try {
             return loader.load();
         } catch (ConfigurateException e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to read bundled " + RESOURCE, e);
+            plugin.getLogger().log(Level.WARNING, "Failed to read bundled " + CONFIG_FILE, e);
             return null;
         }
     }
 
     private boolean backupConfig(int oldVersion) {
-        String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-        File backup = new File(plugin.getDataFolder(), "config-v" + oldVersion + "-" + stamp + ".yml.bak");
+        File backup = new File(plugin.getDataFolder(), "config-v" + oldVersion + "-" + LocalDateTime.now().format(BACKUP_FROMATTER) + ".yml.bak");
         if (backup.exists()) {
             plugin.getLogger().info("Backup " + backup.getName() + " already exists; keeping it.");
             return true;
@@ -263,26 +255,22 @@ public final class Config {
     @ConfigSerializable
     public record ClaimSettings(
             @Setting("vertexpand") boolean expandSelectionVertical,
-            BlockLimits blocklimits
+            @Setting("blocklimits") BlockLimits blockLimits
     ) {
         public static final ClaimSettings DEFAULTS = new ClaimSettings(false, BlockLimits.DEFAULTS);
 
         public ClaimSettings {
-            if (blocklimits == null) blocklimits = BlockLimits.DEFAULTS;
-        }
-
-        public @NotNull BigInteger blockLimitDefault() {
-            return blocklimits.limits().getOrDefault("default", BigInteger.ZERO);
+            if (blockLimits == null) blockLimits = BlockLimits.DEFAULTS;
         }
 
 		public @NotNull BigInteger limitFor(@NotNull String group, @NotNull BigInteger def) {
-			BigInteger value = blocklimits.limits().get(group.toLowerCase(Locale.ROOT));
+			BigInteger value = blockLimits.limits().get(group.toLowerCase(Locale.ROOT));
 			return value != null ? value : def;
 		}
 
         public @NotNull BigInteger limitFor(@NotNull String group) {
-			BigInteger value = blocklimits.limits().get(group.toLowerCase(Locale.ROOT));
-			return value != null ? value : blockLimitDefault();
+			BigInteger value = blockLimits.limits().get(group.toLowerCase(Locale.ROOT));
+			return value != null ? value : blockLimits.defaultLimit();
         }
 
         @ConfigSerializable
@@ -292,6 +280,10 @@ public final class Config {
             public BlockLimits {
                 if (limits == null) limits = new LinkedHashMap<>();
                 if (minimal == null) minimal = Minimal.DEFAULTS;
+            }
+
+            public @NotNull BigInteger defaultLimit() {
+                return limits.getOrDefault("default", BigInteger.ZERO);
             }
         }
 
@@ -357,7 +349,10 @@ public final class Config {
             }
 
             @ConfigSerializable
-            public record Spread(boolean toregion, boolean inregion) {
+            public record Spread(
+                    @Setting("toregion") boolean toRegion,
+                    @Setting("inregion") boolean inRegion
+            ) {
                 public static final Spread DEFAULTS = new Spread(false, false);
             }
         }

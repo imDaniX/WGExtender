@@ -91,7 +91,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 	public @NotNull BigInteger calculateBlockLimit(@NotNull OfflinePlayer player) {
 		String[] groups = PermissionsResolverManager.getInstance().getGroups(player);
 		if (groups.length == 0) {
-			return config.claim().blockLimitDefault();
+			return config.claim().blockLimits().defaultLimit();
 		}
 		BigInteger maxBlocks = BigInteger.ZERO;
 		for (String group : groups) {
@@ -126,7 +126,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 					MAX_VALUE
 			);
 		}
-		var blockLimits = config.claim().blocklimits();
+		var blockLimits = config.claim().blockLimits();
 		if (blockLimits.enabled()) {
 			if (player.hasPermission("worldguard.region.unlimited")) {
 				return EvaluationResult.EMPTY_ALLOW;

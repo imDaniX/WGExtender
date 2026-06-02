@@ -35,13 +35,13 @@ public final class FireSpread extends ConfigurableListenerBase {
 	public void onBlockIgniteBySpread(BlockSpreadEvent event) {
 		if (event.getNewState().getType() == Material.FIRE) {
 			var fireSpread = config.forWorld(event.getBlock().getWorld()).regionProtection().fire().spread();
-			if (fireSpread.toregion()) {
+			if (fireSpread.toRegion()) {
 				if (!WGUtils.isInTheSameRegionOrWild(event.getSource().getLocation(), event.getBlock().getLocation())) {
 					event.setCancelled(true);
 					return;
 				}
 			}
-			if (fireSpread.inregion()) {
+			if (fireSpread.inRegion()) {
 				if (WGUtils.isInTheSameRegion(event.getSource().getLocation(), event.getBlock().getLocation())) {
 					event.setCancelled(true);
 				}
