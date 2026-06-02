@@ -23,7 +23,6 @@ Head to [the wiki pages](https://github.com/imDaniX/WGExtender/wiki/) for more i
 - Paper 1.21.11 or newer
 - WorldGuard 7
 - WorldEdit 7
-- Vault 1.7
 
 ## Building
 
