@@ -45,7 +45,7 @@ import java.util.*;
 import java.util.logging.Level;
 
 public final class Config {
-    private static final DateTimeFormatter BACKUP_FROMATTER = DateTimeFormatter.ofPattern("ddMMyyyy-HHmmss");
+    private static final DateTimeFormatter BACKUP_FORMATTER = DateTimeFormatter.ofPattern("ddMMyyyy-HHmmss");
     private static final String VERSION_KEY = "_version";
     private static final String CONFIG_FILE = "config.yml";
 
@@ -138,17 +138,17 @@ public final class Config {
     }
 
     private void loadWorlds(@NotNull ConfigurationNode root) throws ConfigurateException {
-        ConfigurationNode regionNode = root.node("regionprotect");
-        ConfigurationNode autoNode = root.node("autoflags");
-        ConfigurationNode restrictNode = root.node("restrictcommands");
+        var regionNode = root.node("regionprotect");
+        var autoNode = root.node("autoflags");
+        var restrictNode = root.node("restrictcommands");
 
-        RegionProtection regionDef = regionNode.get(RegionProtection.class, RegionProtection.DEFAULTS);
-        AutoFlags autoDef = autoNode.get(AutoFlags.class, AutoFlags.DEFAULTS);
-        RestrictedCommands restrictDef = restrictNode.get(RestrictedCommands.class, RestrictedCommands.DEFAULTS);
+        var regionDef = regionNode.get(RegionProtection.class, RegionProtection.DEFAULTS);
+        var autoDef = autoNode.get(AutoFlags.class, AutoFlags.DEFAULTS);
+        var restrictDef = restrictNode.get(RestrictedCommands.class, RestrictedCommands.DEFAULTS);
 
-        Map<String, RegionProtection> regionPer = loadPerWorld(regionNode, RegionProtection.class, regionDef);
-        Map<String, AutoFlags> autoPer = loadPerWorld(autoNode, AutoFlags.class, autoDef);
-        Map<String, RestrictedCommands> restrictPer = loadPerWorld(restrictNode, RestrictedCommands.class, restrictDef);
+        var regionPer = loadPerWorld(regionNode, RegionProtection.class, regionDef);
+        var autoPer = loadPerWorld(autoNode, AutoFlags.class, autoDef);
+        var restrictPer = loadPerWorld(restrictNode, RestrictedCommands.class, restrictDef);
 
         Set<String> names = new HashSet<>();
         names.addAll(regionPer.keySet());
@@ -170,7 +170,7 @@ public final class Config {
 
     private <T> @NotNull Map<String, T> loadPerWorld(@NotNull ConfigurationNode feature, @NotNull Class<T> type, @NotNull T fallback) throws ConfigurateException {
         Map<String, T> map = new HashMap<>();
-        for (Map.Entry<Object, ? extends ConfigurationNode> e : feature.node("per-world").childrenMap().entrySet()) {
+        for (var e : feature.node("per-world").childrenMap().entrySet()) {
             ConfigurationNode merged = e.getValue().copy().mergeFrom(feature);
             map.put(String.valueOf(e.getKey()).toLowerCase(Locale.ROOT), merged.get(type, fallback));
         }
@@ -236,7 +236,7 @@ public final class Config {
     }
 
     private boolean backupConfig(int oldVersion) {
-        File backup = new File(plugin.getDataFolder(), "config-v" + oldVersion + "-" + LocalDateTime.now().format(BACKUP_FROMATTER) + ".yml.bak");
+        File backup = new File(plugin.getDataFolder(), "config-v" + oldVersion + "-" + LocalDateTime.now().format(BACKUP_FORMATTER) + ".yml.bak");
         if (backup.exists()) {
             plugin.getLogger().info("Backup " + backup.getName() + " already exists; keeping it.");
             return true;
@@ -259,7 +259,7 @@ public final class Config {
         public static final ClaimSettings DEFAULTS = new ClaimSettings(false, BlockLimits.DEFAULTS);
 
         public ClaimSettings {
-            if (blockLimits == null) blockLimits = BlockLimits.DEFAULTS;
+            blockLimits = nonNull(blockLimits, BlockLimits.DEFAULTS);
         }
 
 		public @NotNull BigInteger limitFor(@NotNull String group, @NotNull BigInteger def) {
@@ -277,8 +277,8 @@ public final class Config {
             public static final BlockLimits DEFAULTS = new BlockLimits(false, Map.of(), Minimal.DEFAULTS);
 
             public BlockLimits {
-                if (limits == null) limits = new LinkedHashMap<>();
-                if (minimal == null) minimal = Minimal.DEFAULTS;
+                limits = nonNull(limits, Map.of());
+                minimal = nonNull(minimal, Minimal.DEFAULTS);
             }
 
             public @NotNull BigInteger defaultLimit() {
@@ -291,9 +291,9 @@ public final class Config {
             public static final Minimal DEFAULTS = new Minimal(BigInteger.ZERO, BigInteger.ZERO, BigInteger.ZERO);
 
             public Minimal {
-                if (volume == null) volume = BigInteger.ZERO;
-                if (horizontal == null) horizontal = BigInteger.ZERO;
-                if (vertical == null) vertical = BigInteger.ZERO;
+                volume = nonNull(volume, BigInteger.ZERO);
+                horizontal = nonNull(horizontal, BigInteger.ZERO);
+                vertical = nonNull(vertical, BigInteger.ZERO);
             }
         }
     }
@@ -306,7 +306,7 @@ public final class Config {
         public static final MiscSettings DEFAULTS = new MiscSettings("default", true);
 
         public MiscSettings {
-            if (pvpMode == null) pvpMode = "default";
+            pvpMode = nonNull(pvpMode, "default");
         }
 
         public @Nullable Boolean pvpFlagMode() {
@@ -329,9 +329,9 @@ public final class Config {
         public static final RegionProtection DEFAULTS = new RegionProtection(Flow.DEFAULTS, Fire.DEFAULTS, Explosion.DEFAULTS);
 
         public RegionProtection {
-            if (flow == null) flow = Flow.DEFAULTS;
-            if (fire == null) fire = Fire.DEFAULTS;
-            if (explosion == null) explosion = Explosion.DEFAULTS;
+            flow = nonNull(flow, Flow.DEFAULTS);
+            fire = nonNull(fire, Fire.DEFAULTS);
+            explosion = nonNull(explosion, Explosion.DEFAULTS);
         }
 
         @ConfigSerializable
@@ -344,7 +344,7 @@ public final class Config {
             public static final Fire DEFAULTS = new Fire(Spread.DEFAULTS, false);
 
             public Fire {
-                if (spread == null) spread = Spread.DEFAULTS;
+                spread = nonNull(spread, Spread.DEFAULTS);
             }
 
             @ConfigSerializable
@@ -365,7 +365,7 @@ public final class Config {
             public static final Explosion DEFAULTS = new Explosion(false, false, SourceDetection.DEFAULTS);
 
             public Explosion {
-                if (sourceDetection == null) sourceDetection = SourceDetection.DEFAULTS;
+                sourceDetection = nonNull(sourceDetection, SourceDetection.DEFAULTS);
             }
 
             @ConfigSerializable
@@ -387,7 +387,7 @@ public final class Config {
         public static final AutoFlags DEFAULTS = new AutoFlags(false, false, Map.of());
 
         public AutoFlags {
-            if (flags == null) flags = new LinkedHashMap<>();
+            flags = nonNull(flags, Map.of());
         }
 
         public @NotNull Map<Flag<?>, String> resolvedFlags() {
@@ -412,7 +412,11 @@ public final class Config {
 
         public RestrictedCommands {
             if (recheckTicks <= 0) recheckTicks = 100;
-            if (commands == null) commands = new ArrayList<>();
+            commands = nonNull(commands, List.of());
         }
+    }
+
+    private static <T> @NotNull T nonNull(@Nullable T value, @NotNull T def) {
+        return value == null ? def : value;
     }
 }
