@@ -25,17 +25,17 @@ import org.jspecify.annotations.NonNull;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
-import wgextender.utils.CommandUtils;
+import wgextender.utils.CommandsUtils;
 
 public final class WEWandCommandWrapper extends Command {
 	public static void inject(Server server, Config config) {
-		WEWandCommandWrapper wrapper = new WEWandCommandWrapper(config, CommandUtils.getCommands(server).get("/wand"));
-		CommandUtils.replaceCommand(server, wrapper.originalCmd, wrapper);
+		WEWandCommandWrapper wrapper = new WEWandCommandWrapper(config, CommandsUtils.getCommands(server).get("/wand"));
+		CommandsUtils.replaceCommand(server, wrapper.originalCmd, wrapper);
 	}
 
 	public static void uninject(Server server) {
-		WEWandCommandWrapper wrapper = (WEWandCommandWrapper) CommandUtils.getCommands(server).get("/wand");
-		CommandUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
+		WEWandCommandWrapper wrapper = (WEWandCommandWrapper) CommandsUtils.getCommands(server).get("/wand");
+		CommandsUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
 	}
 
 	private final Config config;

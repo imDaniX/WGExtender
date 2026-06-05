@@ -32,7 +32,9 @@ autoflags:
 restrictcommands:
   enabled: false
   commands:
-    - home
+    - sethome
+  aliased-search: true
+  prefixed-search: true
   recheck-ticks: 100
 extendedwewand: false
 misc:

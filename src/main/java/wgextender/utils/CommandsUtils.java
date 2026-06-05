@@ -24,19 +24,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-public final class CommandUtils {
-	private static final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
+public final class CommandsUtils {
+	public static final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
 
-	private CommandUtils() { }
+	private CommandsUtils() { }
 
 	public static @NotNull Map<String, Command> getCommands(@NotNull Server server) {
 		return server.getCommandMap().getKnownCommands();
 	}
 
 	public static @NotNull List<String> getCommandAliases(@NotNull Server server, @NotNull String commandName) {
-		Command command = getCommands(server).get(commandName);
+		Command command = getCommands(server).get(commandName.toLowerCase(Locale.ROOT));
 		if (command == null) {
 			return Collections.singletonList(commandName);
 		} else {
@@ -51,21 +52,6 @@ public final class CommandUtils {
 		}
 	}
 
-	public static @NotNull Collection<String> computeAliasedVariants(
-			@NotNull Collection<String> commands,
-			@NotNull Function<String, Iterable<String>> aliases
-	) {
-		Set<String> computedCommands = new HashSet<>();
-		for (String commandBase : commands) {
-			String[] split = SPACE_PATTERN.split(commandBase, 2);
-			String toAdd = split.length > 1 ? split[1] : "";
-			for (String alias : aliases.apply(split[0].toLowerCase(Locale.ROOT))) {
-				computedCommands.add(alias + toAdd);
-			}
-		}
-		return computedCommands;
-	}
-
 	public static void replaceCommand(@NotNull Server server, @NotNull Command oldCommand, @NotNull Command newCommand) {
 		String cmdName = oldCommand.getName();
 		var commandMap = getCommands(server);
@@ -77,5 +63,61 @@ public final class CommandUtils {
 				commandMap.put(alias, newCommand);
 			}
 		}
+	}
+
+	public static @NotNull Predicate<String> computeVariants(
+			@NotNull Collection<String> commands,
+			@NotNull Function<String, Iterable<String>> aliases
+	) {
+		Set<String> variants = CaseInsensitive.newSet();
+		for (String command : commands) {
+			String[] split = SPACE_PATTERN.split(command, 2);
+			String suffix = split.length > 1 ? " " + split[1] : "";
+			variants.add(command);
+			for (String alias : aliases.apply(split[0])) {
+				variants.add(alias + suffix);
+			}
+		}
+		return variants::contains;
+	}
+
+	public static @NotNull Predicate<String> computePrefixedVariants(
+			@NotNull Collection<String> commands,
+			@NotNull Function<String, Iterable<String>> aliases
+	) {
+		ArgNode root = new ArgNode();
+		for (String commandBase : commands) {
+			String[] split = SPACE_PATTERN.split(commandBase, 2);
+			String suffix = split.length > 1 ? " " + split[1] : "";
+			insertChildren(root, commandBase);
+			for (String alias : aliases.apply(split[0])) {
+				insertChildren(root, alias + suffix);
+			}
+		}
+		return input -> {
+			ArgNode node = root;
+			int index = 0;
+			while (index < input.length()) {
+				int end = input.indexOf(' ', index);
+				if (end == -1) end = input.length();
+				node = node.children.get(input.substring(index, end));
+				if (node == null) return false;
+				if (node.terminal) return true;
+				index = end + 1;
+			}
+			return false;
+		};
+	}
+
+	private static void insertChildren(ArgNode node, String s) {
+		for (String word : SPACE_PATTERN.split(s)) {
+			node = node.children.computeIfAbsent(word, k -> new ArgNode());
+		}
+		node.terminal = true;
+	}
+
+	private static class ArgNode {
+		final Map<String, ArgNode> children = CaseInsensitive.newMap();
+		boolean terminal;
 	}
 }

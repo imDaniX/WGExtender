@@ -69,6 +69,8 @@ public final class Config { // TODO Some config framework?
 	public Map<Flag<?>, String> claimAutoFlags = new HashMap<>();
 
 	public boolean restrictCommandsInRegionEnabled = false;
+	public boolean restrictCommandsAliasedSearch = true;
+	public boolean restrictCommandsPrefixedSearch = true;
 	public int restrictCommandsRecheckTicks = 100;
 	public List<String> restrictedCommandsInRegion = new ArrayList<>();
 
@@ -141,6 +143,8 @@ public final class Config { // TODO Some config framework?
 		explosionSourceTntPrime = config.getBoolean("regionprotect.explosion.source-detection.tnt-prime", explosionSourceTntPrime);
 
 		restrictCommandsInRegionEnabled = config.getBoolean("restrictcommands.enabled", restrictCommandsInRegionEnabled);
+		restrictCommandsAliasedSearch = config.getBoolean("restrictcommands.aliased-search", restrictCommandsAliasedSearch);
+		restrictCommandsPrefixedSearch = config.getBoolean("restrictcommands.prefixed-search", restrictCommandsPrefixedSearch);
 		restrictCommandsRecheckTicks = config.getInt("restrictcommands.recheck-ticks", restrictCommandsRecheckTicks);
 		restrictedCommandsInRegion = new ArrayList<>(config.getStringList("restrictcommands.commands"));
 	}

@@ -17,6 +17,7 @@
 
 package wgextender.features.regionprotect.ownormembased;
 
+import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,20 +27,21 @@ import wgextender.WGExtender;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.features.ConfigurableListenerBase;
-import wgextender.utils.CommandUtils;
+import wgextender.utils.CommandsUtils;
 import wgextender.utils.WGUtils;
 
-import java.util.Collection;
-import java.util.Locale;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class RestrictCommands extends ConfigurableListenerBase {
 	private final Server server;
-	private Collection<String> restrictedCommands;
+	private Predicate<String> restrictedCommands;
 
 	public RestrictCommands(WGExtender plugin) {
 		super(plugin.getPluginConfig());
 		this.server = plugin.getServer();
-		restrictedCommands = config.restrictedCommandsInRegion;
+		restrictedCommands = command -> false;
         server.getGlobalRegionScheduler().runAtFixedRate(
                 plugin,
                 (task) -> commandRecheckTask(config),
@@ -47,14 +49,18 @@ public final class RestrictCommands extends ConfigurableListenerBase {
         );
 	}
 
-	private void commandRecheckTask(Config config) {
+	private void commandRecheckTask(Config config) { // TODO React to reload
 		if (!config.restrictCommandsInRegionEnabled) {
 			return;
 		}
-		restrictedCommands = CommandUtils.computeAliasedVariants(
-				config.restrictedCommandsInRegion,
-				base -> CommandUtils.getCommandAliases(server, base)
-		);
+
+		Function<String, Iterable<String>> aliases = config.restrictCommandsAliasedSearch
+				? base -> CommandsUtils.getCommandAliases(server, base)
+				: base -> Set.of(base.split(" ", 2)[0]);
+
+		restrictedCommands = config.restrictCommandsPrefixedSearch
+				? CommandsUtils.computePrefixedVariants(config.restrictedCommandsInRegion, aliases)
+				: CommandsUtils.computeVariants(config.restrictedCommandsInRegion, aliases);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -66,15 +72,14 @@ public final class RestrictCommands extends ConfigurableListenerBase {
 		if (WGUtils.canBypassProtection(player)) {
 			return;
 		}
-		if (WGUtils.isInRegion(player.getLocation()) && !WGUtils.canBuild(player, player.getLocation())) { // TODO canBuild is not a great check for commands?
-			String command = event.getMessage().substring(1).toLowerCase(Locale.ROOT);
-			for (String rcommand : restrictedCommands) {
-				if (command.startsWith(rcommand) && (command.length() == rcommand.length() || command.charAt(rcommand.length()) == ' ')) {
-					event.setCancelled(true);
-					msg.sendMessage(player, MKey.RESTRICTED_COMMAND);
-					return;
-				}
-			}
+		Location loc = player.getLocation();
+        if (!WGUtils.isInRegion(loc) || WGUtils.canBuild(player, loc)) { // TODO canBuild is not a great check for commands?
+            return;
+        }
+
+		if (restrictedCommands.test(event.getMessage().substring(1).trim())) {
+			event.setCancelled(true);
+			msg.sendMessage(player, MKey.RESTRICTED_COMMAND);
 		}
-	}
+    }
 }

@@ -32,7 +32,7 @@ import wgextender.WGExtender;
 import wgextender.config.Config;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
-import wgextender.utils.CommandUtils;
+import wgextender.utils.CommandsUtils;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
 
@@ -40,13 +40,13 @@ import java.util.Map;
 
 public final class WGRegionCommandWrapper extends Command {
 	public static void inject(WGExtender plugin) {
-		WGRegionCommandWrapper wrapper = new WGRegionCommandWrapper(plugin, CommandUtils.getCommands(plugin.getServer()).get("region"));
-		CommandUtils.replaceCommand(plugin.getServer(), wrapper.originalCmd, wrapper);
+		WGRegionCommandWrapper wrapper = new WGRegionCommandWrapper(plugin, CommandsUtils.getCommands(plugin.getServer()).get("region"));
+		CommandsUtils.replaceCommand(plugin.getServer(), wrapper.originalCmd, wrapper);
 	}
 
 	public static void uninject(Server server) {
-		WGRegionCommandWrapper wrapper = (WGRegionCommandWrapper) CommandUtils.getCommands(server).get("region");
-		CommandUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
+		WGRegionCommandWrapper wrapper = (WGRegionCommandWrapper) CommandsUtils.getCommands(server).get("region");
+		CommandsUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
 	}
 
 	private final Config config;
