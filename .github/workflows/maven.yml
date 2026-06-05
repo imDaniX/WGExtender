@@ -1,6 +1,9 @@
 name: Java CI
 
-on: push
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -16,13 +19,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-
-      - uses: actions/cache@main
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          cache: 'maven'
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml
