@@ -1,10 +1,12 @@
 name: 'WGExtender'
+description: 'Extending WorldGuard plugin features'
 main: wgextender.WGExtender
 api-version: '1.20'
 version: '${project.version}-x'
 authors: [_Shevchik_, imDaniX]
 depend: [WorldGuard, WorldEdit]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, LuckPerms]
+website: 'https://modrinth.com/plugin/wgextender-x'
 folia-supported: true
 commands:
   wgextender:

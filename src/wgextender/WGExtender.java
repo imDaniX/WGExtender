@@ -37,12 +37,17 @@ import wgextender.features.regionprotect.regionbased.BlockBurn;
 import wgextender.features.regionprotect.regionbased.Explode;
 import wgextender.features.regionprotect.regionbased.FireSpread;
 import wgextender.features.regionprotect.regionbased.LiquidFlow;
+import wgextender.integration.LpIntegration;
 import wgextender.integration.PapiIntegration;
+import wgextender.integration.PluginIntegration;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 
 public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API
+	private final List<PluginIntegration> integrations = new ArrayList<>();
 	private Config config;
 	private BlockLimitsHandler claimLimitsHandler;
 
@@ -62,6 +67,8 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	@Override
 	public void onLoad() {
 		WGExtenderFlags.registerFlags(getLogger());
+		integrations.add(new LpIntegration());
+		integrations.add(new PapiIntegration(this));
 	}
 
 	@ApiStatus.Internal
@@ -98,9 +105,19 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 			getServer().shutdown();
 		}
 
-
-		if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-			new PapiIntegration(this).register();
+		var pluginManager = getServer().getPluginManager();
+		for (PluginIntegration integration : integrations) {
+			boolean enable = true;
+			for (var pluginName : integration.requiredPlugins()) {
+				if (!pluginManager.isPluginEnabled(pluginName)) {
+					enable = false;
+					break;
+				}
+			}
+			if (enable) {
+				getLogger().info("Enabling " + integration.requiredPlugins() + " integration");
+				integration.onEnable(this);
+			}
 		}
 	}
 	

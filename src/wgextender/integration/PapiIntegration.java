@@ -2,17 +2,22 @@ package wgextender.integration;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import wgextender.WGExtender;
+import wgextender.features.flags.WGExtenderFlags;
+import wgextender.utils.WGUtils;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
 @ApiStatus.Internal
-public class PapiIntegration extends PlaceholderExpansion {
+public class PapiIntegration extends PlaceholderExpansion implements PluginIntegration {
     private final WGExtender plugin;
 
     public PapiIntegration(@NotNull WGExtender plugin) {
@@ -31,7 +36,7 @@ public class PapiIntegration extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getVersion() {
-        return "1.0.0";
+        return plugin.getPluginMeta().getVersion();
     }
 
     @Override
@@ -41,21 +46,31 @@ public class PapiIntegration extends PlaceholderExpansion {
 
     @Override
     public @Nullable String onRequest(@Nullable OfflinePlayer offPlayer, @NotNull String paramsRaw) {
-        if (offPlayer == null) return null;
-
         var handler = plugin.getBlockLimitsHandler();
         var reader = new ParamsReader(paramsRaw);
 
-        if (!reader.next().equals("blocklimit")) return null;
+        if (reader.remaining().equals("context_helper")) {
+            if (offPlayer == null) {
+                return null;
+            }
+            Location location = offPlayer.getLocation();
+            return location != null
+                    ? WGUtils.getFlagValue(location, WGExtenderFlags.CONTEXT_HELPER_FLAG)
+                    : null;
+        }
 
-        return switch (reader.next()) {
+        if (!reader.pop().equals("blocklimit")) return null;
+
+        return switch (reader.pop()) {
             case "refresh" -> offPlayer instanceof Player player
                     ? handler.refreshBlockLimit(player).toString()
                     : null;
             case "cached", "cache" -> offPlayer instanceof Player player
                     ? handler.cachedBlockLimit(player).toString()
                     : null;
-            case "calc" -> handler.calculateBlockLimit(offPlayer).toString();
+            case "calc" -> offPlayer != null
+                    ? handler.calculateBlockLimit(offPlayer).toString()
+                    : null;
             case "group" -> {
                 String groupRaw = reader.remaining();
                 if (groupRaw.isEmpty()) yield null;
@@ -70,6 +85,16 @@ public class PapiIntegration extends PlaceholderExpansion {
         };
     }
 
+    @Override
+    public @NotNull Collection<@NotNull String> requiredPlugins() {
+        return List.of("PlaceholderAPI");
+    }
+
+    @Override
+    public void onEnable(@NotNull WGExtender plugin) {
+        register();
+    }
+
     private static class ParamsReader {
         private final String input;
         private int index;
@@ -79,7 +104,7 @@ public class PapiIntegration extends PlaceholderExpansion {
             this.index = 0;
         }
 
-        String next() {
+        String pop() {
             int end = input.indexOf('_', index);
             String current = end == -1 ? input.substring(index) : input.substring(index, end);
             index = end == -1 ? input.length() : end + 1;

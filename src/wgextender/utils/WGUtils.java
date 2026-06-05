@@ -40,6 +40,8 @@ import com.sk89q.worldguard.protection.regions.RegionQuery;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -102,6 +104,14 @@ public final class WGUtils {
 
 	public static boolean canBuild(Player player, Location location) {
 		return isFlagAllows(player, location, Flags.BUILD);
+	}
+
+	public static <T> @Nullable T getFlagValue(@NotNull Player player, @NotNull Location location, @NotNull Flag<T> flag) {
+		return REGION_QUERY.queryValue(BukkitAdapter.adapt(location), WorldGuardPlugin.inst().wrapPlayer(player), flag);
+	}
+
+	public static <T> @Nullable T getFlagValue(@NotNull Location location, @NotNull Flag<T> flag) {
+		return REGION_QUERY.queryValue(BukkitAdapter.adapt(location), null, flag);
 	}
 
 	public static boolean isFlagAllows(Player player, Location location, StateFlag flag) {
