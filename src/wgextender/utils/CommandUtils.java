@@ -21,13 +21,14 @@ import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public final class CommandUtils {
+	private static final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
+
 	private CommandUtils() { }
 
 	public static @NotNull Map<String, Command> getCommands(@NotNull Server server) {
@@ -48,6 +49,21 @@ public final class CommandUtils {
 			}
 			return aliases;
 		}
+	}
+
+	public static @NotNull Collection<String> computeAliasedVariants(
+			@NotNull Collection<String> commands,
+			@NotNull Function<String, Iterable<String>> aliases
+	) {
+		Set<String> computedCommands = new HashSet<>();
+		for (String commandBase : commands) {
+			String[] split = SPACE_PATTERN.split(commandBase, 2);
+			String toAdd = split.length > 1 ? split[1] : "";
+			for (String alias : aliases.apply(split[0].toLowerCase(Locale.ROOT))) {
+				computedCommands.add(alias + toAdd);
+			}
+		}
+		return computedCommands;
 	}
 
 	public static void replaceCommand(@NotNull Server server, @NotNull Command oldCommand, @NotNull Command newCommand) {

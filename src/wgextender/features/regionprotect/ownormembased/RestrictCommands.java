@@ -30,14 +30,9 @@ import wgextender.utils.CommandUtils;
 import wgextender.utils.WGUtils;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 public final class RestrictCommands extends ConfigurableListenerBase {
-	private final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
-
 	private final Server server;
 	private Collection<String> restrictedCommands;
 
@@ -56,15 +51,10 @@ public final class RestrictCommands extends ConfigurableListenerBase {
 		if (!config.restrictCommandsInRegionEnabled) {
 			return;
 		}
-		Set<String> computedRestrictedCommands = new HashSet<>();
-		for (String restrictedCommand : config.restrictedCommandsInRegion) {
-			String[] split = SPACE_PATTERN.split(restrictedCommand, 2);
-			String toAdd = split.length > 1 ? split[1] : "";
-			for (String alias : CommandUtils.getCommandAliases(server, split[0].toLowerCase(Locale.ROOT))) {
-				computedRestrictedCommands.add(alias + toAdd);
-			}
-		}
-		restrictedCommands = computedRestrictedCommands;
+		restrictedCommands = CommandUtils.computeAliasedVariants(
+				config.restrictedCommandsInRegion,
+				base -> CommandUtils.getCommandAliases(server, base)
+		);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
