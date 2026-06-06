@@ -42,7 +42,7 @@ public final class RestrictCommands extends ConfigurableListenerBase {
 		super(plugin.getPluginConfig());
 		this.server = plugin.getServer();
 		restrictedCommands = command -> false;
-        server.getGlobalRegionScheduler().runAtFixedRate(
+        server.getGlobalRegionScheduler().runAtFixedRate( // TODO Reschedule on reload
                 plugin,
                 (task) -> commandRecheckTask(config),
                 1, Math.max(1, config.restrictCommandsRecheckTicks)

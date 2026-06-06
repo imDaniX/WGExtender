@@ -50,7 +50,8 @@ import static wgextender.utils.WGUtils.getWorldConfig;
 @Deprecated
 /**
  * Most of this class is just a copy-paste of WG code.
- * This is a bad pattern, and this should either be refactored or removed entierly
+ * This is a bad pattern, and this should either be refactored or removed entierly.
+ * TODO This actually can be reworked by handling DisallowedPVPEvent and EntityDamageByEntityEvent/DamageEntityEvent
  */
 public final class PvPHandlingListener extends ConfigurableListenerBase {
 
