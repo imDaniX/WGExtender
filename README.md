@@ -12,8 +12,8 @@ WGExtender **X** is a fork that is maintained for modern Paper versions and incl
 - Experimental Folia support
 - Configurable minimum region claim size limits (volume, horizontal, vertical)
 - Configurable messages in the `messages/` folder
-- New block limit PAPI placeholders
-- New `item-consume` flag
+- PlaceholderAPI and LuckPerms integration
+- New WG flags
 
 Head to [the wiki pages](https://github.com/imDaniX/WGExtender/wiki/) for more info.
 
