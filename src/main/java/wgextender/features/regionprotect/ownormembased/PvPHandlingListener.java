@@ -35,7 +35,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
-import wgextender.config.Config;
+import org.jetbrains.annotations.NotNull;
+import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.WGUtils;
@@ -53,19 +54,19 @@ import static wgextender.utils.WGUtils.getWorldConfig;
  * This is a bad pattern, and this should either be refactored or removed entierly.
  * TODO This actually can be reworked by handling DisallowedPVPEvent and EntityDamageByEntityEvent/DamageEntityEvent
  */
-public final class PvPHandlingListener extends ConfigurableListenerBase {
+public final class PvPHandlingListener extends ConfigurableListenerBase<ConfigurationProvider.Misc> {
 
 	private static final String DENY_MESSAGE_KEY = "worldguard.region.lastMessage";
 	private static final int LAST_MESSAGE_DELAY = 500;
 
 	private RegisteredListener origin;
 
-	public PvPHandlingListener(Config config) {
-		super(config);
+	public PvPHandlingListener(@NotNull ConfigurationProvider cfgProvider) {
+		super(cfgProvider, ConfigurationProvider.Misc.SECTION);
 	}
 
 	public void inject(Plugin plugin) {
-        if (config.miscDefaultPvPFlagOperationMode == null) {
+        if (config.pvpMode() == null) {
             plugin.getLogger().info(
                     "misc.pvpmode is set to default. Changing it post-initialization will require server " +
                     "restart, but it's recommended to not use this feature because of possible inconsistencies."
@@ -73,7 +74,7 @@ public final class PvPHandlingListener extends ConfigurableListenerBase {
             return;
         } else {
             plugin.getLogger().warning(
-                    "misc.pvpmode is set to '" + config.miscDefaultPvPFlagOperationMode + "'. This may or " +
+                    "misc.pvpmode is set to '" + config.pvpMode() + "'. This may or " +
                     "may not result in inconsistency with the default WG behavior, since the feature requires " +
                     "manual copying of WG code."
             );
@@ -147,12 +148,12 @@ public final class PvPHandlingListener extends ConfigurableListenerBase {
 			// null - default wg pvp logic
 			// true - allow pvp when flag not set
 			// false - disallow pvp when flag not set
-			if (config.miscDefaultPvPFlagOperationMode == null) {
+			if (config.pvpMode() == null) {
 				canDamage =
 					query.testBuild(target, associable, combine(event, Flags.PVP)) &&
 					(query.queryState(attackerLocation, localAttacker, combine(event, Flags.PVP)) != State.DENY) &&
 					(query.queryState(target, localAttacker, combine(event, Flags.PVP)) != State.DENY);
-			} else if (config.miscDefaultPvPFlagOperationMode) {
+			} else if (config.pvpMode() == State.ALLOW) {
 				canDamage =
 					(query.queryState(attackerLocation, localAttacker, combine(event, Flags.PVP)) != State.DENY) &&
 					(query.queryState(target, localAttacker, combine(event, Flags.PVP)) != State.DENY);

@@ -2,15 +2,17 @@ package wgextender.features;
 
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
-import wgextender.config.Config;
-import wgextender.config.message.Messages;
+import wgextender.config.Configurable;
+import wgextender.config.ConfigurationProvider;
 
-public abstract class ConfigurableListenerBase implements Listener {
-    protected final Config config;
-    protected final Messages msg;
+import java.util.function.Function;
 
-    protected ConfigurableListenerBase(@NotNull Config config) {
-        this.config = config;
-        this.msg = config.getMessages();
+// TODO We can disable the listening itself, but requires some more engineering, might not worth it
+public abstract class ConfigurableListenerBase<T> extends Configurable.Base<T> implements Listener {
+    protected ConfigurableListenerBase(
+            @NotNull ConfigurationProvider cfgProvider,
+            @NotNull Function<ConfigurationProvider, T> sectionGetter
+    ) {
+        super(cfgProvider, sectionGetter);
     }
 }

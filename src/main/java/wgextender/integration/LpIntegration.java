@@ -28,7 +28,7 @@ public class LpIntegration implements PluginIntegration {
         }
     }
 
-    public static final class RegionContext implements ContextCalculator<Player> {
+    public static final class RegionContext implements ContextCalculator<Player> { // TODO Configure to disable
         @Override
         public void calculate(@NotNull Player target, @NotNull ContextConsumer context) {
             var regions = WGUtils.getRegionsAt(target.getLocation());

@@ -17,7 +17,8 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.util.DomainInputResolver.UserLocatorPolicy;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import wgextender.config.Config;
+import org.jetbrains.annotations.NotNull;
+import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
 import wgextender.utils.WEUtils;
@@ -26,8 +27,8 @@ import wgextender.utils.WGUtils;
 public final class WGClaimSubcommand {
 	private final Messages msg;
 
-	public WGClaimSubcommand(Config config) {
-		this.msg = config.getMessages();
+	public WGClaimSubcommand(@NotNull ConfigurationProvider cfgProvider) {
+		this.msg = cfgProvider.messages();
 	}
 
 	public void claim(String id, CommandSender sender) throws CommandException {

@@ -59,7 +59,7 @@ public class PapiIntegration extends PlaceholderExpansion implements PluginInteg
                     : null;
         }
 
-        if (!reader.pop().equals("blocklimit")) return null;
+        if (!reader.pop().equals("blocklimit")) return null; // TODO Add claim amount limit
 
         return switch (reader.pop()) {
             case "refresh" -> offPlayer instanceof Player player
@@ -75,7 +75,7 @@ public class PapiIntegration extends PlaceholderExpansion implements PluginInteg
                 String groupRaw = reader.remaining();
                 if (groupRaw.isEmpty()) yield null;
 
-                String groupName = groupRaw.contains("{")
+                String groupName = groupRaw.indexOf('{') != -1
                         ? PlaceholderAPI.setBracketPlaceholders(offPlayer, groupRaw)
                         : groupRaw;
 

@@ -3,16 +3,19 @@ package wgextender.features.flags;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.jetbrains.annotations.NotNull;
-import wgextender.config.Config;
+import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
-import wgextender.features.ConfigurableListenerBase;
+import wgextender.config.message.Messages;
 import wgextender.utils.WGUtils;
 
-public final class ConsumeFlagsHandler extends ConfigurableListenerBase {
-    public ConsumeFlagsHandler(@NotNull Config config) {
-        super(config);
+public final class ConsumeFlagsHandler implements Listener {
+    private final Messages msg;
+
+    public ConsumeFlagsHandler(@NotNull ConfigurationProvider provider) {
+        this.msg = provider.messages();
     }
 
     @EventHandler(ignoreCancelled = true)

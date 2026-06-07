@@ -27,7 +27,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
-import wgextender.config.Config;
+import wgextender.config.ConfigurationProvider;
 import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.WEUtils;
 
@@ -37,13 +37,13 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class BlockLimitsHandler extends ConfigurableListenerBase {
+public final class BlockLimitsHandler extends ConfigurableListenerBase<ConfigurationProvider.BlockLimits> {
 	private static final BigInteger MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
 	private final Map<UUID, BigInteger> cache;
 
-	public BlockLimitsHandler(@NotNull Config config) {
-		super(config);
+	public BlockLimitsHandler(@NotNull ConfigurationProvider cfgProvider) {
+		super(cfgProvider, ConfigurationProvider.BlockLimits.SECTION);
 		this.cache = new ConcurrentHashMap<>();
 	}
 
@@ -57,7 +57,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 	}
 
 	public @NotNull BigInteger blockLimitByGroup(@NotNull String group) {
-		return config.claimBlockLimits.getOrDefault(group, config.claimBlockLimitDefault);
+		return config.limits().getOrDefault(group, config.defaultLimit());
 	}
 
 	/**
@@ -92,11 +92,11 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 	public @NotNull BigInteger calculateBlockLimit(@NotNull OfflinePlayer player) {
 		String[] groups = PermissionsResolverManager.getInstance().getGroups(player);
 		if (groups.length == 0) {
-			return config.claimBlockLimitDefault;
+			return config.defaultLimit();
 		}
 		BigInteger maxBlocks = BigInteger.ZERO;
 		for (String group : groups) {
-			maxBlocks = maxBlocks.max(config.claimBlockLimits.getOrDefault(group.toLowerCase(Locale.ROOT), BigInteger.ZERO));
+			maxBlocks = maxBlocks.max(config.limits().getOrDefault(group.toLowerCase(Locale.ROOT), BigInteger.ZERO));
 		}
 		return maxBlocks;
 	}
@@ -127,29 +127,29 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase {
 					MAX_VALUE
 			);
 		}
-		if (config.claimBlockLimitsEnabled) {
+		if (config.enabled()) {
 			if (player.hasPermission("worldguard.region.unlimited")) {
 				return EvaluationResult.EMPTY_ALLOW;
 			}
-			if (volume.compareTo(config.claimBlockMinimalVolume) < 0) {
+			if (volume.compareTo(config.minimalVolume()) < 0) {
 				return new EvaluationResult(
 						ResultType.DENY_MIN_VOLUME,
 						volume,
-						config.claimBlockMinimalVolume
+						config.minimalVolume()
 				);
 			}
-			if (minHorizontal.compareTo(config.claimBlockMinimalHorizontal) < 0) {
+			if (minHorizontal.compareTo(config.minimalHorizontal()) < 0) {
 				return new EvaluationResult(
 						ResultType.DENY_MIN_VOLUME,
 						minHorizontal,
-						config.claimBlockMinimalHorizontal
+						config.minimalHorizontal()
 				);
 			}
-			if (yDistance.compareTo(config.claimBlockMinimalVertical) < 0) {
+			if (yDistance.compareTo(config.minimalVertical()) < 0) {
 				return new EvaluationResult(
 						ResultType.DENY_VERTICAL,
 						yDistance,
-						config.claimBlockMinimalVertical
+						config.minimalVertical()
 				);
 			}
 			BigInteger maxBlocks = refreshBlockLimit(player);

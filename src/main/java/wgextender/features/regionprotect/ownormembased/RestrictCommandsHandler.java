@@ -17,14 +17,16 @@
 
 package wgextender.features.regionprotect.ownormembased;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
-import wgextender.config.Config;
+import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.CommandsUtils;
@@ -34,38 +36,58 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public final class RestrictCommands extends ConfigurableListenerBase {
-	private final Server server;
-	private Predicate<String> restrictedCommands;
+public final class RestrictCommandsHandler extends ConfigurableListenerBase<ConfigurationProvider.RestrictCommands> {
 
-	public RestrictCommands(WGExtender plugin) {
-		super(plugin.getPluginConfig());
+	private final WGExtender plugin;
+	private final Server server;
+
+	private Predicate<String> restrictedCommands = command -> false;
+	private ScheduledTask recheckTask;
+
+	public RestrictCommandsHandler(WGExtender plugin) {
+		super(plugin.getConfigurationProvider(), ConfigurationProvider.RestrictCommands.SECTION);
+		this.plugin = plugin;
 		this.server = plugin.getServer();
-		restrictedCommands = command -> false;
-        server.getGlobalRegionScheduler().runAtFixedRate( // TODO Reschedule on reload
-                plugin,
-                (task) -> commandRecheckTask(config),
-                1, Math.max(1, config.restrictCommandsRecheckTicks)
-        );
+		scheduleRecheckTask();
 	}
 
-	private void commandRecheckTask(Config config) { // TODO React to reload
-		if (!config.restrictCommandsInRegionEnabled) {
+	@Override
+	public void onReload(@NotNull ConfigurationProvider.RestrictCommands section) {
+		super.onReload(section);
+		if (recheckTask != null && !recheckTask.isCancelled()) {
+			recheckTask.cancel();
+		}
+		rebuildPredicate();
+		scheduleRecheckTask();
+	}
+
+	private void rebuildPredicate() {
+		if (!config.enabled()) {
+			restrictedCommands = command -> false;
 			return;
 		}
-
-		Function<String, Iterable<String>> aliases = config.restrictCommandsAliasedSearch
+		Function<String, Iterable<String>> aliases = config.aliasedSearch()
 				? base -> CommandsUtils.getCommandAliases(server, base)
 				: base -> Set.of(base.split(" ", 2)[0]);
+		restrictedCommands = config.prefixedSearch()
+				? CommandsUtils.computePrefixedVariants(config.commands(), aliases)
+				: CommandsUtils.computeVariants(config.commands(), aliases);
+	}
 
-		restrictedCommands = config.restrictCommandsPrefixedSearch
-				? CommandsUtils.computePrefixedVariants(config.restrictedCommandsInRegion, aliases)
-				: CommandsUtils.computeVariants(config.restrictedCommandsInRegion, aliases);
+	private void scheduleRecheckTask() {
+		if (config.recheckTicks() <= 0) {
+			return;
+		}
+		recheckTask = server.getGlobalRegionScheduler().runAtFixedRate(
+				plugin,
+				task -> rebuildPredicate(),
+				1, config.recheckTicks()
+		);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
-		if (!config.restrictCommandsInRegionEnabled) {
+		if (!config.enabled()) {
 			return;
 		}
 		Player player = event.getPlayer();
@@ -81,5 +103,5 @@ public final class RestrictCommands extends ConfigurableListenerBase {
 			event.setCancelled(true);
 			msg.sendMessage(player, MKey.RESTRICTED_COMMAND);
 		}
-    }
+	}
 }

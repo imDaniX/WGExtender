@@ -39,7 +39,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import wgextender.config.Config;
+import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
 import wgextender.utils.Transform;
@@ -56,14 +56,14 @@ import static wgextender.utils.WGUtils.getWorldGuard;
 public final class WGExCommand implements CommandExecutor, TabCompleter {
     private final WGExtender plugin;
     private final Server server;
-    private final Config config;
+    private final ConfigurationProvider cfgProvider;
     private final Messages msg;
 
     public WGExCommand(@NotNull WGExtender plugin) {
         this.plugin = plugin;
         this.server = plugin.getServer();
-        this.config = plugin.getPluginConfig();
-        this.msg = config.getMessages();
+        this.cfgProvider = plugin.getConfigurationProvider();
+        this.msg = cfgProvider.messages();
     }
 
     @Override
@@ -82,7 +82,7 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             case "reload" -> {
-                config.loadConfig();
+                cfgProvider.reload();
                 msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__SUCCESS);
                 return true;
             }

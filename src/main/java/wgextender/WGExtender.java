@@ -17,13 +17,12 @@
 
 package wgextender;
 
-import org.bukkit.Server;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
-import wgextender.config.Config;
+import wgextender.config.ConfigurationProvider;
 import wgextender.features.claimcommand.BlockLimitsHandler;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
@@ -32,14 +31,14 @@ import wgextender.features.flags.ConsumeFlagsHandler;
 import wgextender.features.flags.OldPVPFlagsHandler;
 import wgextender.features.flags.WGExtenderFlags;
 import wgextender.features.regionprotect.ownormembased.PvPHandlingListener;
-import wgextender.features.regionprotect.ownormembased.RestrictCommands;
-import wgextender.features.regionprotect.regionbased.BlockBurn;
+import wgextender.features.regionprotect.ownormembased.RestrictCommandsHandler;
 import wgextender.features.regionprotect.regionbased.Explode;
-import wgextender.features.regionprotect.regionbased.FireSpread;
+import wgextender.features.regionprotect.regionbased.FireBurn;
 import wgextender.features.regionprotect.regionbased.LiquidFlow;
 import wgextender.integration.LpIntegration;
 import wgextender.integration.PapiIntegration;
 import wgextender.integration.PluginIntegration;
+import wgextender.utils.CommandWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,15 +47,16 @@ import java.util.logging.Level;
 
 public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API
 	private final List<PluginIntegration> integrations = new ArrayList<>();
-	private Config config;
+	private final List<CommandWrapper> commandWrappers = new ArrayList<>();
+	private ConfigurationProvider cfgProvider;
 	private BlockLimitsHandler claimLimitsHandler;
 
 	private PvPHandlingListener pvpListener;
 	private OldPVPFlagsHandler oldPvpHandler;
 
 	@ApiStatus.Internal
-	public @UnknownNullability Config getPluginConfig() {
-		return config;
+	public @UnknownNullability ConfigurationProvider getConfigurationProvider() {
+		return cfgProvider;
 	}
 
 	public @UnknownNullability BlockLimitsHandler getBlockLimitsHandler() {
@@ -74,25 +74,24 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	@ApiStatus.Internal
 	@Override
 	public void onEnable() {
-		config = new Config(this);
-		config.loadConfig();
-		Server server = getServer();
+		cfgProvider = new ConfigurationProvider(this);
+		cfgProvider.reload();
 		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(this));
-		registerListeners(claimLimitsHandler = new BlockLimitsHandler(config));
-		registerListeners(new RestrictCommands(this));
-		registerListeners(new LiquidFlow(config));
-		registerListeners(new FireSpread(config));
-		registerListeners(new BlockBurn(config));
-		registerListeners(new Explode(config));
+		registerListeners(claimLimitsHandler = new BlockLimitsHandler(cfgProvider));
+		registerListeners(new RestrictCommandsHandler(this));
+		registerListeners(new LiquidFlow(cfgProvider));
+		registerListeners(new FireBurn(cfgProvider));
+		registerListeners(new Explode(cfgProvider));
 		registerListeners(new WEWandListener());
-		registerListeners(new ConsumeFlagsHandler(config));
+		registerListeners(new ConsumeFlagsHandler(cfgProvider));
 		try {
-			WGRegionCommandWrapper.inject(this); // TODO This static call can be non-static
-			WEWandCommandWrapper.inject(server, config); // TODO This static call can be non-static
-			pvpListener = new PvPHandlingListener(config);
+			commandWrappers.add(new WGRegionCommandWrapper(this));
+			commandWrappers.add(new WEWandCommandWrapper(getServer(), cfgProvider));
+			commandWrappers.forEach(CommandWrapper::inject);
+			pvpListener = new PvPHandlingListener(cfgProvider);
 			pvpListener.inject(this);
 			oldPvpHandler = new OldPVPFlagsHandler(this);
-			if (config.miscOldPvpFlags) {
+			if (cfgProvider.misc().oldPvpFlags()) {
 				getLogger().warning(
 						"Enabling the old-PvP flags. Do note that they're not supported, " +
 						"as they're very out of scope of extending WG capabilities and may harm performance. " +
@@ -129,8 +128,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	@Override
 	public void onDisable() {
 		try {
-			WEWandCommandWrapper.uninject(getServer());
-			WGRegionCommandWrapper.uninject(getServer());
+			commandWrappers.forEach(CommandWrapper::uninject);
 			pvpListener.uninject();
 			oldPvpHandler.stop(this);
 		} catch (Throwable t) {

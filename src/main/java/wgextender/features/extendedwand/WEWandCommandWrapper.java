@@ -18,40 +18,29 @@
 package wgextender.features.extendedwand;
 
 import org.bukkit.Server;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jspecify.annotations.NonNull;
-import wgextender.config.Config;
+import org.jetbrains.annotations.NotNull;
+import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
+import wgextender.utils.CommandWrapper;
 import wgextender.utils.CommandsUtils;
 
-public final class WEWandCommandWrapper extends Command {
-	public static void inject(Server server, Config config) {
-		WEWandCommandWrapper wrapper = new WEWandCommandWrapper(config, CommandsUtils.getCommands(server).get("/wand"));
-		CommandsUtils.replaceCommand(server, wrapper.originalCmd, wrapper);
-	}
-
-	public static void uninject(Server server) {
-		WEWandCommandWrapper wrapper = (WEWandCommandWrapper) CommandsUtils.getCommands(server).get("/wand");
-		CommandsUtils.replaceCommand(server, wrapper, wrapper.originalCmd);
-	}
-
-	private final Config config;
+public final class WEWandCommandWrapper extends CommandWrapper {
 	private final Messages msg;
-	private final Command originalCmd;
+	private ConfigurationProvider.Misc misc;
 
-	private WEWandCommandWrapper(Config config, Command originalCmd) {
-		super(originalCmd.getName(), originalCmd.getDescription(), originalCmd.getUsage(), originalCmd.getAliases());
-		this.config = config;
-		this.msg = config.getMessages();
-		this.originalCmd = originalCmd;
+	public WEWandCommandWrapper(@NotNull Server server, @NotNull ConfigurationProvider config) {
+		super(server, CommandsUtils.getCommands(server).get("/wand"));
+		this.msg = config.messages();
+		this.misc = config.misc();
+		config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);
 	}
 
 	@Override
-	public boolean execute(@NonNull CommandSender sender, @NonNull String label, String @NonNull [] args) {
-		if (!config.extendedWorldEditWandEnabled) {
+	public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args) {
+		if (!misc.extendedWeWand()) {
 			return originalCmd.execute(sender, label, args);
 		}
 		if (sender instanceof Player player) {
