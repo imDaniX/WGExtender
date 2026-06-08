@@ -27,11 +27,12 @@ public interface Configurable<T> {
 
         @Override
         public final void onReload(@NonNull T section) {
+            T oldConfig = config;
             this.config = section;
-            subReload();
+            subReload(oldConfig);
         }
 
-        protected void subReload() {
+        protected void subReload(T oldConfig) {
             // No-op by default
         }
     }

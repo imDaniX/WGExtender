@@ -51,7 +51,7 @@ public final class RestrictCommandsHandler extends ConfigurableListenerBase<Conf
 	}
 
 	@Override
-	protected void subReload() {
+	protected void subReload(ConfigurationProvider.RestrictCommands oldConfig) {
 		if (recheckTask != null && !recheckTask.isCancelled()) {
 			recheckTask.cancel();
 		}
