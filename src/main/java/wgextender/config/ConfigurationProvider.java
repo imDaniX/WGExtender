@@ -146,7 +146,8 @@ public final class ConfigurationProvider {
                         explosionSection.getBoolean("block", false),
                         explosionSection.getBoolean("entity", false),
                         explosionSection.getBoolean("source-detection.creeper-target", false),
-                        explosionSection.getBoolean("source-detection.tnt-prime", true)
+                        explosionSection.getBoolean("source-detection.tnt-prime", true),
+                        explosionSection.getBoolean("source-detection.end-crystal-damager", false)
                 ))
         ));
     }
@@ -248,7 +249,7 @@ public final class ConfigurationProvider {
         public static final Function<ConfigurationProvider, Fire> SECTION = cfg -> cfg.protection().fire();
     }
 
-    public record Explosion(boolean block, boolean entity, boolean creeperTarget, boolean tntPrime) {
+    public record Explosion(boolean block, boolean entity, boolean creeperTarget, boolean tntPrime, boolean endCrystalDamager) {
         public static final Function<ConfigurationProvider, Explosion> SECTION = cfg -> cfg.protection().explosion();
     }
 

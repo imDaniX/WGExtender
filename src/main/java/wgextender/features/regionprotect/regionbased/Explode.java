@@ -18,10 +18,7 @@
 package wgextender.features.regionprotect.regionbased;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Creeper;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.TNTPrimed;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockExplodeEvent;
@@ -87,19 +84,20 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
         }
 	}
 
+	// TODO Beds, anchors
 	private @Nullable Player findExplosionSource(@Nullable Entity exploded) {
-		Entity source = null;
-		if (exploded instanceof TNTPrimed primed) {
-			if (config.tntPrime()) {
-				source = primed.getSource();
-			}
-		} else if (exploded instanceof Creeper creeper) {// TODO Creepers can be ignited using flint and steel
-			if (config.creeperTarget()) {
-				source = creeper.getTarget();
-			}
-		} else { // TODO End crystals, beds, anchors
-			return null;
-		}
-		return source instanceof Player player ? player : null;
+        return switch (exploded) {
+            case TNTPrimed primed -> config.tntPrime()
+					? primed.getSource() // TODO Dispensers?
+					: null;
+			// TODO Creepers can be ignited using flint and steel
+            case Creeper creeper -> config.creeperTarget()
+					? creeper.getTarget()
+					: null;
+            case EnderCrystal enderCrystal -> config.endCrystalDamager() && enderCrystal.getLastDamageCause() instanceof EntityDamageByEntityEvent damageEvent
+					? damageEvent.getDamageSource().getCausingEntity()
+					: null;
+            case null, default -> null;
+        } instanceof Player player ? player : null;
 	}
 }

@@ -55,6 +55,9 @@ public final class RestrictCommandsHandler extends ConfigurableListenerBase<Conf
 		if (recheckTask != null && !recheckTask.isCancelled()) {
 			recheckTask.cancel();
 		}
+		if (!config.enabled()) {
+			return;
+		}
 		rebuildPredicate();
 		scheduleRecheckTask();
 	}

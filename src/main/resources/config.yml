@@ -24,6 +24,7 @@ regionprotect:
     source-detection:
       creeper-target: false
       tnt-prime: true
+      end-crystal-damager: false
 autoflags:
   enabled: false
   show-messages: false
