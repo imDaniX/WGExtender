@@ -1,6 +1,12 @@
-# WGExtender X
-[![Snapshot](https://img.shields.io/github/actions/workflow/status/imDaniX/WGExtender/maven.yml?logo=github&label=snapshot)](https://github.com/imDaniX/WGExtender/actions?query=branch%3Amaster) 
-[![Modrinth](https://img.shields.io/modrinth/dt/JFMgRt9t?logo=modrinth&color=00AF5C)](https://modrinth.com/plugin/wgextender-x)
+<div align="center">
+  <img src=".github/assets/logo.png" alt="WGExtender X Logo" height="100" align="left">
+  <h1>WGExtender X</h1>
+
+[![Modrinth](https://img.shields.io/modrinth/v/JFMgRt9t?logo=modrinth&color=00AF5C&label=Modrinth)](https://modrinth.com/plugin/wgextender-x)
+[![Snapshot](https://img.shields.io/github/actions/workflow/status/imDaniX/WGExtender/maven.yml?logo=github&label=Snapshot)](https://github.com/imDaniX/WGExtender/actions?query=branch%3Amaster)
+</div>
+
+---
 
 [WGExtender](https://github.com/Shevchik/WorldGuardExtender) is a plugin that extends WorldGuard's capabilities:
 - Extended region protection for liquids, fire, and explosions
