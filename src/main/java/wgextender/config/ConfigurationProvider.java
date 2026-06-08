@@ -145,8 +145,8 @@ public final class ConfigurationProvider {
                 at(protectionSection, "explosion", explosionSection -> new Explosion(
                         explosionSection.getBoolean("block", false),
                         explosionSection.getBoolean("entity", false),
-                        explosionSection.getBoolean("source-detection.creeper-target", true),
-                        explosionSection.getBoolean("source-detection.tnt-prime", false)
+                        explosionSection.getBoolean("source-detection.creeper-target", false),
+                        explosionSection.getBoolean("source-detection.tnt-prime", true)
                 ))
         ));
     }
