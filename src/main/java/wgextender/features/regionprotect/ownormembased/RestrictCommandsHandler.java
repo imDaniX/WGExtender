@@ -24,7 +24,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
@@ -52,8 +51,7 @@ public final class RestrictCommandsHandler extends ConfigurableListenerBase<Conf
 	}
 
 	@Override
-	public void onReload(@NotNull ConfigurationProvider.RestrictCommands section) {
-		super.onReload(section);
+	protected void subReload() {
 		if (recheckTask != null && !recheckTask.isCancelled()) {
 			recheckTask.cancel();
 		}

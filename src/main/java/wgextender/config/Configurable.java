@@ -26,8 +26,13 @@ public interface Configurable<T> {
         }
 
         @Override
-        public void onReload(@NonNull T section) {
+        public final void onReload(@NonNull T section) {
             this.config = section;
+            subReload();
+        }
+
+        protected void subReload() {
+            // No-op by default
         }
     }
 }

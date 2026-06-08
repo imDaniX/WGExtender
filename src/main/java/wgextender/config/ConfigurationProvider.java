@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import wgextender.WGExtender;
 import wgextender.config.message.Messages;
+import wgextender.utils.CaseInsensitive;
 import wgextender.utils.WGUtils;
 
 import java.io.File;
@@ -109,7 +110,7 @@ public final class ConfigurationProvider {
     private @NotNull BlockLimits loadBlockLimits(@NotNull ConfigurationSection claimSection) {
         return at(claimSection, "blocklimits", blockLimitsSection -> at(blockLimitsSection, "minimal", minimalSection -> {
             ConfigurationSection limitsSection = blockLimitsSection.getConfigurationSection("limits");
-            Map<String, BigInteger> limits = new HashMap<>();
+            Map<String, BigInteger> limits = CaseInsensitive.newMap();
             BigInteger defaultLimit = BigInteger.ZERO;
             if (limitsSection != null) {
                 defaultLimit = readBigInteger(limitsSection, "default");
@@ -121,7 +122,7 @@ public final class ConfigurationProvider {
             return new BlockLimits(
                     blockLimitsSection.getBoolean("enabled", false),
                     defaultLimit,
-                    Map.copyOf(limits),
+                    Collections.unmodifiableMap(limits),
                     readBigInteger(minimalSection, "volume"),
                     readBigInteger(minimalSection, "horizontal"),
                     readBigInteger(minimalSection, "vertical")

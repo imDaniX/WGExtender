@@ -32,7 +32,6 @@ import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.WEUtils;
 
 import java.math.BigInteger;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,7 +95,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 		}
 		BigInteger maxBlocks = BigInteger.ZERO;
 		for (String group : groups) {
-			maxBlocks = maxBlocks.max(config.limits().getOrDefault(group.toLowerCase(Locale.ROOT), BigInteger.ZERO));
+			maxBlocks = maxBlocks.max(config.limits().getOrDefault(group, BigInteger.ZERO));
 		}
 		return maxBlocks;
 	}

@@ -16,6 +16,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
+import static me.clip.placeholderapi.PlaceholderAPIPlugin.booleanFalse;
+import static me.clip.placeholderapi.PlaceholderAPIPlugin.booleanTrue;
+
 @ApiStatus.Internal
 public class PapiIntegration extends PlaceholderExpansion implements PluginIntegration {
     private final WGExtender plugin;
@@ -46,21 +49,43 @@ public class PapiIntegration extends PlaceholderExpansion implements PluginInteg
 
     @Override
     public @Nullable String onRequest(@Nullable OfflinePlayer offPlayer, @NotNull String paramsRaw) {
-        var handler = plugin.getBlockLimitsHandler();
         var reader = new ParamsReader(paramsRaw);
 
-        if (reader.remaining().equals("context_helper")) {
-            if (offPlayer == null) {
-                return null;
+        return switch (reader.input) {
+            case "context_helper" -> handleContextHelper(offPlayer);
+            case "in_region" -> handleInRegion(offPlayer);
+            default -> {
+                String next = reader.pop();
+                if (!next.equals("blocklimit")) {
+                    yield null;
+                }
+                yield handleBlockLimit(offPlayer, reader);
             }
-            Location location = offPlayer.getLocation();
-            return location != null
-                    ? WGUtils.getFlagValue(location, WGExtenderFlags.CONTEXT_HELPER_FLAG)
-                    : null;
+        };
+    }
+
+    private @Nullable String handleContextHelper(@Nullable OfflinePlayer offPlayer) {
+        if (offPlayer == null) {
+            return null;
         }
+        Location location = offPlayer.getLocation();
+        return location != null
+                ? WGUtils.getFlagValue(location, WGExtenderFlags.CONTEXT_HELPER_FLAG)
+                : null;
+    }
 
-        if (!reader.pop().equals("blocklimit")) return null; // TODO Add claim amount limit
+    private @Nullable String handleInRegion(@Nullable OfflinePlayer offPlayer) {
+        if (offPlayer instanceof Player player) {
+            return WGUtils.getRegionsAt(player.getLocation()).size() > 0
+                    ? booleanTrue()
+                    : booleanFalse();
+        } else {
+            return null;
+        }
+    }
 
+    private @Nullable String handleBlockLimit(@Nullable OfflinePlayer offPlayer, @NotNull ParamsReader reader) {
+        var handler = plugin.getBlockLimitsHandler();
         return switch (reader.pop()) {
             case "refresh" -> offPlayer instanceof Player player
                     ? handler.refreshBlockLimit(player).toString()
