@@ -97,7 +97,7 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
 			if (config.creeperTarget()) {
 				source = creeper.getTarget();
 			}
-		} else {
+		} else { // TODO End crystals, beds, anchors
 			return null;
 		}
 		return source instanceof Player player ? player : null;

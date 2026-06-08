@@ -15,6 +15,7 @@ import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 
+// TODO Better integrate with the current config API
 // TODO Option for per-player?
 public final class Messages { // TODO Use MM placeholders properly?
     private final WGExtender plugin;

@@ -38,8 +38,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ConfigurationProvider {
-    public static final Function<ConfigurationProvider, Void> VOID_SECTION = cfg -> null;
-
     private final Plugin plugin;
     private final File configFile;
     private final Messages messages;
@@ -111,7 +109,7 @@ public final class ConfigurationProvider {
     private @NotNull BlockLimits loadBlockLimits(@NotNull ConfigurationSection claimSection) {
         return at(claimSection, "blocklimits", blockLimitsSection -> at(blockLimitsSection, "minimal", minimalSection -> {
             ConfigurationSection limitsSection = blockLimitsSection.getConfigurationSection("limits");
-            Map<String, BigInteger> limits = new LinkedHashMap<>();
+            Map<String, BigInteger> limits = new HashMap<>();
             BigInteger defaultLimit = BigInteger.ZERO;
             if (limitsSection != null) {
                 defaultLimit = readBigInteger(limitsSection, "default");
@@ -119,10 +117,11 @@ public final class ConfigurationProvider {
                     limits.put(group.toLowerCase(Locale.ROOT), readBigInteger(limitsSection, group));
                 }
             }
+            // TODO Compare max limit with the WG's and warn the user
             return new BlockLimits(
                     blockLimitsSection.getBoolean("enabled", false),
                     defaultLimit,
-                    limits,
+                    Map.copyOf(limits),
                     readBigInteger(minimalSection, "volume"),
                     readBigInteger(minimalSection, "horizontal"),
                     readBigInteger(minimalSection, "vertical")
@@ -152,21 +151,22 @@ public final class ConfigurationProvider {
     }
 
     private @NotNull AutoFlags loadAutoFlags(@NotNull FileConfiguration config) {
-        return at(config, "autoflags", autoFlagsSection -> {
-            Map<Flag<?>, String> flags = new LinkedHashMap<>();
-            ConfigurationSection flagsSection = autoFlagsSection.getConfigurationSection("flags");
-            if (flagsSection != null) {
-                for (String key : flagsSection.getKeys(false)) {
-                    Flag<?> flag = WGUtils.matchFlag(key);
-                    if (flag != null) flags.put(flag, flagsSection.getString(key));
-                }
-            }
-            return new AutoFlags(
-                    autoFlagsSection.getBoolean("enabled", false),
-                    autoFlagsSection.getBoolean("show-messages", false),
-                    flags
-            );
-        });
+        return at(config, "autoflags", autoFlagsSection -> new AutoFlags(
+                autoFlagsSection.getBoolean("enabled", false),
+                autoFlagsSection.getBoolean("show-messages", false),
+                at(autoFlagsSection, "flags", flagsSection -> {
+                    Map<Flag<?>, String> flags = new HashMap<>();
+                    for (String key : flagsSection.getKeys(false)) {
+                        Flag<?> flag = WGUtils.matchFlag(key);
+                        if (flag != null) {
+                            flags.put(flag, flagsSection.getString(key));
+                        } else {
+                            plugin.getSLF4JLogger().warn("Unknown flag provided for autoflags: {}", key);
+                        }
+                    }
+                    return Map.copyOf(flags);
+                })
+        ));
     }
 
     private @NotNull RestrictCommands loadRestrictCommands(@NotNull FileConfiguration config) {
@@ -175,30 +175,35 @@ public final class ConfigurationProvider {
                 rcSection.getBoolean("aliased-search", true),
                 rcSection.getBoolean("prefixed-search", true),
                 rcSection.getInt("recheck-ticks", 100),
-                new ArrayList<>(rcSection.getStringList("commands"))
+                List.copyOf(rcSection.getStringList("commands"))
         ));
     }
 
     private @NotNull Misc loadMisc(@NotNull FileConfiguration config) {
-        return at(config, "misc", miscSection -> {
-            State pvpMode = switch (miscSection.getString("pvpmode", "default").toLowerCase(Locale.ROOT)) {
-                case "allow" -> State.ALLOW;
-                case "deny" -> State.DENY;
-                default -> null;
-            };
-            return new Misc(
-                    config.getBoolean("extendedwewand", false),
-                    pvpMode,
-                    miscSection.getBoolean("old-pvp-flags", true)
-            );
-        });
+        return at(config, "misc", miscSection -> new Misc(
+                config.getBoolean("extendedwewand", false),
+                switch (miscSection.getString("pvpmode", "default").toLowerCase(Locale.ROOT)) {
+                    case "allow" -> State.ALLOW;
+                    case "deny" -> State.DENY;
+                    default -> null;
+                },
+                miscSection.getBoolean("old-pvp-flags", true)
+        ));
     }
 
     private void loadMessages(@NotNull FileConfiguration config) {
-        messages.setDecoder(switch (config.getString("messages.serializer", "LEGACY_AMPERSAND").toUpperCase(Locale.ROOT)) {
+        String serializer = config.getString("messages.serializer", "LEGACY_AMPERSAND").toUpperCase(Locale.ROOT);
+        messages.setDecoder(switch (serializer) { // TODO Serializer registry?
             case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
             case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
-            default -> LegacyComponentSerializer.legacyAmpersand();
+            case "LEGACY_AMPERSAND" -> LegacyComponentSerializer.legacyAmpersand();
+            default -> {
+                plugin.getSLF4JLogger().warn(
+                        "Unknown messages serializer provided: {}, falling back to LEGACY_AMPERSAND",
+                        serializer
+                );
+                yield LegacyComponentSerializer.legacyAmpersand();
+            }
         });
         messages.loadMessages(config.getString("messages.locale", "en"));
     }
@@ -210,7 +215,7 @@ public final class ConfigurationProvider {
 
     private static @NotNull BigInteger readBigInteger(@NotNull ConfigurationSection section, @NotNull String key) {
         if (section.isLong(key)) return BigInteger.valueOf(section.getLong(key));
-        if (section.isInt(key)) return BigInteger.valueOf(section.getInt(key));
+        if (section.isDouble(key)) return BigInteger.valueOf((long) section.getDouble(key));
         String value = section.getString(key, "0");
         return value.equals("0") ? BigInteger.ZERO : new BigInteger(value);
     }
