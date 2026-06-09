@@ -20,7 +20,7 @@ import static me.clip.placeholderapi.PlaceholderAPIPlugin.booleanFalse;
 import static me.clip.placeholderapi.PlaceholderAPIPlugin.booleanTrue;
 
 @ApiStatus.Internal
-public class PapiIntegration extends PlaceholderExpansion implements PluginIntegration {
+public final class PapiIntegration extends PlaceholderExpansion implements PluginIntegration {
     private final WGExtender plugin;
 
     public PapiIntegration(@NotNull WGExtender plugin) {
@@ -56,10 +56,12 @@ public class PapiIntegration extends PlaceholderExpansion implements PluginInteg
             case "in_region" -> handleInRegion(offPlayer);
             default -> {
                 String next = reader.pop();
-                if (!next.equals("blocklimit")) {
+                // TODO QoL: add claim count limit
+                if (next.equals("blocklimit") || (next.equals("limit") && reader.pop().equals("blocks"))) {
+                    yield handleBlockLimit(offPlayer, reader);
+                } else {
                     yield null;
                 }
-                yield handleBlockLimit(offPlayer, reader);
             }
         };
     }
@@ -87,7 +89,7 @@ public class PapiIntegration extends PlaceholderExpansion implements PluginInteg
     private @Nullable String handleBlockLimit(@Nullable OfflinePlayer offPlayer, @NotNull ParamsReader reader) {
         var handler = plugin.getBlockLimitsHandler();
         return switch (reader.pop()) {
-            case "refresh" -> offPlayer instanceof Player player
+            case "", "refresh" -> offPlayer instanceof Player player
                     ? handler.refreshBlockLimit(player).toString()
                     : null;
             case "cached", "cache" -> offPlayer instanceof Player player
