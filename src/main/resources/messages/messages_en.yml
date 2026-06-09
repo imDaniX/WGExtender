@@ -12,24 +12,24 @@ claim:
       Currently, it must be 2147483647 or smaller. Please contact a server administrator.
     already-exists: A region with that name already exists, please choose another.
     too-many: You have too many regions, delete one before claiming a new one.
-    too-big: 'Region size is too large. Maximum size: {maxVolume}, your size: {volume}'
+    too-big: 'Region size is too large. Maximum size: {maxVolume}, your size: {volume}.'
     overlap: This region overlaps another player''s region.
     only-inside-own: You can only claim inside your own regions.
     only-cuboid: You can only use a cuboid selection.
     exception: '&eAn error occurred while claiming region {id}.'
     incomplete: 'Select an area first. Use WorldEdit to make a selection (wiki: https://worldedit.enginehub.org/).'
     deny-max-volume: |-
-      &4You cannot claim such a large region
-      Your limit: {limit}, you attempted to claim: {volume}
+      &4You cannot claim such a large region.
+      Your limit: {limit}, you attempted to claim: {volume}.
     deny-min-volume: |-
-      &4You cannot claim such a small region
-      Minimum volume: {limit}, you attempted to claim: {volume}
+      &4You cannot claim such a small region.
+      Minimum volume: {limit}, you attempted to claim: {volume}.
     deny-horizontal: |-
-      &4You cannot claim such a narrow region
-      Minimum width: {limit}, you attempted to claim: {volume}
+      &4You cannot claim such a narrow region.
+      Minimum width: {limit}, you attempted to claim: {volume}.
     deny-vertical: |-
-      &4You cannot claim such a short region
-      Minimum height: {limit}, you attempted to claim: {volume}
+      &4You cannot claim such a short region.
+      Minimum height: {limit}, you attempted to claim: {volume}.
   success: '&eYou have claimed region {id}.'
   auto-vert: '&eRegion automatically expanded vertically.'
 wand:

@@ -146,7 +146,7 @@ public final class ConfigurationProvider {
                         explosionSection.getBoolean("block", false),
                         explosionSection.getBoolean("entity", false),
                         explosionSection.getBoolean("source-detection.creeper-target", false),
-                        explosionSection.getBoolean("source-detection.tnt-prime", true),
+                        explosionSection.getBoolean("source-detection.tnt-prime", false),
                         explosionSection.getBoolean("source-detection.end-crystal-damager", false)
                 ))
         ));
@@ -189,7 +189,7 @@ public final class ConfigurationProvider {
                     case "deny" -> State.DENY;
                     default -> null;
                 },
-                miscSection.getBoolean("old-pvp-flags", true)
+                miscSection.getBoolean("old-pvp-flags", false)
         ));
     }
 

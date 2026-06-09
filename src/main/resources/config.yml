@@ -23,7 +23,7 @@ regionprotect:
     entity: false
     source-detection:
       creeper-target: false
-      tnt-prime: true
+      tnt-prime: false
       end-crystal-damager: false
 autoflags:
   enabled: false
@@ -40,7 +40,7 @@ restrictcommands:
 extendedwewand: false
 misc:
   pvpmode: default
-  old-pvp-flags: true
+  old-pvp-flags: false
 messages:
   serializer: LEGACY
   locale: en

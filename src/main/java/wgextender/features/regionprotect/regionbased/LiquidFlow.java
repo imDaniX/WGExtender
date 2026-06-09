@@ -43,7 +43,7 @@ public final class LiquidFlow extends ConfigurableListenerBase<ConfigurationProv
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onDispense(BlockDispenseEvent event) {
+	public void onDispense(BlockDispenseEvent event) { // TODO This probably is quite borked
 		Block block = event.getBlock();
 		BlockData blockData = block.getBlockData();
 		if (blockData instanceof Directional directional) {
