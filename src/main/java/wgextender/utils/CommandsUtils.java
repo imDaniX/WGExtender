@@ -55,11 +55,11 @@ public final class CommandsUtils {
 	public static void replaceCommand(@NotNull Server server, @NotNull Command oldCommand, @NotNull Command newCommand) {
 		String cmdName = oldCommand.getName();
 		var commandMap = getCommands(server);
-		if (commandMap.get(cmdName).equals(oldCommand)) {
+		if (oldCommand.equals(commandMap.get(cmdName))) {
 			commandMap.put(cmdName, newCommand);
 		}
 		for (String alias : oldCommand.getAliases()) {
-			if (commandMap.get(alias).equals(oldCommand)) {
+			if (oldCommand.equals(commandMap.get(alias))) {
 				commandMap.put(alias, newCommand);
 			}
 		}
