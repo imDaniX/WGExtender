@@ -38,6 +38,7 @@ wand:
 flags:
   chorus-restricted: '&4You cannot use chorus fruit in this region.'
   consume-restricted: '&4You cannot consume items in this region.'
+  rename-restricted: '&4You cannot rename mobs in this region.'
 damage:
   mob: hit that
   vehicle: change that

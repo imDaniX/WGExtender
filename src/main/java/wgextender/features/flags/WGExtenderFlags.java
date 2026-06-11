@@ -20,6 +20,7 @@ public final class WGExtenderFlags {
 
     public static final StateFlag CHORUS_FRUIT_USE_FLAG = cache(new StateFlag("chorus-fruit-use", true));
     public static final StateFlag ITEM_CONSUME_FLAG = cache(new StateFlag("item-consume", true));
+    public static final StateFlag MOB_RENAME_FLAG = cache(new StateFlag("mob-rename", true));
 
     public static final StringFlag CONTEXT_HELPER_FLAG = cache(new StringFlag("context-helper"));
 

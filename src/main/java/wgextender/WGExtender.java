@@ -28,6 +28,7 @@ import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
 import wgextender.features.extendedwand.WEWandListener;
 import wgextender.features.flags.ConsumeFlagsHandler;
+import wgextender.features.flags.MobRenameFlagHandler;
 import wgextender.features.flags.OldPVPFlagsHandler;
 import wgextender.features.flags.WGExtenderFlags;
 import wgextender.features.regionprotect.ownormembased.PvPHandlingListener;
@@ -49,7 +50,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	private final List<PluginIntegration> integrations = new ArrayList<>();
 	private final List<CommandWrapper> commandWrappers = new ArrayList<>();
 	private ConfigurationProvider cfgProvider;
-	private BlockLimitsHandler claimLimitsHandler;
+	private BlockLimitsHandler blockLimitsHandler;
 
 	private PvPHandlingListener pvpListener;
 	private OldPVPFlagsHandler oldPvpHandler;
@@ -60,7 +61,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	}
 
 	public @UnknownNullability BlockLimitsHandler getBlockLimitsHandler() {
-		return claimLimitsHandler;
+		return blockLimitsHandler;
 	}
 
 	@ApiStatus.Internal
@@ -77,7 +78,8 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		cfgProvider = new ConfigurationProvider(this);
 		cfgProvider.reload();
 		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(this));
-		registerListeners(claimLimitsHandler = new BlockLimitsHandler(cfgProvider));
+		registerListeners(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
+		registerListeners(new MobRenameFlagHandler(cfgProvider));
 		registerListeners(new RestrictCommandsHandler(this));
 		registerListeners(new LiquidFlow(cfgProvider));
 		registerListeners(new FireBurn(cfgProvider));
