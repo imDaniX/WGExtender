@@ -1,47 +1,95 @@
 claim:
+  # Auto-expand claim selection from world top to bottom
   vertexpand: false
+  
   blocklimits:
+    # Enforce block limits per region
     enabled: false
+    
+    # Max region block count per group
+    # The limit in WorldGuard's config.yml should be higher than specified here
     limits:
       default: 50000
+    
+    # Minimal region size restrictions
     minimal:
+      # Minimal volume (width * height * length)
       volume: 0
+      # Minimal width and length
       horizontal: 0
+      # Minimal height
       vertical: 0
+
 regionprotect:
+  # Block liquid flow across region borders
   flow:
     lava: false
     water: false
     other: false
+  
   fire:
     spread:
+      # Block fire spreading into a region from outside
       toregion: false
+      # Block fire spread within a region
       inregion: false
+    # Prevent fire from destroying blocks
     burn: false
+  
   explosion:
+    # Prevent explosions from destroying blocks
     block: false
+    # Prevent explosion damage to entities
     entity: false
+    # Player source detection - if source was a member of the region, protection is disabled
     source-detection:
       creeper-target: false
       tnt-prime: false
       end-crystal-damager: false
+
 autoflags:
+  # Auto-apply defined flags to new regions
   enabled: false
+  # Show vanilla WorldGuard messages when setting flags
   show-messages: false
+  # WorldGuard flag names and values to auto-apply
   flags:
     pvp: deny
+
 restrictcommands:
+  # Block certain commands and their aliases inside any WorldGuard region
+  # for players who do not have access to that region
   enabled: false
+  # Commands to block
   commands:
     - sethome
+  # Match commands by their aliases (e.g. 'tp' also matches 'teleport')
   aliased-search: true
+  # Match commands that are a prefix of the input, split by spaces
+  # (e.g. 'home bed' matches 'home bed here')
   prefixed-search: true
+  # How often to recheck commands list, in ticks
   recheck-ticks: 100
-extendedwewand: false
-misc:
-  pvpmode: default
-  old-pvp-flags: false
-messages:
-  serializer: LEGACY
-  locale: en
 
+# Handle the item given by the //wand command
+# The wand is deleted when dropped
+extendedwewand: false
+
+misc:
+  # Default PvP behavior for regions without an explicit flag
+  # Possible values: 'allow', 'deny', or 'default' (WorldGuard behavior)
+  # WARNING: Deprecated - may have issues or inconsistencies
+  pvpmode: default
+  
+  # Enables the usage of legacy 1.8 PvP flags
+  # WARNING: Deprecated - may have issues or inconsistencies
+  old-pvp-flags: false
+
+messages:
+  # Format parser for messages
+  # Possible values: 'LEGACY' (&c), 'LEGACY_SECTION' (§c), 'MINIMESSAGE' (<red>)
+  serializer: LEGACY
+  # Localization to load messages from
+  # Supported locales: 'en', 'ru'
+  # Messages are loaded from messages/messages_<locale>.yml files
+  locale: en
