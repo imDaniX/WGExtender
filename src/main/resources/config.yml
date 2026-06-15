@@ -10,12 +10,13 @@ claim:
     # The limit in WorldGuard's config.yml should be higher than specified here
     limits:
       default: 50000
+      vip: 100000
     
     # Minimal region size restrictions
     minimal:
       # Minimal volume (width * height * length)
       volume: 0
-      # Minimal width and length
+      # Minimal width or length
       horizontal: 0
       # Minimal height
       vertical: 0
@@ -41,7 +42,7 @@ regionprotect:
     block: false
     # Prevent explosion damage to entities
     entity: false
-    # Player source detection - if source was a member of the region, protection is disabled
+    # Player source detection - if source was a member of a region, protection is disabled
     source-detection:
       creeper-target: false
       tnt-prime: false
@@ -63,6 +64,7 @@ restrictcommands:
   # Commands to block
   commands:
     - sethome
+    - setwarp
   # Match commands by their aliases (e.g. 'tp' also matches 'teleport')
   aliased-search: true
   # Match commands that are a prefix of the input, split by spaces
