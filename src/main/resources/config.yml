@@ -89,7 +89,7 @@ misc:
 
 messages:
   # Format parser for messages
-  # Possible values: 'LEGACY' (&c), 'LEGACY_SECTION' (§c), 'MINIMESSAGE' (<red>)
+  # Possible values: 'LEGACY' (&c or §c), 'LEGACY_AMPERSAND' (&c), 'LEGACY_SECTION' (§c), 'MINIMESSAGE' (<red>)
   serializer: LEGACY
   # Localization to load messages from
   # Supported locales: 'en', 'ru'

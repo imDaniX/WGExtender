@@ -28,7 +28,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.ItemStack;
 
-public final class WEWandListener implements Listener {
+public final class WEWandHandler implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityAttack(EntityDamageByEntityEvent event) {
 		Entity edamager = event.getDamager();

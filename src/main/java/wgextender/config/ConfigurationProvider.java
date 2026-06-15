@@ -19,8 +19,6 @@ package wgextender.config;
 
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.StateFlag.State;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -49,11 +47,12 @@ public final class ConfigurationProvider {
     private AutoFlags autoFlags;
     private RestrictCommands restrictCommands;
     private Misc misc;
+    private MessagesConfig messagesConfig;
 
     public ConfigurationProvider(WGExtender plugin) {
         this.plugin = plugin;
         this.configFile = new File(plugin.getDataFolder(), "config.yml");
-        this.messages = new Messages(plugin);
+        this.messages = new Messages(plugin, this);
     }
 
     public void reload() {
@@ -64,8 +63,8 @@ public final class ConfigurationProvider {
         this.autoFlags = loadAutoFlags(config);
         this.restrictCommands = loadRestrictCommands(config);
         this.misc = loadMisc(config);
-        loadMessages(config);
-        subscribers.forEach(s -> s.accept(this));
+        this.messagesConfig = loadMessagesConfig(config);
+        subscribers.forEach(sub -> sub.accept(this));
     }
 
     public <T> void register(@NotNull Configurable<T> reloadable, @NotNull Function<ConfigurationProvider, T> section) {
@@ -94,6 +93,10 @@ public final class ConfigurationProvider {
 
     public @NotNull Misc misc() {
         return misc;
+    }
+
+    public @NotNull MessagesConfig messagesConfig() {
+        return messagesConfig;
     }
 
     public @NotNull Messages messages() {
@@ -193,24 +196,14 @@ public final class ConfigurationProvider {
         ));
     }
 
-    private void loadMessages(@NotNull FileConfiguration config) {
-        String serializer = config.getString("messages.serializer", "LEGACY_AMPERSAND").toUpperCase(Locale.ROOT);
-        messages.setDecoder(switch (serializer) { // TODO Serializer registry?
-            case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
-            case "LEGACY_SECTION" -> LegacyComponentSerializer.legacySection();
-            case "LEGACY_AMPERSAND" -> LegacyComponentSerializer.legacyAmpersand();
-            default -> {
-                plugin.getSLF4JLogger().warn(
-                        "Unknown messages serializer provided: {}, falling back to LEGACY_AMPERSAND",
-                        serializer
-                );
-                yield LegacyComponentSerializer.legacyAmpersand();
-            }
-        });
-        messages.loadMessages(config.getString("messages.locale", "en"));
+    private @NotNull MessagesConfig loadMessagesConfig(@NotNull FileConfiguration config) {
+        return at(config, "messages", messagesSection -> new MessagesConfig(
+                messagesSection.getString("serializer", "LEGACY"),
+                messagesSection.getString("locale", "en")
+        ));
     }
 
-    private static <T> T at(ConfigurationSection config, String path, Function<ConfigurationSection, T> creator) {
+    private static <T> T at(@NotNull ConfigurationSection config, @NotNull String path, @NotNull Function<ConfigurationSection, T> creator) {
         var section = config.getConfigurationSection(path);
         return creator.apply(section == null ? config.createSection(path) : section);
     }
@@ -222,7 +215,7 @@ public final class ConfigurationProvider {
         return value.equals("0") ? BigInteger.ZERO : new BigInteger(value);
     }
 
-    public record Claim(boolean expandSelectionVertical, BlockLimits blockLimits) {
+    public record Claim(boolean expandSelectionVertical, @NotNull BlockLimits blockLimits) {
         public static final Function<ConfigurationProvider, Claim> SECTION = ConfigurationProvider::claim;
     }
 
@@ -237,7 +230,7 @@ public final class ConfigurationProvider {
         public static final Function<ConfigurationProvider, BlockLimits> SECTION = cfg -> cfg.claim().blockLimits();
     }
 
-    public record Protection(Flow flow, Fire fire, Explosion explosion) {
+    public record Protection(@NotNull Flow flow, @NotNull Fire fire, @NotNull Explosion explosion) {
         public static final Function<ConfigurationProvider, Protection> SECTION = ConfigurationProvider::protection;
     }
 
@@ -253,7 +246,7 @@ public final class ConfigurationProvider {
         public static final Function<ConfigurationProvider, Explosion> SECTION = cfg -> cfg.protection().explosion();
     }
 
-    public record AutoFlags(boolean enabled, boolean showMessages, Map<Flag<?>, String> flags) {
+    public record AutoFlags(boolean enabled, boolean showMessages, @NotNull Map<Flag<?>, String> flags) {
         public static final Function<ConfigurationProvider, AutoFlags> SECTION = ConfigurationProvider::autoFlags;
     }
 
@@ -269,5 +262,10 @@ public final class ConfigurationProvider {
 
     public record Misc(boolean extendedWeWand, @Nullable State pvpMode, boolean oldPvpFlags) {
         public static final Function<ConfigurationProvider, Misc> SECTION = ConfigurationProvider::misc;
+    }
+
+    // TODO ConfigurationProvider.Messages would collide with the Messages class name
+    public record MessagesConfig(@NotNull String serializer, @NotNull String locale) {
+        public static final Function<ConfigurationProvider, MessagesConfig> SECTION = ConfigurationProvider::messagesConfig;
     }
 }

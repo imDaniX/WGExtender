@@ -82,7 +82,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 	}
 
 	/**
-	 * Recalculates blocks limit
+	 * Recalculates blocks limit without caching it
 	 * @param player player to recalculate the limit for
 	 * @return calculated limit
 	 * @see #cachedBlockLimit(Player)

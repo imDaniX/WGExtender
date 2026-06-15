@@ -2,12 +2,15 @@ package wgextender.config.message;
 
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.ComponentDecoder;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
+import wgextender.config.Configurable;
+import wgextender.config.ConfigurationProvider;
 
 import java.io.File;
 import java.util.Arrays;
@@ -15,9 +18,21 @@ import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 
-// TODO Better integrate with the current config API
 // TODO Option for per-player?
-public final class Messages { // TODO Use MM placeholders properly?
+public final class Messages implements Configurable<ConfigurationProvider.MessagesConfig> { // TODO Use MM placeholders properly?
+    private static final LegacyComponentSerializer LEGACY_SECTION = fixup(LegacyComponentSerializer.legacySection());
+    private static final LegacyComponentSerializer LEGACY_AMPERSAND = fixup(LegacyComponentSerializer.legacyAmpersand());
+
+    private static @NotNull LegacyComponentSerializer fixup(@NotNull LegacyComponentSerializer serializer) {
+        return serializer.toBuilder()
+                .extractUrls()
+                .hexColors()
+                .useUnusualXRepeatedCharacterHexFormat()
+                .build();
+    }
+
+    private static final ComponentDecoder<String, ? extends Component> LEGACY = input -> LEGACY_SECTION.deserialize(input.replace('§', '&'));
+
     private final WGExtender plugin;
     private final Map<MKey, String> messages = new EnumMap<>(MKey.class);
     private final File messagesFolder;
@@ -26,13 +41,33 @@ public final class Messages { // TODO Use MM placeholders properly?
 
     private ComponentDecoder<String, ? extends Component> decoder;
 
-    public Messages(@NotNull WGExtender plugin) {
+    public Messages(@NotNull WGExtender plugin, @NotNull ConfigurationProvider configProvider) {
         this.plugin = plugin;
         this.messagesFolder = new File(plugin.getDataFolder(), "messages");
-        decoder = LegacyComponentSerializer.legacyAmpersand();
+        this.decoder = LEGACY;
+        configProvider.register(this, ConfigurationProvider.MessagesConfig.SECTION);
     }
 
-    public void loadMessages(@NotNull String locale) { // TODO Option to cache the ones with no placeholders
+    @Override
+    public void onReload(@NotNull ConfigurationProvider.MessagesConfig section) {
+        this.decoder = switch (section.serializer().toUpperCase(Locale.ROOT)) {
+            // TODO InkyMessage? Decoders registry?
+            case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
+            case "LEGACY" -> LEGACY;
+            case "LEGACY_SECTION" -> LEGACY_SECTION;
+            case "LEGACY_AMPERSAND" -> LEGACY_AMPERSAND;
+            default -> {
+                plugin.getSLF4JLogger().warn(
+                        "Unknown messages serializer provided: {}, falling back to LEGACY",
+                        section.serializer()
+                );
+                yield LEGACY;
+            }
+        };
+        loadMessages(section.locale());
+    }
+
+    private void loadMessages(@NotNull String locale) {
         if (!locale.equals(lastLocale)) {
             plugin.getSLF4JLogger().info("Set locale to {}, getting messages from messages/messages_{}.yml", locale, locale);
         }
@@ -78,10 +113,6 @@ public final class Messages { // TODO Use MM placeholders properly?
                 }
             }
         }
-    }
-
-    public void setDecoder(@NotNull ComponentDecoder<String, ? extends Component> decoder) {
-        this.decoder = decoder;
     }
 
     public @NotNull Component decode(@NotNull String msg) {

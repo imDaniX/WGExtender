@@ -26,7 +26,7 @@ import wgextender.config.ConfigurationProvider;
 import wgextender.features.claimcommand.BlockLimitsHandler;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
-import wgextender.features.extendedwand.WEWandListener;
+import wgextender.features.extendedwand.WEWandHandler;
 import wgextender.features.flags.ConsumeFlagsHandler;
 import wgextender.features.flags.MobRenameFlagHandler;
 import wgextender.features.flags.OldPVPFlagsHandler;
@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 
-public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API
+public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API?
 	private final List<PluginIntegration> integrations = new ArrayList<>();
 	private final List<CommandWrapper> commandWrappers = new ArrayList<>();
 	private ConfigurationProvider cfgProvider;
@@ -84,7 +84,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		registerListeners(new LiquidFlow(cfgProvider));
 		registerListeners(new FireBurn(cfgProvider));
 		registerListeners(new Explode(cfgProvider));
-		registerListeners(new WEWandListener());
+		registerListeners(new WEWandHandler());
 		registerListeners(new ConsumeFlagsHandler(cfgProvider));
 		try {
 			commandWrappers.add(new WGRegionCommandWrapper(this));
