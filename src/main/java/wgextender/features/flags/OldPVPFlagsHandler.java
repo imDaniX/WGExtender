@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageModifier;
@@ -128,16 +127,12 @@ public final class OldPVPFlagsHandler implements Listener {
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onInteract(PlayerInteractEvent event) {
-		if (isRightClick(event.getAction()) &&
+		if (event.getAction().isRightClick() &&
 				event.getHand() == EquipmentSlot.OFF_HAND &&
 				event.getItem() != null &&
 				event.getItem().getType() == Material.BOW &&
 				WGUtils.isFlagTrue(event.getPlayer().getLocation(), WGExtenderFlags.OLDPVP_NOBOW)) {
 			event.setCancelled(true);
 		}
-	}
-
-	private static boolean isRightClick(Action action) {
-		return action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK;
 	}
 }

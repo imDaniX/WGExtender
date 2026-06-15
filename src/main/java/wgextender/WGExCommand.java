@@ -67,7 +67,7 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, @NotNull Command arg1, @NotNull String label, String @NotNull [] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command arg1, @NotNull String label, @NotNull String @NotNull [] args) {
         if (!sender.hasPermission("wgextender.admin")) {
             msg.sendMessage(sender, MKey.COMMON__ERROR__NO_PERMISSION);
             return true;
