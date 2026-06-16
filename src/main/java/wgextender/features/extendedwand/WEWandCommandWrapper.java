@@ -25,14 +25,13 @@ import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
 import wgextender.utils.CommandWrapper;
-import wgextender.utils.CommandsUtils;
 
 public final class WEWandCommandWrapper extends CommandWrapper {
 	private final Messages msg;
 	private ConfigurationProvider.Misc misc;
 
 	public WEWandCommandWrapper(@NotNull Server server, @NotNull ConfigurationProvider config) {
-		super(server, CommandsUtils.getCommands(server).get("/wand"));
+		super(server, "/wand");
 		this.msg = config.messages();
 		this.misc = config.misc();
 		config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);

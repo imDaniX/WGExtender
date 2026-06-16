@@ -31,7 +31,6 @@ import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
 import wgextender.utils.CommandWrapper;
-import wgextender.utils.CommandsUtils;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
 
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class WGRegionCommandWrapper extends CommandWrapper {
-
 	private final Messages msg;
 	private final BlockLimitsHandler limits;
 	private final WGClaimSubcommand claimSubcommand;
@@ -49,7 +47,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	private ConfigurationProvider.AutoFlags autoFlags;
 
 	public WGRegionCommandWrapper(@NotNull WGExtender plugin) {
-		super(plugin.getServer(), CommandsUtils.getCommands(plugin.getServer()).get("region"));
+		super(plugin.getServer(), "region");
 		ConfigurationProvider config = plugin.getConfigurationProvider();
 		this.msg = config.messages();
 		this.limits = plugin.getBlockLimitsHandler();
