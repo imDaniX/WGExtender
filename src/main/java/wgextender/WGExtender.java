@@ -120,6 +120,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 				integration.onEnable(this);
 			}
 		}
+		cfgProvider.reload();
 	}
 	
 	private void registerListeners(@NotNull Listener listener) {
