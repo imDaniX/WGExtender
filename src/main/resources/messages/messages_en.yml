@@ -78,3 +78,15 @@ wgex-command:
     clear:
       help: '&bwgex limits clear - clear the current cache'
       success: '&bLimit cache cleared.'
+  update:
+    help: '&bwgex update - check for a new plugin version'
+    start: '&bChecking for updates...'
+    available: |-
+      &bA new version is available: {remote} [{versionType}]. Current: {current}.
+      &bDownload it from https://modrinth.com/plugin/wgextender-x
+    ahead: '&bCurrent version ({current}) is newer than the latest published ({remote}).'
+    up-to-date: '&bThe latest version is installed: {current}.'
+    failure: |-
+      &bError checking for updates: {exception}.
+      &bYou can check manually at https://modrinth.com/plugin/wgextender-x
+    unknown: '&bCould not determine a matching version to compare against.'

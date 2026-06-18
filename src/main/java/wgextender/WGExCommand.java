@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
+import wgextender.utils.ModrinthUpdater.CheckResult;
 import wgextender.utils.Transform;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
@@ -216,6 +217,38 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
                     }
                 }
             }
+            case "update" -> {
+                msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__START);
+                server.getAsyncScheduler().runNow(plugin, task -> {
+                    CheckResult result = plugin.getUpdater().checkForUpdate(cfgProvider.updater().allowStaging());
+                    switch (result) {
+                        case CheckResult.Failure failure -> {
+                            msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage());
+                            plugin.getSLF4JLogger().error("Failed to fetch latest version", failure.cause());
+                        }
+                        case CheckResult.Unknown ignored -> msg.sendMessage(
+                                sender,
+                                MKey.WGEX_COMMAND__UPDATE__UNKNOWN
+                        );
+                        case CheckResult.Ahead ahead -> msg.sendMessage(
+                                sender,
+                                MKey.WGEX_COMMAND__UPDATE__AHEAD,
+                                ahead.currentRaw(), ahead.latestRaw()
+                        );
+                        case CheckResult.UpToDate upToDate -> msg.sendMessage(
+                                sender,
+                                MKey.WGEX_COMMAND__UPDATE__UP_TO_DATE,
+                                upToDate.currentRaw()
+                        );
+                        case CheckResult.Available available -> msg.sendMessage(
+                                sender,
+                                MKey.WGEX_COMMAND__UPDATE__AVAILABLE,
+                                available.currentRaw(), available.latestRaw(), available.latestFile().versionType()
+                        );
+                    }
+                });
+                return true;
+            }
             default -> {
                 msg.sendMessage(sender, MKey.WGEX_COMMAND__UNKNOWN_SUBCOMMAND, args[0]);
                 showHelp(sender);
@@ -231,10 +264,11 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
         msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEOWNER__HELP);
         msg.sendMessage(sender, MKey.WGEX_COMMAND__REMOVEMEMBER__HELP);
         msg.sendMessage(sender, MKey.WGEX_COMMAND__LIMITS__HELP);
+        msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__HELP);
     }
 
-    private static final List<String> PLAYER_ARGS = List.of("help", "reload", "search", "setflag", "removeowner", "removemember", "limits");
-    private static final List<String> CONSOLE_ARGS = List.of("help", "reload", "setflag", "removeowner", "removemember", "limits");
+    private static final List<String> PLAYER_ARGS = List.of("help", "reload", "search", "setflag", "removeowner", "removemember", "limits", "update");
+    private static final List<String> CONSOLE_ARGS = List.of("help", "reload", "setflag", "removeowner", "removemember", "limits", "update");
 
     private static final List<String> STATE_ARGS = List.of("ALLOW", "DENY");
     private static final List<String> BOOLEAN_ARGS = List.of("true", "false");

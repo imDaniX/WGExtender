@@ -31,7 +31,7 @@ public final class Messages implements Configurable<ConfigurationProvider.Messag
                 .build();
     }
 
-    private static final ComponentDecoder<String, ? extends Component> LEGACY = input -> LEGACY_SECTION.deserialize(input.replace('§', '&'));
+    private static final ComponentDecoder<String, ? extends Component> LEGACY = input -> LEGACY_AMPERSAND.deserialize(input.replace('§', '&'));
 
     private final WGExtender plugin;
     private final Map<MKey, String> messages = new EnumMap<>(MKey.class);

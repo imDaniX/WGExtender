@@ -48,6 +48,7 @@ public final class ConfigurationProvider {
     private RestrictCommands restrictCommands;
     private Misc misc;
     private MessagesConfig messagesConfig;
+    private Updater updater;
 
     public ConfigurationProvider(WGExtender plugin) {
         this.plugin = plugin;
@@ -64,6 +65,7 @@ public final class ConfigurationProvider {
         this.restrictCommands = loadRestrictCommands(config);
         this.misc = loadMisc(config);
         this.messagesConfig = loadMessagesConfig(config);
+        this.updater = loadUpdater(config);
         subscribers.forEach(sub -> sub.accept(this));
     }
 
@@ -102,6 +104,10 @@ public final class ConfigurationProvider {
 
     public @NotNull Messages messages() {
         return messages;
+    }
+
+    public @NotNull Updater updater() {
+        return updater;
     }
 
     private @NotNull Claim loadClaim(@NotNull FileConfiguration config) {
@@ -204,6 +210,17 @@ public final class ConfigurationProvider {
         ));
     }
 
+    private @NotNull Updater loadUpdater(@NotNull FileConfiguration config) {
+        return at(config, "updater", updaterSection -> at(updaterSection, "notify", notifySection -> new Updater(
+                updaterSection.getBoolean("enabled", true),
+                updaterSection.getInt("check-interval", 86400),
+                notifySection.getBoolean("on-join", true),
+                notifySection.getBoolean("on-interval", false),
+                updaterSection.getBoolean("allow-staging", false),
+                updaterSection.getString("url-base", "https://api.modrinth.com")
+        )));
+    }
+
     private static <T> T at(@NotNull ConfigurationSection config, @NotNull String path, @NotNull Function<ConfigurationSection, T> creator) {
         var section = config.getConfigurationSection(path);
         return creator.apply(section == null ? config.createSection(path) : section);
@@ -268,5 +285,16 @@ public final class ConfigurationProvider {
     // TODO ConfigurationProvider.Messages would collide with the Messages class name
     public record MessagesConfig(@NotNull String serializer, @NotNull String locale) {
         public static final Function<ConfigurationProvider, MessagesConfig> SECTION = ConfigurationProvider::messagesConfig;
+    }
+
+    public record Updater(
+            boolean enabled,
+            int checkInterval,
+            boolean joinNotify,
+            boolean intervalNotify,
+            boolean allowStaging,
+            @NotNull String baseUrl
+    ) {
+        public static final Function<ConfigurationProvider, Updater> SECTION = ConfigurationProvider::updater;
     }
 }

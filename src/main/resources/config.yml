@@ -95,3 +95,19 @@ messages:
   # Supported locales: 'en', 'ru'
   # Messages are loaded from messages/messages_<locale>.yml files
   locale: en
+
+updater:
+  # Automatic background update checking through Modrinth
+  enabled: true
+  # Interval between automatic update checks, in seconds
+  check-interval: 86400
+  # Settings for notifying admins ('wgextender.admin' permission) when an update is available
+  notify:
+    # Notify admins when they join if an update is available
+    on-join: true
+    # Notify admins periodically (every check-interval) if an update is available
+    on-interval: false
+  # Include beta and alpha versions/snapshots when checking for updates
+  allow-staging: false
+  # Base URL of the Modrinth API to query for updates
+  url-base: https://api.modrinth.com

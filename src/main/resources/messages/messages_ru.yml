@@ -78,3 +78,15 @@ wgex-command:
     clear:
       help: '&bwgex limits clear - очистить текущий кэш'
       success: '&bКэш лимитов сброшен.'
+  update:
+    help: '&bwgex update - проверить наличие новой версии плагина'
+    start: '&bПроверка обновлений...'
+    available: |-
+      &bДоступна новая версия: {remote} [{versionType}]. Текущая: {current}.
+      &bВы можете скачать её с https://modrinth.com/plugin/wgextender-x
+    ahead: '&bТекущая версия ({current}) новее последней опубликованной ({remote}).'
+    up-to-date: '&bУстановлена последняя версия: {current}.'
+    failure: |-
+      &bОшибка при проверке обновлений: {exception}.
+      &bВы можете проверить вручную на https://modrinth.com/plugin/wgextender-x
+    unknown: '&bНе удалось определить подходящую версию для сравнения.'

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 import wgextender.config.ConfigurationProvider;
+import wgextender.features.VersionHandler;
 import wgextender.features.claimcommand.BlockLimitsHandler;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
@@ -40,6 +41,7 @@ import wgextender.integration.LpIntegration;
 import wgextender.integration.PapiIntegration;
 import wgextender.integration.PluginIntegration;
 import wgextender.utils.CommandWrapper;
+import wgextender.utils.ModrinthUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +51,7 @@ import java.util.logging.Level;
 public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API?
 	private final List<PluginIntegration> integrations = new ArrayList<>();
 	private final List<CommandWrapper> commandWrappers = new ArrayList<>();
+	private ModrinthUpdater updater;
 	private ConfigurationProvider cfgProvider;
 	private BlockLimitsHandler blockLimitsHandler;
 
@@ -64,9 +67,14 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		return blockLimitsHandler;
 	}
 
+	public @UnknownNullability ModrinthUpdater getUpdater() {
+		return updater;
+	}
+
 	@ApiStatus.Internal
 	@Override
 	public void onLoad() {
+		updater = new ModrinthUpdater("JFMgRt9t", getPluginMeta().getVersion());
 		WGExtenderFlags.registerFlags(getLogger());
 		integrations.add(new LpIntegration());
 		integrations.add(new PapiIntegration(this));
@@ -78,14 +86,15 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		cfgProvider = new ConfigurationProvider(this);
 		cfgProvider.reload();
 		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(this));
-		registerListeners(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
-		registerListeners(new MobRenameFlagHandler(cfgProvider));
-		registerListeners(new RestrictCommandsHandler(this));
-		registerListeners(new LiquidFlow(cfgProvider));
-		registerListeners(new FireBurn(cfgProvider));
-		registerListeners(new Explode(cfgProvider));
-		registerListeners(new WEWandHandler());
-		registerListeners(new ConsumeFlagsHandler(cfgProvider));
+		listener(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
+		listener(new VersionHandler(this));
+		listener(new MobRenameFlagHandler(cfgProvider));
+		listener(new RestrictCommandsHandler(this));
+		listener(new LiquidFlow(cfgProvider));
+		listener(new FireBurn(cfgProvider));
+		listener(new Explode(cfgProvider));
+		listener(new WEWandHandler());
+		listener(new ConsumeFlagsHandler(cfgProvider));
 		try {
 			commandWrappers.add(new WGRegionCommandWrapper(this));
 			commandWrappers.add(new WEWandCommandWrapper(getServer(), cfgProvider));
@@ -123,7 +132,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		cfgProvider.reload();
 	}
 	
-	private void registerListeners(@NotNull Listener listener) {
+	private void listener(@NotNull Listener listener) {
 		getServer().getPluginManager().registerEvents(listener, this);
 	}
 
