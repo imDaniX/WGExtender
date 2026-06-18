@@ -24,7 +24,7 @@ Head to [the wiki pages](https://github.com/imDaniX/WGExtender/wiki/) for more i
 ## Requirements
 
 - Java 21
-- Paper 1.21.11 or newer
+- Paper 1.21.3 or newer
 - WorldGuard 7
 - WorldEdit 7
 
