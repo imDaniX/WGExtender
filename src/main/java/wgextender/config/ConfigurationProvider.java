@@ -68,7 +68,9 @@ public final class ConfigurationProvider {
     }
 
     public <T> void register(@NotNull Configurable<T> reloadable, @NotNull Function<ConfigurationProvider, T> section) {
-        subscribers.add(provider -> reloadable.onReload(section.apply(provider)));
+        Consumer<ConfigurationProvider> sub = provider -> reloadable.onReload(section.apply(provider));
+        sub.accept(this);
+        subscribers.add(sub);
     }
 
     public void register(@NotNull Configurable<ConfigurationProvider> reloadable) {
