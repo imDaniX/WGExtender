@@ -1,5 +1,5 @@
 <div align="center">
-  <img src=".github/assets/logo.png" alt="WGExtender X Logo" height="200">
+  <img src=".github/assets/logo.png" alt="WGExtender X Logo" height="120">
 
 # WGExtender X
 [![Modrinth](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/compact/available/modrinth_vector.svg)](https://modrinth.com/plugin/wgextender-x)
