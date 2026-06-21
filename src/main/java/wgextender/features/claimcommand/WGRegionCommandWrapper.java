@@ -22,6 +22,7 @@ import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.World;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,9 @@ import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
-import wgextender.utils.CommandWrapper;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
+import wgextender.utils.command.CommandWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	private ConfigurationProvider.AutoFlags autoFlags;
 
 	public WGRegionCommandWrapper(@NotNull WGExtender plugin) {
-		super(plugin.getServer(), "region");
+		super("region");
 		ConfigurationProvider config = plugin.getConfigurationProvider();
 		this.msg = config.messages();
 		this.limits = plugin.getBlockLimitsHandler();
@@ -59,7 +60,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	}
 
 	@Override
-	public boolean execute(@NonNull CommandSender sender, @NonNull String label, @NotNull String @NonNull [] args) {
+	public boolean execute(@NonNull CommandSender sender, @NonNull String label, @NotNull String @NonNull [] args, @NotNull Command originalCmd) {
 		if (sender instanceof Player player && args.length >= 2 && args[0].equalsIgnoreCase("claim")) {
 			String regionName = args[1];
 			if (claim.expandSelectionVertical()) {

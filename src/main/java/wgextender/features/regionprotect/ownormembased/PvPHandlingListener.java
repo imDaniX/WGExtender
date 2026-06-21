@@ -33,12 +33,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
 import org.jetbrains.annotations.NotNull;
+import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.Injectable;
 import wgextender.utils.WGUtils;
 
 import java.util.Arrays;
@@ -54,7 +55,7 @@ import static wgextender.utils.WGUtils.getWorldConfig;
  * This is a bad pattern, and this should either be refactored or removed entierly.
  * TODO This actually can be reworked by handling DisallowedPVPEvent and EntityDamageByEntityEvent/DamageEntityEvent
  */
-public final class PvPHandlingListener extends ConfigurableListenerBase<ConfigurationProvider.Misc> {
+public final class PvPHandlingListener extends ConfigurableListenerBase<ConfigurationProvider.Misc> implements Injectable {
 
 	private static final String DENY_MESSAGE_KEY = "worldguard.region.lastMessage";
 	private static final int LAST_MESSAGE_DELAY = 500;
@@ -65,7 +66,8 @@ public final class PvPHandlingListener extends ConfigurableListenerBase<Configur
 		super(cfgProvider, ConfigurationProvider.Misc.SECTION);
 	}
 
-	public void inject(Plugin plugin) {
+	@Override
+	public void inject(@NotNull WGExtender plugin) {
         if (config.pvpMode() == null) {
             plugin.getLogger().info(
                     "misc.pvpmode is set to default. Changing it post-initialization will require server " +
@@ -91,7 +93,8 @@ public final class PvPHandlingListener extends ConfigurableListenerBase<Configur
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
 	}
 
-	public void uninject() {
+	@Override
+	public void uninject(@NotNull WGExtender plugin) {
         if (origin == null) return;
         HandlerList handlers = DamageEntityEvent.getHandlerList();
         handlers.unregister(this);

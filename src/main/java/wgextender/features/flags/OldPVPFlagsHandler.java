@@ -16,9 +16,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
+import wgextender.utils.Injectable;
 import wgextender.utils.WGUtils;
 
 import java.lang.reflect.Field;
@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 @Deprecated
-public final class OldPVPFlagsHandler implements Listener {
+public final class OldPVPFlagsHandler implements Listener, Injectable {
 	private static final Set<EntityDamageEvent.DamageModifier> PVP_MODIFIERS = EnumSet.of(
 			DamageModifier.ARMOR, DamageModifier.RESISTANCE, DamageModifier.MAGIC, DamageModifier.ABSORPTION
 	);
@@ -42,23 +42,16 @@ public final class OldPVPFlagsHandler implements Listener {
 		this.plugin = plugin;
 	}
 
-	public void start(Plugin plugin) {
-        try {
-            functionsField = EntityDamageEvent.class.getDeclaredField("modifierFunctions");
-			functionsField.setAccessible(true);
-        } catch (Exception ex) {
-            plugin.getLogger().log(
-					Level.SEVERE,
-					"Couldn't get access to 'modifierFunctions' field. Old PvP flags will not be enabled",
-					ex
-			);
-			return;
-        }
+	@Override
+	public void inject(@NotNull WGExtender plugin) throws Exception {
+		functionsField = EntityDamageEvent.class.getDeclaredField("modifierFunctions");
+		functionsField.setAccessible(true);
 
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
 	}
 
-	public void stop(Plugin plugin) {
+	@Override
+	public void uninject(@NotNull WGExtender plugin) {
 		for (Player player : plugin.getServer().getOnlinePlayers()) {
 			reset(player);
 		}

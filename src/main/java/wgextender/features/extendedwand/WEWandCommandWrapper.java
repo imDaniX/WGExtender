@@ -17,28 +17,28 @@
 
 package wgextender.features.extendedwand;
 
-import org.bukkit.Server;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.Messages;
-import wgextender.utils.CommandWrapper;
+import wgextender.utils.command.CommandWrapper;
 
 public final class WEWandCommandWrapper extends CommandWrapper {
 	private final Messages msg;
 	private ConfigurationProvider.Misc misc;
 
-	public WEWandCommandWrapper(@NotNull Server server, @NotNull ConfigurationProvider config) {
-		super(server, "/wand");
+	public WEWandCommandWrapper(@NotNull ConfigurationProvider config) {
+		super("/wand");
 		this.msg = config.messages();
 		this.misc = config.misc();
 		config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);
 	}
 
 	@Override
-	public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args) {
+	public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args, @NotNull Command originalCmd) {
 		if (!misc.extendedWeWand()) {
 			return originalCmd.execute(sender, label, args);
 		}

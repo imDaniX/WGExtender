@@ -15,14 +15,16 @@
  *
  */
 
-package wgextender.utils;
+package wgextender.utils.command;
 
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.jetbrains.annotations.NotNull;
+import wgextender.utils.CaseInsensitive;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -70,14 +72,7 @@ public final class CommandsUtils {
 			@NotNull Function<String, Iterable<String>> aliases
 	) {
 		Set<String> variants = CaseInsensitive.newSet();
-		for (String command : commands) {
-			String[] split = SPACE_PATTERN.split(command, 2);
-			String suffix = split.length > 1 ? " " + split[1] : "";
-			variants.add(command);
-			for (String alias : aliases.apply(split[0])) {
-				variants.add(alias + suffix);
-			}
-		}
+		processCommands(commands, aliases, variants::add);
 		return variants::contains;
 	}
 
@@ -86,14 +81,7 @@ public final class CommandsUtils {
 			@NotNull Function<String, Iterable<String>> aliases
 	) {
 		ArgNode root = new ArgNode();
-		for (String commandBase : commands) {
-			String[] split = SPACE_PATTERN.split(commandBase, 2);
-			String suffix = split.length > 1 ? " " + split[1] : "";
-			insertChildren(root, commandBase);
-			for (String alias : aliases.apply(split[0])) {
-				insertChildren(root, alias + suffix);
-			}
-		}
+		processCommands(commands, aliases, s -> insertChildren(root, s));
 		return input -> {
 			ArgNode node = root;
 			int index = 0;
@@ -102,22 +90,37 @@ public final class CommandsUtils {
 				if (end == -1) end = input.length();
 				node = node.children.get(input.substring(index, end));
 				if (node == null) return false;
-				if (node.terminal) return true;
+				if (node.end) return true;
 				index = end + 1;
 			}
 			return false;
 		};
 	}
 
+	private static void processCommands(
+			@NotNull Collection<String> commands,
+			@NotNull Function<String, Iterable<String>> aliases,
+			@NotNull Consumer<String> addVariant
+	) {
+		for (String command : commands) {
+			String[] split = SPACE_PATTERN.split(command, 2);
+			String suffix = split.length > 1 ? " " + split[1] : "";
+			addVariant.accept(command);
+			for (String alias : aliases.apply(split[0])) {
+				addVariant.accept(alias + suffix);
+			}
+		}
+	}
+
 	private static void insertChildren(ArgNode node, String s) {
 		for (String word : SPACE_PATTERN.split(s)) {
 			node = node.children.computeIfAbsent(word, k -> new ArgNode());
 		}
-		node.terminal = true;
+		node.end = true;
 	}
 
 	private static class ArgNode {
 		final Map<String, ArgNode> children = CaseInsensitive.newMap();
-		boolean terminal;
+		boolean end;
 	}
 }

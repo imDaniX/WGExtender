@@ -28,8 +28,8 @@ import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.features.ConfigurableListenerBase;
-import wgextender.utils.CommandsUtils;
 import wgextender.utils.WGUtils;
+import wgextender.utils.command.CommandsUtils;
 
 import java.util.Set;
 import java.util.function.Function;

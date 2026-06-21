@@ -40,17 +40,16 @@ import wgextender.features.regionprotect.regionbased.LiquidFlow;
 import wgextender.integration.LpIntegration;
 import wgextender.integration.PapiIntegration;
 import wgextender.integration.PluginIntegration;
-import wgextender.utils.CommandWrapper;
+import wgextender.utils.Injectable;
 import wgextender.utils.ModrinthUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
 
 public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API?
 	private final List<PluginIntegration> integrations = new ArrayList<>();
-	private final List<CommandWrapper> commandWrappers = new ArrayList<>();
+	private final List<Injectable> injectables = new ArrayList<>();
 	private ModrinthUpdater updater;
 	private ConfigurationProvider cfgProvider;
 	private BlockLimitsHandler blockLimitsHandler;
@@ -95,23 +94,25 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		listener(new Explode(cfgProvider));
 		listener(new WEWandHandler());
 		listener(new ConsumeFlagsHandler(cfgProvider));
+
+		injectables.add(new WGRegionCommandWrapper(this));
+		injectables.add(new WEWandCommandWrapper(cfgProvider));
+		injectables.add(pvpListener = new PvPHandlingListener(cfgProvider));
+		if (cfgProvider.misc().oldPvpFlags()) {
+			getLogger().warning(
+					"Enabling the old-PvP flags. Do note that they're not supported, " +
+					"as they're very out of scope of extending WG capabilities and may harm performance. " +
+					"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
+			);
+			injectables.add(oldPvpHandler = new OldPVPFlagsHandler(this));
+		}
 		try {
-			commandWrappers.add(new WGRegionCommandWrapper(this));
-			commandWrappers.add(new WEWandCommandWrapper(getServer(), cfgProvider));
-			commandWrappers.forEach(CommandWrapper::inject);
-			pvpListener = new PvPHandlingListener(cfgProvider);
-			pvpListener.inject(this);
-			oldPvpHandler = new OldPVPFlagsHandler(this);
-			if (cfgProvider.misc().oldPvpFlags()) {
-				getLogger().warning(
-						"Enabling the old-PvP flags. Do note that they're not supported, " +
-						"as they're very out of scope of extending WG capabilities and may harm performance. " +
-						"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
-				);
-				oldPvpHandler.start(this);
-			}
-		} catch (Throwable t) {
-			getLogger().log(Level.SEVERE, "Unable to inject, shutting down", t);
+            for (Injectable injectable : injectables) {
+                getSLF4JLogger().debug("Injecting {}", injectable.getClass().getSimpleName());
+                injectable.inject(this);
+            }
+        } catch (Exception e) {
+			getSLF4JLogger().error("Unable to inject, shutting down", e);
 			getServer().shutdown();
 		}
 
@@ -140,14 +141,15 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	@Override
 	public void onDisable() {
 		try {
-			commandWrappers.forEach(CommandWrapper::uninject);
-			pvpListener.uninject();
-			oldPvpHandler.stop(this);
-		} catch (Throwable t) {
+            for (Injectable injectable : injectables) {
+				getSLF4JLogger().debug("Uninjecting {}", injectable.getClass().getSimpleName());
+                injectable.uninject(this);
+            }
+        } catch (Exception e) {
 			if (getServer().isStopping()) {
-				getLogger().log(Level.SEVERE, "Unable to uninject", t);
+				getSLF4JLogger().error("Unable to uninject", e);
 			} else {
-				getLogger().log(Level.SEVERE, "Unable to uninject, shutting down", t);
+				getSLF4JLogger().error("Unable to uninject, shutting down", e);
 				getServer().shutdown();
 			}
 		}
