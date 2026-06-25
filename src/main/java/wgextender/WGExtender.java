@@ -84,7 +84,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	public void onEnable() {
 		cfgProvider = new ConfigurationProvider(this);
 		cfgProvider.reload();
-		Objects.requireNonNull(getCommand("wgex")).setExecutor(new WGExCommand(this));
+		Objects.requireNonNull(getCommand("wgextender")).setExecutor(new WGExCommand(this));
 		listener(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
 		listener(new VersionHandler(this));
 		listener(new MobRenameFlagHandler(cfgProvider));
