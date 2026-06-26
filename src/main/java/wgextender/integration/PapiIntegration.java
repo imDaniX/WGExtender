@@ -106,7 +106,7 @@ public final class PapiIntegration extends PlaceholderExpansion implements Plugi
                         ? PlaceholderAPI.setBracketPlaceholders(offPlayer, groupRaw)
                         : groupRaw;
 
-                yield handler.blockLimitByGroup(groupName).toString();
+                yield handler.groupBlockLimit(groupName).toString();
             }
             default -> null;
         };

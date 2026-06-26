@@ -55,7 +55,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 		cache.clear();
 	}
 
-	public @NotNull BigInteger blockLimitByGroup(@NotNull String group) {
+	public @NotNull BigInteger groupBlockLimit(@NotNull String group) {
 		return config.limits().getOrDefault(group, config.defaultLimit());
 	}
 
@@ -100,7 +100,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 		return maxBlocks;
 	}
 
-	public @NotNull BlockLimitsHandler.EvaluationResult evaluateBlocksLimit(@NotNull Player player) {
+	public @NotNull BlockLimitsHandler.EvaluationResult evaluateResult(@NotNull Player player) {
 		Region selection;
 		try {
 			selection = WEUtils.getSelection(player);

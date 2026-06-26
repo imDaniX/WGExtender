@@ -107,7 +107,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	}
 
 	private boolean process(@NotNull Player player) {
-		BlockLimitsHandler.EvaluationResult info = limits.evaluateBlocksLimit(player);
+		BlockLimitsHandler.EvaluationResult info = limits.evaluateResult(player);
 		return switch (info.type()) {
 			case ALLOW -> true;
 			case DENY_MAX_VOLUME -> {
