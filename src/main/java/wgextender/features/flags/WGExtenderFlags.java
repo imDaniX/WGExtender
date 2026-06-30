@@ -7,11 +7,10 @@ import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StringFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public final class WGExtenderFlags {
     private WGExtenderFlags() { }
@@ -39,7 +38,7 @@ public final class WGExtenderFlags {
             try {
                 flagRegistry.register(flag);
             } catch (FlagConflictException ex) {
-                log.log(Level.SEVERE, "Unable to register '" + flag.getName() + "' flag - already registered", ex);
+                log.error("Unable to register '{}' flag - already registered", flag.getName(), ex);
             }
         }
     }

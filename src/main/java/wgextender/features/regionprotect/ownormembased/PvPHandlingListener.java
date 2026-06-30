@@ -69,13 +69,13 @@ public final class PvPHandlingListener extends ConfigurableListenerBase<Configur
 	@Override
 	public void inject(@NotNull WGExtender plugin) {
         if (config.pvpMode() == null) {
-            plugin.getLogger().info(
+            plugin.logger().info(
                     "misc.pvpmode is set to default. Changing it post-initialization will require server " +
                     "restart, but it's recommended to not use this feature because of possible inconsistencies."
             );
             return;
         } else {
-            plugin.getLogger().warning(
+            plugin.logger().warn(
                     "misc.pvpmode is set to '" + config.pvpMode() + "'. This may or " +
                     "may not result in inconsistency with the default WG behavior, since the feature requires " +
                     "manual copying of WG code."

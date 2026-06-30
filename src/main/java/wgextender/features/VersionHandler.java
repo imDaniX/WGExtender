@@ -35,7 +35,7 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
         }
 
         if (config.checkInterval() < 60) {
-            plugin.getSLF4JLogger().error(
+            plugin.logger().error(
                     "<ModrinthUpdater> Check interval is less than a minute ({} seconds). Not enabling the version check task.",
                     config.checkInterval()
             );

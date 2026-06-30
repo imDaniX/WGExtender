@@ -17,6 +17,7 @@
 
 package wgextender;
 
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,6 +47,7 @@ import wgextender.utils.ModrinthUpdater;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API?
 	private final List<PluginIntegration> integrations = new ArrayList<>();
@@ -71,7 +73,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	@Override
 	public void onLoad() {
 		updater = new ModrinthUpdater("JFMgRt9t", getPluginMeta().getVersion());
-		WGExtenderFlags.registerFlags(getLogger());
+		WGExtenderFlags.registerFlags(logger());
 		integrations.add(new LpIntegration());
 		integrations.add(new PapiIntegration(this));
 	}
@@ -96,7 +98,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		injectables.add(new WEWandCommandWrapper(cfgProvider));
         injectables.add(new PvPHandlingListener(cfgProvider));
 		if (cfgProvider.misc().oldPvpFlags()) {
-			getLogger().warning(
+			logger().warn(
 					"Enabling the old-PvP flags. Do note that they're not supported, " +
 					"as they're very out of scope of extending WG capabilities and may harm performance. " +
 					"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
@@ -105,11 +107,11 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 		}
 		try {
             for (Injectable injectable : injectables) {
-                getSLF4JLogger().debug("Injecting {}", injectable.getClass().getSimpleName());
+                logger().debug("Injecting {}", injectable.getClass().getSimpleName());
                 injectable.inject(this);
             }
         } catch (Exception e) {
-			getSLF4JLogger().error("Unable to inject, shutting down", e);
+			logger().error("Unable to inject, shutting down", e);
 			getServer().shutdown();
 		}
 
@@ -123,7 +125,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 				}
 			}
 			if (enable) {
-				getLogger().info("Enabling " + integration.requiredPlugins() + " integration");
+                logger().info("Enabling {} integration", integration.requiredPlugins());
 				integration.onEnable(this);
 			}
 		}
@@ -139,16 +141,32 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	public void onDisable() {
 		try {
             for (Injectable injectable : injectables) {
-				getSLF4JLogger().debug("Uninjecting {}", injectable.getClass().getSimpleName());
+				logger().debug("Uninjecting {}", injectable.getClass().getSimpleName());
                 injectable.uninject(this);
             }
         } catch (Exception e) {
 			if (getServer().isStopping()) {
-				getSLF4JLogger().error("Unable to uninject", e);
+				logger().error("Unable to uninject", e);
 			} else {
-				getSLF4JLogger().error("Unable to uninject, shutting down", e);
+				logger().error("Unable to uninject, shutting down", e);
 				getServer().shutdown();
 			}
 		}
+	}
+	
+	public @NotNull ComponentLogger logger() {
+		return getComponentLogger();
+	}
+
+	@Deprecated
+	@Override
+	public @NotNull Logger getLogger() {
+		return super.getLogger();
+	}
+
+	@Deprecated
+	@Override
+	public org.slf4j.@NotNull Logger getSLF4JLogger() {
+		return super.getSLF4JLogger();
 	}
 }

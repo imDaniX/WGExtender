@@ -22,7 +22,6 @@ import com.sk89q.worldguard.protection.flags.StateFlag.State;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import wgextender.WGExtender;
@@ -37,7 +36,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ConfigurationProvider {
-    private final Plugin plugin;
+    private final WGExtender plugin;
     private final File configFile;
     private final Messages messages;
     private final List<Consumer<ConfigurationProvider>> subscribers = new ArrayList<>();
@@ -173,7 +172,7 @@ public final class ConfigurationProvider {
                         if (flag != null) {
                             flags.put(flag, flagsSection.getString(key));
                         } else {
-                            plugin.getSLF4JLogger().warn("Unknown flag provided for autoflags: {}", key);
+                            plugin.logger().warn("Unknown flag provided for autoflags: {}", key);
                         }
                     }
                     return Map.copyOf(flags);

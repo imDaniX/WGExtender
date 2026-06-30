@@ -20,6 +20,7 @@
     <build>
         <finalName>WGExtenderX-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
+
         <resources>
             <resource>
                 <directory>src/main/resources</directory>

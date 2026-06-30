@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 
 @Deprecated
 public final class OldPVPFlagsHandler implements Listener, Injectable {
@@ -104,7 +103,7 @@ public final class OldPVPFlagsHandler implements Listener, Injectable {
             //noinspection unchecked
             func = (Map<DamageModifier, Function<Double, Double>>) functionsField.get(event);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			plugin.getLogger().log(Level.SEVERE, "Unable to recalculate blocking damage", e);
+			plugin.logger().error("Unable to recalculate blocking damage", e);
 			return;
 		}
 		double totalDamage = event.getDamage() + event.getDamage(DamageModifier.HARD_HAT);

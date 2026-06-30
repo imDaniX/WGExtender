@@ -224,7 +224,7 @@ public final class WGExCommand implements CommandExecutor, TabCompleter {
                     switch (result) {
                         case CheckResult.Failure failure -> {
                             msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage());
-                            plugin.getSLF4JLogger().error("Failed to fetch latest version", failure.cause());
+                            plugin.logger().error("Failed to fetch latest version", failure.cause());
                         }
                         case CheckResult.Unknown ignored -> msg.sendMessage(
                                 sender,

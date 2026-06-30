@@ -57,7 +57,7 @@ public final class Messages implements Configurable<ConfigurationProvider.Messag
             case "LEGACY_SECTION" -> LEGACY_SECTION;
             case "LEGACY_AMPERSAND" -> LEGACY_AMPERSAND;
             default -> {
-                plugin.getSLF4JLogger().warn(
+                plugin.logger().warn(
                         "Unknown messages serializer provided: {}, falling back to LEGACY",
                         section.serializer()
                 );
@@ -69,14 +69,14 @@ public final class Messages implements Configurable<ConfigurationProvider.Messag
 
     private void loadMessages(@NotNull String locale) {
         if (!locale.equals(lastLocale)) {
-            plugin.getSLF4JLogger().info("Set locale to {}, getting messages from messages/messages_{}.yml", locale, locale);
+            plugin.logger().info("Set locale to {}, getting messages from messages/messages_{}.yml", locale, locale);
         }
         prepareSupportedLocales();
 
         File messagesFile = new File(messagesFolder, "messages_" + locale + ".yml");
         if (!messagesFile.exists()) {
-            plugin.getSLF4JLogger().warn("Locale {} was not found in the messages folder! Loading fallback values.", locale);
-            plugin.getSLF4JLogger().warn("Supported plugin locales: {}", Arrays.toString(SupportedLocale.values()));
+            plugin.logger().warn("Locale {} was not found in the messages folder! Loading fallback values.", locale);
+            plugin.logger().warn("Supported plugin locales: {}", Arrays.toString(SupportedLocale.values()));
             for (MKey msg : MKey.values()) {
                 messages.put(msg, msg.fallback);
             }
@@ -91,7 +91,7 @@ public final class Messages implements Configurable<ConfigurationProvider.Messag
             if (value != null) {
                 messages.put(msg, value);
             } else {
-                plugin.getSLF4JLogger().warn(
+                plugin.logger().warn(
                         "Locale {} does not have a value for {}! Loading fallback value '{}'.",
                         locale, msg.configurationKey, msg.fallback
                 );
@@ -106,7 +106,7 @@ public final class Messages implements Configurable<ConfigurationProvider.Messag
                 try {
                     plugin.saveResource("messages/" + "messages_" + supLocale + ".yml", false);
                 } catch (Exception e) {
-                    plugin.getSLF4JLogger().error(
+                    plugin.logger().error(
                             "Failed to save messages for locale {}.",
                             supLocale, e
                     );
