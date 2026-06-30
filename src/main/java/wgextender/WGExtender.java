@@ -54,10 +54,7 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	private ConfigurationProvider cfgProvider;
 	private BlockLimitsHandler blockLimitsHandler;
 
-	private PvPHandlingListener pvpListener;
-	private OldPVPFlagsHandler oldPvpHandler;
-
-	@ApiStatus.Internal
+    @ApiStatus.Internal
 	public @UnknownNullability ConfigurationProvider getConfigurationProvider() {
 		return cfgProvider;
 	}
@@ -97,14 +94,14 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 
 		injectables.add(new WGRegionCommandWrapper(this));
 		injectables.add(new WEWandCommandWrapper(cfgProvider));
-		injectables.add(pvpListener = new PvPHandlingListener(cfgProvider));
+        injectables.add(new PvPHandlingListener(cfgProvider));
 		if (cfgProvider.misc().oldPvpFlags()) {
 			getLogger().warning(
 					"Enabling the old-PvP flags. Do note that they're not supported, " +
 					"as they're very out of scope of extending WG capabilities and may harm performance. " +
 					"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
 			);
-			injectables.add(oldPvpHandler = new OldPVPFlagsHandler(this));
+            injectables.add(new OldPVPFlagsHandler(this));
 		}
 		try {
             for (Injectable injectable : injectables) {
