@@ -49,7 +49,6 @@ damage:
   other: hit that
 restricted-command: '&4You cannot use this command in another player''s region.'
 wgex-command:
-  unknown-subcommand: '&bUnknown subcommand ''{subcommand}''.'
   reload:
     help: '&bwgex reload - reload the config'
     success: '&bConfig reloaded.'

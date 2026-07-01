@@ -8,6 +8,3 @@ depend: [WorldGuard, WorldEdit]
 softdepend: [PlaceholderAPI, LuckPerms]
 website: 'https://modrinth.com/plugin/wgextender-x'
 folia-supported: true
-commands:
-  wgextender:
-    aliases: [wgex]

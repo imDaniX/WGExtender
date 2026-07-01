@@ -49,7 +49,6 @@ damage:
   other: бить это
 restricted-command: '&4Вы не можете использовать эту команду в чужом регионе.'
 wgex-command:
-  unknown-subcommand: '&bНеизвестная подкоманда ''{subcommand}''.'
   reload:
     help: '&bwgex reload - перезагрузить конфиг'
     success: '&bКонфиг перезагружен.'

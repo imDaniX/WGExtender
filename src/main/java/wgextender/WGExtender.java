@@ -17,12 +17,14 @@
 
 package wgextender;
 
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
+import wgextender.command.impl.WGExCommand;
 import wgextender.config.ConfigurationProvider;
 import wgextender.features.VersionHandler;
 import wgextender.features.claimcommand.BlockLimitsHandler;
@@ -46,10 +48,10 @@ import wgextender.utils.ModrinthUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Logger;
 
-public final class WGExtender extends JavaPlugin { // TODO Might wanna separate for the actual API?
+// TODO Might wanna separate for the actual API?
+public final class WGExtender extends JavaPlugin {
 	private final List<PluginIntegration> integrations = new ArrayList<>();
 	private final List<Injectable> injectables = new ArrayList<>();
 	private ModrinthUpdater updater;
@@ -83,7 +85,11 @@ public final class WGExtender extends JavaPlugin { // TODO Might wanna separate 
 	public void onEnable() {
 		cfgProvider = new ConfigurationProvider(this);
 		cfgProvider.reload();
-		Objects.requireNonNull(getCommand("wgextender")).setExecutor(new WGExCommand(this));
+
+		getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+			commands.registrar().register(new WGExCommand(this).node().build(), List.of("wgextender"));
+		});
+
 		listener(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
 		listener(new VersionHandler(this));
 		listener(new MobRenameFlagHandler(cfgProvider));
