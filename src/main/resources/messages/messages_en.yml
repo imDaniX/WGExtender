@@ -88,4 +88,3 @@ wgex-command:
     failure: |-
       &bError checking for updates: {exception}.
       &bYou can check manually at https://modrinth.com/plugin/wgextender-x
-    unknown: '&bCould not determine a matching version to compare against.'

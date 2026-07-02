@@ -76,7 +76,6 @@ public enum MKey {
     WGEX_COMMAND__UPDATE__AHEAD("current", "remote"),
     WGEX_COMMAND__UPDATE__UP_TO_DATE("current"),
     WGEX_COMMAND__UPDATE__FAILURE("exception"),
-    WGEX_COMMAND__UPDATE__UNKNOWN,
     ;
 
     final String configurationKey;

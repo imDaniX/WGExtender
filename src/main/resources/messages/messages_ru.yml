@@ -88,4 +88,3 @@ wgex-command:
     failure: |-
       &bОшибка при проверке обновлений: {exception}.
       &bВы можете проверить вручную на https://modrinth.com/plugin/wgextender-x
-    unknown: '&bНе удалось определить подходящую версию для сравнения.'
