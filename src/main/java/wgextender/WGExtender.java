@@ -175,4 +175,11 @@ public final class WGExtender extends JavaPlugin {
 	public org.slf4j.@NotNull Logger getSLF4JLogger() {
 		return super.getSLF4JLogger();
 	}
+
+	@SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+	@Override
+	public @NotNull ComponentLogger getComponentLogger() {
+		return super.getComponentLogger();
+	}
 }

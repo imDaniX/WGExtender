@@ -9,6 +9,7 @@ import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.utils.ModrinthUpdater;
+import wgextender.utils.ModrinthUpdater.CheckResult;
 
 import java.util.concurrent.TimeUnit;
 
@@ -52,35 +53,37 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
     }
 
     private void checkForUpdate() {
-        ComponentLogger logger = plugin.getComponentLogger();
-        ModrinthUpdater.CheckResult result = updater.checkForUpdate(config.allowStaging());
+        ComponentLogger logger = plugin.logger();
+        CheckResult result = updater.checkForUpdate(config.allowStaging());
         switch (result) {
-            case ModrinthUpdater.CheckResult.Available available -> {
+            case CheckResult.Success success -> {
+                if (success.status() != ModrinthUpdater.Status.AVAILABLE) return;
                 logger.info(
                         msg.rich(
                                 MKey.WGEX_COMMAND__UPDATE__AVAILABLE,
-                                available.currentRaw(), available.latestRaw(), available.latestFile().versionType()
+                                success.currentRaw(), success.latestRaw(), success.latestFile().versionType()
                         )
                 );
                 if (config.intervalNotify()) {
                     plugin.getServer().broadcast(
                             msg.rich(
                                     MKey.WGEX_COMMAND__UPDATE__AVAILABLE,
-                                    available.currentRaw(),
-                                    available.latestRaw(),
-                                    available.latestFile().versionType()
+                                    success.currentRaw(),
+                                    success.latestRaw(),
+                                    success.latestFile().versionType()
                             ),
                             "wgextender.admin"
                     );
                 }
             }
-            case ModrinthUpdater.CheckResult.Failure failure ->
+            case CheckResult.Failure failure -> {
+                if (plugin.getConfigurationProvider().updater().logFailures()) {
                     logger.error(
                             msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
                             failure.cause()
                     );
-            case ModrinthUpdater.CheckResult.Unknown ignored ->
-                    logger.warn(msg.rich(MKey.WGEX_COMMAND__UPDATE__UNKNOWN));
+                }
+            }
             default -> {}
         }
     }
@@ -92,12 +95,12 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
         }
 
         updater.lastResult().ifPresent(result -> {
-            if (result instanceof ModrinthUpdater.CheckResult.Available available) {
+            if (result instanceof CheckResult.Success success && success.status() == ModrinthUpdater.Status.AVAILABLE) {
                 msg.sendMessage(
                         event.getPlayer(),
                         MKey.WGEX_COMMAND__UPDATE__AVAILABLE,
-                        available.currentRaw(),
-                        available.latestRaw()
+                        success.currentRaw(),
+                        success.latestRaw()
                 );
             }
         });

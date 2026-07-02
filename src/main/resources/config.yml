@@ -111,3 +111,6 @@ updater:
   allow-staging: false
   # Base URL of the Modrinth API to query for updates
   url-base: https://api.modrinth.com
+  # Log failed fetches into the console
+  # While it's generally not recommended to disable, the exceptions on unstable connections might be very annoying
+  log-failures: true

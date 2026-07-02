@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongLists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ public final class ModrinthUpdater implements AutoCloseable {
     private static final String USER_AGENT = "dani-version-checker/1.0";
     private static final String SNAPSHOT_TOKEN = "SNAPSHOT";
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
-    private static final Comparator<VersionFile> BY_VERSION = Comparator.comparing(VersionFile::version);
+    private static final Comparator<Artifact> BY_VERSION = Comparator.comparing(Artifact::version);
 
     private final String urlBaseDefault;
     private final String projectId;
@@ -57,65 +58,65 @@ public final class ModrinthUpdater implements AutoCloseable {
         return Optional.ofNullable(lastResult);
     }
 
-    public @NotNull ModrinthUpdater.CheckResult checkForUpdate(boolean allowStaging) {
+    public @NotNull CheckResult checkForUpdate(boolean allowStaging) {
         return _checkForUpdate(urlBaseDefault, allowStaging);
     }
 
-    public @NotNull ModrinthUpdater.CheckResult checkForUpdate(@NotNull String urlBase, boolean allowStaging) {
+    public @NotNull CheckResult checkForUpdate(@NotNull String urlBase, boolean allowStaging) {
         return _checkForUpdate(normalizeUrlBase(urlBase), allowStaging);
     }
 
-    private @NotNull ModrinthUpdater.CheckResult _checkForUpdate(@NotNull String normalizedUrlBase, boolean allowStaging) {
-        List<VersionFile> versions;
+    private @NotNull CheckResult _checkForUpdate(@NotNull String normalizedUrlBase, boolean allowStaging) {
+        List<Artifact> versions;
         try {
             versions = _fetchVersions(normalizedUrlBase);
         } catch (IOException | InterruptedException e) {
             return (lastResult = new CheckResult.Failure(currentVersion, e));
         }
 
-        Optional<VersionFile> latest = latestMatchingVersion(versions, allowStaging);
+        Optional<Artifact> latest = latestMatchingVersion(versions, allowStaging);
         if (latest.isEmpty()) {
-            return (lastResult = new CheckResult.Unknown(currentVersion));
+            return (lastResult = new CheckResult.Failure(currentVersion, new NoSuchElementException("No matching versions found")));
         }
 
         int cmp = latest.get().version().compareTo(currentVersion);
         if (cmp > 0) {
-            return (lastResult = new CheckResult.Available(currentVersion, latest.get()));
+            return (lastResult = new CheckResult.Success(currentVersion, latest.get(), Status.AVAILABLE));
+        } else if (cmp < 0) {
+            return (lastResult = new CheckResult.Success(currentVersion, latest.get(), Status.AHEAD));
+        } else {
+            return (lastResult = new CheckResult.Success(currentVersion, latest.get(), Status.UP_TO_DATE));
         }
-        if (cmp < 0) {
-            return (lastResult = new CheckResult.Ahead(currentVersion, latest.get()));
-        }
-        return (lastResult = new CheckResult.UpToDate(currentVersion, latest.get()));
     }
 
-    public @NotNull Optional<VersionFile> getLatestVersion(boolean allowStaging) throws IOException, InterruptedException {
+    public @NotNull Optional<Artifact> getLatestVersion(boolean allowStaging) throws IOException, InterruptedException {
         return _getLatestVersion(urlBaseDefault, allowStaging);
     }
 
-    public @NotNull Optional<VersionFile> getLatestVersion(@NotNull String urlBase, boolean allowStaging) throws IOException, InterruptedException {
+    public @NotNull Optional<Artifact> getLatestVersion(@NotNull String urlBase, boolean allowStaging) throws IOException, InterruptedException {
         return _getLatestVersion(normalizeUrlBase(urlBase), allowStaging);
     }
 
-    private @NotNull Optional<VersionFile> _getLatestVersion(@NotNull String normalizedUrlBase, boolean allowStaging) throws IOException, InterruptedException {
+    private @NotNull Optional<Artifact> _getLatestVersion(@NotNull String normalizedUrlBase, boolean allowStaging) throws IOException, InterruptedException {
         return latestMatchingVersion(_fetchVersions(normalizedUrlBase), allowStaging);
     }
 
-    private @NotNull Optional<VersionFile> latestMatchingVersion(@NotNull List<VersionFile> versions, boolean allowStaging) {
+    private @NotNull Optional<Artifact> latestMatchingVersion(@NotNull List<Artifact> versions, boolean allowStaging) {
         return versions.stream()
                 .filter(v -> currentVersion.snapshot() || !v.version().snapshot())
                 .filter(v -> allowStaging || v.versionType() == VersionType.RELEASE)
                 .max(BY_VERSION);
     }
 
-    public @NotNull List<VersionFile> fetchVersions() throws IOException, InterruptedException {
+    public @NotNull List<Artifact> fetchVersions() throws IOException, InterruptedException {
         return _fetchVersions(urlBaseDefault);
     }
 
-    public @NotNull List<VersionFile> fetchVersions(@NotNull String urlBase) throws IOException, InterruptedException {
+    public @NotNull List<Artifact> fetchVersions(@NotNull String urlBase) throws IOException, InterruptedException {
         return _fetchVersions(normalizeUrlBase(urlBase));
     }
 
-    private @NotNull List<VersionFile> _fetchVersions(@NotNull String normalizedUrlBase) throws IOException, InterruptedException {
+    private @NotNull List<Artifact> _fetchVersions(@NotNull String normalizedUrlBase) throws IOException, InterruptedException {
         String url = normalizedUrlBase + "/v2/project/" + projectId + "/version?include_changelog=false";
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", USER_AGENT).GET().build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -126,7 +127,7 @@ public final class ModrinthUpdater implements AutoCloseable {
 
         try {
             JsonArray array = JsonParser.parseString(response.body()).getAsJsonArray();
-            List<VersionFile> versions = new ArrayList<>();
+            List<Artifact> versions = new ArrayList<>();
 
             for (JsonElement element : array) {
                 JsonObject obj = element.getAsJsonObject();
@@ -136,7 +137,7 @@ public final class ModrinthUpdater implements AutoCloseable {
                 if (primaryFile == null) {
                     throw new IOException("Missing primary file for version " + parsed.raw());
                 }
-                versions.add(new VersionFile(
+                versions.add(new Artifact(
                         parsed,
                         versionType,
                         primaryFile.get("url").getAsString(),
@@ -184,7 +185,7 @@ public final class ModrinthUpdater implements AutoCloseable {
             while (matcher.find()) {
                 numbers.add(Long.parseLong(matcher.group()));
             }
-            return numbers;
+            return LongLists.unmodifiable(numbers);
         }
 
         @Override
@@ -218,7 +219,7 @@ public final class ModrinthUpdater implements AutoCloseable {
         }
     }
 
-    public record VersionFile(
+    public record Artifact(
             @NotNull PluginVersion version,
             @NotNull VersionType versionType,
             @NotNull String fileUrl,
@@ -236,26 +237,30 @@ public final class ModrinthUpdater implements AutoCloseable {
             return current().raw;
         }
 
-        record Failure(@NotNull PluginVersion current, @NotNull Exception cause) implements CheckResult { }
+        @NotNull Status status();
 
-        record Unknown(@NotNull PluginVersion current) implements CheckResult { }
-
-        sealed interface Known extends CheckResult {
-            @NotNull ModrinthUpdater.VersionFile latestFile();
-
-            default @NotNull PluginVersion latest() {
-                return latestFile().version;
-            }
-
-            default @NotNull String latestRaw() {
-                return latestFile().version.raw;
+        record Failure(@NotNull PluginVersion current, @NotNull Exception cause) implements CheckResult {
+            @Override
+            public @NotNull Status status() {
+                return Status.FAILURE;
             }
         }
 
-        record Ahead(@NotNull PluginVersion current, @NotNull ModrinthUpdater.VersionFile latestFile) implements Known { }
+        record Success(@NotNull PluginVersion current, @NotNull ModrinthUpdater.Artifact latestFile, @NotNull Status status) implements CheckResult {
+            public @NotNull PluginVersion latest() {
+                return latestFile().version;
+            }
 
-        record UpToDate(@NotNull PluginVersion current, @NotNull ModrinthUpdater.VersionFile latestFile) implements Known { }
+            public @NotNull String latestRaw() {
+                return latestFile().version.raw;
+            }
+        }
+    }
 
-        record Available(@NotNull PluginVersion current, @NotNull ModrinthUpdater.VersionFile latestFile) implements Known { }
+    public enum Status {
+        AHEAD,
+        UP_TO_DATE,
+        AVAILABLE,
+        FAILURE
     }
 }

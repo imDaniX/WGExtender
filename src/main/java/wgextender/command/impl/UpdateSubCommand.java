@@ -23,27 +23,30 @@ final class UpdateSubCommand extends SubCommandBase.Simple {
             switch (result) {
                 case CheckResult.Failure failure -> {
                     msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage());
-                    plugin.logger().error("Failed to fetch latest version", failure.cause());
+                    if (plugin.getConfigurationProvider().updater().logFailures()) {
+                        plugin.logger().error(
+                                msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
+                                failure.cause()
+                        );
+                    }
                 }
-                case CheckResult.Unknown ignored -> msg.sendMessage(
-                        sender,
-                        MKey.WGEX_COMMAND__UPDATE__UNKNOWN
-                );
-                case CheckResult.Ahead ahead -> msg.sendMessage(
-                        sender,
-                        MKey.WGEX_COMMAND__UPDATE__AHEAD,
-                        ahead.currentRaw(), ahead.latestRaw()
-                );
-                case CheckResult.UpToDate upToDate -> msg.sendMessage(
-                        sender,
-                        MKey.WGEX_COMMAND__UPDATE__UP_TO_DATE,
-                        upToDate.currentRaw()
-                );
-                case CheckResult.Available available -> msg.sendMessage(
-                        sender,
-                        MKey.WGEX_COMMAND__UPDATE__AVAILABLE,
-                        available.currentRaw(), available.latestRaw(), available.latestFile().versionType()
-                );
+                case CheckResult.Success success -> { switch (success.status()) {
+                        case AHEAD -> msg.sendMessage(
+                                sender,
+                                MKey.WGEX_COMMAND__UPDATE__AHEAD,
+                                success.currentRaw(), success.latestRaw()
+                        );
+                        case UP_TO_DATE -> msg.sendMessage(
+                                sender,
+                                MKey.WGEX_COMMAND__UPDATE__UP_TO_DATE,
+                                success.currentRaw()
+                        );
+                        case AVAILABLE -> msg.sendMessage(
+                                sender,
+                                MKey.WGEX_COMMAND__UPDATE__AVAILABLE,
+                                success.currentRaw(), success.latestRaw(), success.latestFile().versionType()
+                        );
+                }}
             }
         });
     }

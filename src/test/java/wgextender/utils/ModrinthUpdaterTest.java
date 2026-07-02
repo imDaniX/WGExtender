@@ -1,7 +1,6 @@
 package wgextender.utils;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -9,7 +8,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,20 +55,21 @@ public final class ModrinthUpdaterTest {
 
     private static @NotNull Stream<Arguments> resultData() {
         return Stream.of(
-                Arguments.of("1.1.0", "1.0.0", (ResultFactory) ModrinthUpdater.CheckResult.Ahead::new),
-                Arguments.of("1.0.0", "1.0.0", (ResultFactory) ModrinthUpdater.CheckResult.UpToDate::new),
-                Arguments.of("1.0.0", "1.1.0", (ResultFactory) ModrinthUpdater.CheckResult.Available::new)
+                Arguments.of("1.1.0", "1.0.0", ModrinthUpdater.Status.AHEAD),
+                Arguments.of("1.0.0", "1.0.0", ModrinthUpdater.Status.UP_TO_DATE),
+                Arguments.of("1.0.0", "1.1.0", ModrinthUpdater.Status.AVAILABLE)
         );
     }
 
     @ParameterizedTest
     @MethodSource("resultData")
-    public void resultTest(@NotNull String currentVersion, @NotNull String latestVersion, @NotNull ResultFactory factory) {
+    public void resultTest(@NotNull String currentVersion, @NotNull String latestVersion, @NotNull ModrinthUpdater.Status status) {
         ModrinthUpdater.PluginVersion current = ModrinthUpdater.PluginVersion.parse(currentVersion);
-        ModrinthUpdater.VersionFile latest = versionFile(latestVersion);
-        ModrinthUpdater.CheckResult result = factory.apply(current, latest);
+        ModrinthUpdater.Artifact latest = versionFile(latestVersion);
+        ModrinthUpdater.CheckResult.Success result = new ModrinthUpdater.CheckResult.Success(current, latest, status);
         assertThat(result.current()).isEqualTo(current);
-        assertThat(latestOf(result)).isEqualTo(latest);
+        assertThat(result.status()).isEqualTo(status);
+        assertThat(result.latestFile()).isEqualTo(latest);
     }
 
     @Test
@@ -82,22 +81,7 @@ public final class ModrinthUpdaterTest {
         assertThat(failure.cause()).isEqualTo(cause);
     }
 
-    private static @NotNull ModrinthUpdater.VersionFile versionFile(@NotNull String version) {
-        return new ModrinthUpdater.VersionFile(ModrinthUpdater.PluginVersion.parse(version), ModrinthUpdater.VersionType.RELEASE, "http://x", "f.jar");
-    }
-
-    @Nullable
-    private static ModrinthUpdater.VersionFile latestOf(@NotNull ModrinthUpdater.CheckResult result) {
-        return switch (result) {
-            case ModrinthUpdater.CheckResult.Ahead ahead -> ahead.latestFile();
-            case ModrinthUpdater.CheckResult.UpToDate upToDate -> upToDate.latestFile();
-            case ModrinthUpdater.CheckResult.Available available -> available.latestFile();
-            default -> null;
-        };
-    }
-
-    @FunctionalInterface
-    public interface ResultFactory extends BiFunction<ModrinthUpdater.PluginVersion, ModrinthUpdater.VersionFile, ModrinthUpdater.CheckResult> {
-        @NotNull ModrinthUpdater.CheckResult apply(@NotNull ModrinthUpdater.PluginVersion current, @NotNull ModrinthUpdater.VersionFile latest);
+    private static @NotNull ModrinthUpdater.Artifact versionFile(@NotNull String version) {
+        return new ModrinthUpdater.Artifact(ModrinthUpdater.PluginVersion.parse(version), ModrinthUpdater.VersionType.RELEASE, "http://x", "f.jar");
     }
 }

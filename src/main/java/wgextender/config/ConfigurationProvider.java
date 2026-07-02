@@ -216,7 +216,8 @@ public final class ConfigurationProvider {
                 notifySection.getBoolean("on-join", true),
                 notifySection.getBoolean("on-interval", false),
                 updaterSection.getBoolean("allow-staging", false),
-                updaterSection.getString("url-base", "https://api.modrinth.com")
+                updaterSection.getString("url-base", "https://api.modrinth.com"),
+                updaterSection.getBoolean("log-failures", true)
         )));
     }
 
@@ -238,11 +239,11 @@ public final class ConfigurationProvider {
 
     public record BlockLimits(
             boolean enabled,
-            BigInteger defaultLimit,
-            Map<String, BigInteger> limits,
-            BigInteger minimalVolume,
-            BigInteger minimalHorizontal,
-            BigInteger minimalVertical
+            @NotNull BigInteger defaultLimit,
+            @NotNull Map<String, BigInteger> limits,
+            @NotNull BigInteger minimalVolume,
+            @NotNull BigInteger minimalHorizontal,
+            @NotNull BigInteger minimalVertical
     ) {
         public static final Function<ConfigurationProvider, BlockLimits> SECTION = cfg -> cfg.claim().blockLimits();
     }
@@ -292,7 +293,8 @@ public final class ConfigurationProvider {
             boolean joinNotify,
             boolean intervalNotify,
             boolean allowStaging,
-            @NotNull String baseUrl
+            @NotNull String baseUrl,
+            boolean logFailures
     ) {
         public static final Function<ConfigurationProvider, Updater> SECTION = ConfigurationProvider::updater;
     }
