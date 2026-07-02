@@ -15,7 +15,7 @@ claim:
     too-big: 'Region size is too large. Maximum size: {maxVolume}, your size: {volume}.'
     overlap: This region overlaps another player''s region.
     only-inside-own: You can only claim inside your own regions.
-    only-cuboid: You can only use a cuboid selection.
+    wrong-shape: You can only use cuboid or polygonal selection to claim regions.
     exception: '&eAn error occurred while claiming region {id}.'
     incomplete: 'Select an area first. Use WorldEdit to make a selection (wiki: https://worldedit.enginehub.org/).'
     deny-max-volume: |-

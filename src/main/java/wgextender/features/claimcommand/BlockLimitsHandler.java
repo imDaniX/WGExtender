@@ -115,10 +115,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 		BigInteger zDistance = distance(min.z(), max.z());
 		BigInteger minHorizontal = xDistance.min(zDistance);
 
-		BigInteger volume = BigInteger.ONE
-				.multiply(xDistance)
-				.multiply(zDistance)
-				.multiply(yDistance);
+		BigInteger volume = BigInteger.valueOf(selection.getVolume());
 		if (volume.compareTo(MAX_VALUE) > 0) {
 			return new EvaluationResult(
 					ResultType.DENY_MAX_VOLUME,

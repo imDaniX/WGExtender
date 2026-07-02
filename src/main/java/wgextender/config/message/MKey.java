@@ -17,7 +17,7 @@ public enum MKey {
     CLAIM__ERROR__TOO_BIG("maxVolume", "volume"),
     CLAIM__ERROR__OVERLAP,
     CLAIM__ERROR__ONLY_INSIDE_OWN,
-    CLAIM__ERROR__ONLY_CUBOID,
+    CLAIM__ERROR__WRONG_SHAPE,
     CLAIM__ERROR__EXCEPTION("id"),
     CLAIM__ERROR__INCOMPLETE,
     CLAIM__ERROR__DENY_MAX_VOLUME("limit", "volume"),

@@ -17,23 +17,24 @@
 
 package wgextender.features.claimcommand;
 
+import com.google.common.base.Strings;
 import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.minecraft.util.commands.CommandPermissionsException;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Polygonal2DRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.bukkit.BukkitWorldConfiguration;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.commands.task.RegionAdder;
 import com.sk89q.worldguard.internal.permission.RegionPermissionModel;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
+import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import com.sk89q.worldguard.protection.util.DomainInputResolver;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -75,11 +76,8 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	public boolean execute(@NonNull CommandSender sender, @NonNull String label, @NotNull String @NonNull [] args, @NotNull Command originalCmd) {
 		if (sender instanceof Player player && args.length >= 2 && args[0].equalsIgnoreCase("claim")) {
 			String regionName = args[1];
-			if (claim.expandSelectionVertical()) {
-				boolean result = WEUtils.expandVert(player);
-				if (result) {
-					msg.sendMessage(player, MKey.CLAIM__AUTO_VERT);
-				}
+			if (claim.expandSelectionVertical() && WEUtils.expandVert(player)) {
+				msg.sendMessage(player, MKey.CLAIM__AUTO_VERT);
 			}
 			if (!processLimits(player)) {
 				return true;
@@ -90,7 +88,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 				if (!hasRegion && autoFlags.enabled()) {
 					Actor actor = WEUtils.privilegedActor(player, autoFlags.showMessages());
 					World world = player.getWorld();
-					final ProtectedRegion rg = WGUtils.getRegion(world, regionName);
+					ProtectedRegion rg = WGUtils.getRegion(world, regionName);
                     if (rg == null) return true;
 					List<CommandException> exceptions = new ArrayList<>(0);
                     for (Map.Entry<Flag<?>, String> entry : autoFlags.flags().entrySet()) {
@@ -131,6 +129,9 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
         return false;
 	}
 
+	/**
+     * <a href="https://github.com/EngineHub/WorldGuard/blob/d1a3193754280a633d901901313fd326905dbcd9/worldguard-core/src/main/java/com/sk89q/worldguard/commands/region/RegionCommands.java#L248">Original code</a>
+     */
 	private void claim(String id, CommandSender sender) throws CommandException {
 		if (!(sender instanceof Player player)) {
 			throw new CommandException(msg.get(MKey.COMMON__ERROR__PLAYER_ONLY));
@@ -183,25 +184,32 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__ONLY_INSIDE_OWN));
 		}
 
-		RegionAdder task = new RegionAdder(manager, region);
-		task.setLocatorPolicy(DomainInputResolver.UserLocatorPolicy.UUID_ONLY);
-		task.setOwnersInput(new String[] { player.getName() });
-		try {
-			task.call();
-			msg.sendMessage(sender, MKey.CLAIM__SUCCESS, id);
-		} catch (Exception e) {
-			msg.sendMessage(sender, MKey.CLAIM__ERROR__EXCEPTION);
-			e.printStackTrace(); // TODO Log properly
+		if (!Strings.isNullOrEmpty(wcfg.setParentOnClaim)) {
+			ProtectedRegion templateRegion = manager.getRegion(wcfg.setParentOnClaim);
+			if (templateRegion != null) {
+				try {
+					region.setParent(templateRegion);
+				} catch (ProtectedRegion.CircularInheritanceException e) {
+					throw new CommandException(e.getMessage());
+				}
+			}
 		}
+
+		region.getOwners().addPlayer(localPlayer);
+		manager.addRegion(region);
+
+		msg.sendMessage(sender, MKey.CLAIM__SUCCESS, id);
 	}
 
-	private ProtectedRegion createProtectedRegionFromSelection(Player player, String id) throws CommandException {
+	private @NotNull ProtectedRegion createProtectedRegionFromSelection(@NotNull Player player, @NotNull String id) throws CommandException {
 		try {
 			Region selection = WEUtils.getSelection(player);
 			if (selection instanceof CuboidRegion) {
 				return new ProtectedCuboidRegion(id, selection.getMinimumPoint(), selection.getMaximumPoint());
+			} else if (selection instanceof Polygonal2DRegion polySel) {
+				return new ProtectedPolygonalRegion(id, polySel.getPoints(), polySel.getMinimumY(), polySel.getMaximumY());
 			} else {
-				throw new CommandException(msg.get(MKey.CLAIM__ERROR__ONLY_CUBOID)); // TODO We still can perform some stuff
+				throw new CommandException(msg.get(MKey.CLAIM__ERROR__WRONG_SHAPE));
 			}
 		} catch (IncompleteRegionException e) {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__INCOMPLETE));
