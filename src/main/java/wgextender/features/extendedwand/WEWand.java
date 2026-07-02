@@ -27,32 +27,33 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import wgextender.utils.WEUtils;
 
-import java.util.Objects;
-
 public final class WEWand {
-	public static final NamespacedKey WAND_KEY = Objects.requireNonNull(NamespacedKey.fromString("wgextender:wand"));
+	public static final NamespacedKey WAND_KEY = new NamespacedKey("wgextender", "wand");
 
-	private static String cachedName;
-	private static Material cachedMaterial;
+	private String cachedTypeName;
+	private Material cachedType;
 
-	private WEWand() { }
-
-	@SuppressWarnings("PatternValidation")
-    private static Material getWandMaterial() { // TODO Better handle registry?
-		String weName = WEUtils.getWorldEditPlugin().getLocalConfiguration().wandItem;
-		if (!weName.equals(cachedName)) {
-			if (!Key.parseable(weName)) {
-				cachedMaterial = Material.WOODEN_AXE;
-				// TODO Log
-			} else {
-				cachedMaterial = Registry.MATERIAL.get(Key.key(weName));
-				cachedName = weName;
-			}
-		}
-		return cachedMaterial;
+	public WEWand() {
+		this.cachedTypeName = "minecraft:wooden_axe";
+		this.cachedType = Material.WOODEN_AXE;
 	}
 
-	public static @NotNull ItemStack getWand(@NotNull Component name) {
+	@SuppressWarnings("PatternValidation")
+    private Material getWandMaterial() {
+		String weName = WEUtils.getWorldEditPlugin().getLocalConfiguration().wandItem;
+		if (!weName.equals(cachedTypeName)) {
+			if (!Key.parseable(weName)) {
+				cachedType = Material.WOODEN_AXE;
+				// TODO Log
+			} else {
+				cachedType = Registry.MATERIAL.get(Key.key(weName));
+				cachedTypeName = weName;
+			}
+		}
+		return cachedType;
+	}
+
+	public @NotNull ItemStack getWand(@NotNull Component name) {
 		ItemStack wandItem = ItemStack.of(getWandMaterial());
 		wandItem.editMeta(meta -> {
 			meta.getPersistentDataContainer().set(WAND_KEY, PersistentDataType.BOOLEAN, true);
@@ -61,7 +62,7 @@ public final class WEWand {
 		return wandItem;
 	}
 
-	public static boolean isWand(@NotNull ItemStack item) {
+	public boolean isWand(@NotNull ItemStack item) {
         return item.getType().equals(getWandMaterial()) && item.getPersistentDataContainer().getOrDefault(WAND_KEY, PersistentDataType.BOOLEAN, false);
     }
 }

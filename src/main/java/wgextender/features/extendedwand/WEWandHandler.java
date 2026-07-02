@@ -17,24 +17,33 @@
 
 package wgextender.features.extendedwand;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import wgextender.config.ConfigurationProvider;
+import wgextender.features.ConfigurableListenerBase;
 
-public final class WEWandHandler implements Listener {
+// TODO We can disable listening
+public final class WEWandHandler extends ConfigurableListenerBase<ConfigurationProvider.Misc> {
+	private final WEWand weWand;
+
+	public WEWandHandler(@NotNull ConfigurationProvider cfgProvider, @NotNull WEWand weWand) {
+		super(cfgProvider, ConfigurationProvider::misc);
+		this.weWand = weWand;
+	}
+
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityAttack(EntityDamageByEntityEvent event) {
-		Entity edamager = event.getDamager();
-		if (edamager instanceof Player player) {
+		if (!config.extendedWeWand()) return;
+		if (event.getDamager() instanceof Player player) {
 			ItemStack item = player.getInventory().getItemInMainHand();
-			if (WEWand.isWand(item)) {
+			if (weWand.isWand(item)) {
 				event.setCancelled(true);
 			}
 		}
@@ -42,13 +51,15 @@ public final class WEWandHandler implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onPlayerDeath(PlayerDeathEvent event) {
-		event.getDrops().removeIf(WEWand::isWand);
+		if (!config.extendedWeWand()) return;
+		event.getDrops().removeIf(weWand::isWand);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onItemDrop(PlayerDropItemEvent event) {
+		if (!config.extendedWeWand()) return;
 		Item drop = event.getItemDrop();
-		if (WEWand.isWand(drop.getItemStack())) {
+		if (weWand.isWand(drop.getItemStack())) {
 			drop.remove();
 		}
 	}

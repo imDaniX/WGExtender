@@ -29,6 +29,7 @@ import wgextender.config.ConfigurationProvider;
 import wgextender.features.VersionHandler;
 import wgextender.features.claimcommand.BlockLimitsHandler;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
+import wgextender.features.extendedwand.WEWand;
 import wgextender.features.extendedwand.WEWandCommandWrapper;
 import wgextender.features.extendedwand.WEWandHandler;
 import wgextender.features.flags.ConsumeFlagsHandler;
@@ -90,6 +91,8 @@ public final class WGExtender extends JavaPlugin {
 			commands.registrar().register(new WGExCommand(this).node().build(), List.of("wgextender"));
 		});
 
+		WEWand weWand = new WEWand();
+
 		listener(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
 		listener(new VersionHandler(this));
 		listener(new MobRenameFlagHandler(cfgProvider));
@@ -97,11 +100,11 @@ public final class WGExtender extends JavaPlugin {
 		listener(new LiquidFlow(cfgProvider));
 		listener(new FireBurn(cfgProvider));
 		listener(new Explode(cfgProvider));
-		listener(new WEWandHandler());
+		listener(new WEWandHandler(cfgProvider, weWand));
 		listener(new ConsumeFlagsHandler(cfgProvider));
 
 		injectables.add(new WGRegionCommandWrapper(this));
-		injectables.add(new WEWandCommandWrapper(cfgProvider));
+		injectables.add(new WEWandCommandWrapper(cfgProvider, weWand));
         injectables.add(new PvPHandlingListener(cfgProvider));
 		if (cfgProvider.misc().oldPvpFlags()) {
 			logger().warn(

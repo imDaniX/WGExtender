@@ -28,11 +28,13 @@ import wgextender.utils.command.CommandWrapper;
 
 public final class WEWandCommandWrapper extends CommandWrapper {
 	private final Messages msg;
+	private final WEWand weWand;
 	private ConfigurationProvider.Misc misc;
 
-	public WEWandCommandWrapper(@NotNull ConfigurationProvider config) {
+	public WEWandCommandWrapper(@NotNull ConfigurationProvider config, @NotNull WEWand weWand) {
 		super("/wand");
 		this.msg = config.messages();
+		this.weWand = weWand;
 		this.misc = config.misc();
 		config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);
 	}
@@ -43,7 +45,7 @@ public final class WEWandCommandWrapper extends CommandWrapper {
 			return originalCmd.execute(sender, label, args);
 		}
 		if (sender instanceof Player player) {
-			player.getInventory().addItem(WEWand.getWand(msg.rich(MKey.WAND__ITEM_NAME)));
+			player.getInventory().addItem(weWand.getWand(msg.rich(MKey.WAND__ITEM_NAME)));
 			msg.sendMessage(player, MKey.WAND__GIVEN);
 		}
 		return true;
