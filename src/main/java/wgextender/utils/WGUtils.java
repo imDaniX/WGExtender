@@ -114,33 +114,39 @@ public final class WGUtils {
 		return REGION_QUERY.queryValue(BukkitAdapter.adapt(location), null, flag);
 	}
 
-	public static boolean isFlagAllows(Player player, Location location, StateFlag flag) {
+	public static boolean isFlagAllows(@NotNull Player player, @NotNull Location location, @NotNull StateFlag flag) {
 		return REGION_QUERY.testState(BukkitAdapter.adapt(location), WorldGuardPlugin.inst().wrapPlayer(player), flag);
 	}
 
-	public static boolean isFlagTrue(Location location, BooleanFlag flag) {
+	public static boolean isFlagTrue(@NotNull Location location, @NotNull BooleanFlag flag) {
 		Boolean bool = REGION_QUERY.queryValue(BukkitAdapter.adapt(location), null, flag);
 		return (bool != null) && bool;
 	}
 
-	public static ApplicableRegionSet getRegionsAt(Location location) {
+	public static @NotNull ApplicableRegionSet getRegionsAt(@NotNull Location location) {
 		return REGION_QUERY.getApplicableRegions(BukkitAdapter.adapt(location));
 	}
 
-	public static boolean hasRegion(World world, String regionName) {
+	public static boolean hasRegion(@NotNull World world, @NotNull String regionName) {
 		return getRegion(world, regionName) != null;
 	}
 
-	public static ProtectedRegion getRegion(World world, String regionName) {
-		final RegionManager rm = getRegionManager(world);
-		if (rm == null) {
-			return null;
-		}
-		return rm.getRegion(regionName);
+	public static @Nullable ProtectedRegion getRegion(@NotNull World world, @NotNull String regionName) {
+		RegionManager rm = getRegionManager(world);
+		return rm == null ? null : rm.getRegion(regionName);
 	}
 
-	public static <T> void setFlagNaturally(Actor actor, World world, ProtectedRegion region, Flag<T> flag, String value) throws CommandException {
-		CommandContext context = new CommandContext(String.format("flag %s -w %s %s %s", region.getId(), world.getName(), flag.getName(), value), FLAG_COMMAND_FLAGS);
+	public static <T> void setFlagNaturally(
+			@NotNull Actor actor,
+			@NotNull World world,
+			@NotNull ProtectedRegion region,
+			@NotNull Flag<T> flag,
+			@NotNull String value
+	) throws CommandException {
+		CommandContext context = new CommandContext(
+				"flag " + region.getId() + " -w " + world.getName() + " " + flag.getName() + " " + value,
+				FLAG_COMMAND_FLAGS
+		);
 		REGION_COMMANDS.flag(context, actor);
 	}
 

@@ -17,7 +17,8 @@ import java.util.Collection;
 import java.util.List;
 
 public final class LpIntegration implements PluginIntegration {
-    public static String IN_REGION_CONTEXT = "wgex:in-region";
+    private static final String IN_REGION_CONTEXT = "wgex:in-region";
+    private static final String CONTEXT_HELPER_CONTEXT = "wgex:context-helper";
 
     @Override
     public @NotNull Collection<@NotNull String> requiredPlugins() {
@@ -41,7 +42,7 @@ public final class LpIntegration implements PluginIntegration {
             String contextFlag = regions.queryValue(null, WGExtenderFlags.CONTEXT_HELPER_FLAG);
             if (contextFlag != null) {
                 context.accept(
-                        "wgex:context-helper",
+                        CONTEXT_HELPER_CONTEXT,
                         contextFlag
                 );
             }

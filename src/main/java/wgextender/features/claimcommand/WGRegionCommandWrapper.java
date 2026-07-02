@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("deprecation")
 public final class WGRegionCommandWrapper extends CommandWrapper {
 	private final Messages msg;
 	private final BlockLimitsHandler limits;
@@ -80,7 +81,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 					msg.sendMessage(player, MKey.CLAIM__AUTO_VERT);
 				}
 			}
-			if (!process(player)) {
+			if (!processLimits(player)) {
 				return true;
 			}
 			boolean hasRegion = WGUtils.hasRegion(player.getWorld(), regionName);
@@ -117,27 +118,17 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 		}
 	}
 
-	private boolean process(@NotNull Player player) {
+	private boolean processLimits(@NotNull Player player) {
 		BlockLimitsHandler.EvaluationResult info = limits.evaluateResult(player);
-		return switch (info.type()) {
-			case ALLOW -> true;
-			case DENY_MAX_VOLUME -> {
-				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_MAX_VOLUME, info.assignedLimit(), info.assignedSize());
-				yield false;
-			}
-			case DENY_MIN_VOLUME -> {
-				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_MIN_VOLUME, info.assignedLimit(), info.assignedSize());
-				yield false;
-			}
-			case DENY_HORIZONTAL -> {
-				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_HORIZONTAL, info.assignedLimit(), info.assignedSize());
-				yield false;
-			}
-			case DENY_VERTICAL -> {
-				msg.sendMessage(player, MKey.CLAIM__ERROR__DENY_VERTICAL, info.assignedLimit(), info.assignedSize());
-				yield false;
-			}
-		};
+		if (info.type() == BlockLimitsHandler.ResultType.ALLOW) return true;
+		msg.sendMessage(player, switch (info.type()) {
+            case DENY_MAX_VOLUME -> MKey.CLAIM__ERROR__DENY_MAX_VOLUME;
+			case DENY_MIN_VOLUME -> MKey.CLAIM__ERROR__DENY_MIN_VOLUME;
+			case DENY_HORIZONTAL -> MKey.CLAIM__ERROR__DENY_HORIZONTAL;
+			case DENY_VERTICAL -> MKey.CLAIM__ERROR__DENY_VERTICAL;
+            default -> throw new IllegalStateException("Unexpected value: " + info.type());
+        }, info.assignedLimit(), info.assignedSize());
+        return false;
 	}
 
 	private void claim(String id, CommandSender sender) throws CommandException {

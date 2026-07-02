@@ -48,7 +48,7 @@ public abstract class SubCommandBase implements Brigadierable {
 
         @Override
         public final @NotNull LiteralArgumentBuilder<CommandSourceStack> node() {
-            return root().executes(cmd(ctx -> execute(ctx)));
+            return root().executes(cmd(this::execute));
         }
 
         protected abstract void execute(@NotNull CommandContext<CommandSourceStack> ctx);
