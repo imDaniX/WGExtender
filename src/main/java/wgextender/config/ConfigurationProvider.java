@@ -65,6 +65,9 @@ public final class ConfigurationProvider {
         this.misc = loadMisc(config);
         this.messagesConfig = loadMessagesConfig(config);
         this.updater = loadUpdater(config);
+    }
+
+    public void reloadSubscribers() {
         subscribers.forEach(sub -> sub.accept(this));
     }
 
@@ -112,6 +115,7 @@ public final class ConfigurationProvider {
     private @NotNull Claim loadClaim(@NotNull FileConfiguration config) {
         return at(config, "claim", claimSection -> new Claim(
                 claimSection.getBoolean("vertexpand", false),
+                claimSection.getBoolean("hijack-handler", true),
                 loadBlockLimits(claimSection)
         ));
     }
@@ -233,7 +237,11 @@ public final class ConfigurationProvider {
         return value.equals("0") ? BigInteger.ZERO : new BigInteger(value);
     }
 
-    public record Claim(boolean expandSelectionVertical, @NotNull BlockLimits blockLimits) {
+    public record Claim(
+            boolean expandSelectionVertical,
+            boolean hijackHandler,
+            @NotNull BlockLimits blockLimits
+    ) {
         public static final Function<ConfigurationProvider, Claim> SECTION = ConfigurationProvider::claim;
     }
 

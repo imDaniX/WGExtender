@@ -138,7 +138,7 @@ public final class WGExtender extends JavaPlugin {
 				integration.onEnable(this);
 			}
 		}
-		cfgProvider.reload();
+		cfgProvider.reloadSubscribers();
 	}
 	
 	private void listener(@NotNull Listener listener) {

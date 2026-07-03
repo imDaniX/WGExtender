@@ -30,6 +30,8 @@ claim:
     deny-vertical: |-
       &4You cannot claim such a short region.
       Minimum height: {limit}, you attempted to claim: {volume}.
+    disabled: Region support is disabled in the target world.
+    region-data-fail: Region data failed to load for this world. Please ask a server administrator to read the logs to identify the reason.
   success: '&eYou have claimed region {id}.'
   auto-vert: '&eRegion automatically expanded vertically.'
 wand:

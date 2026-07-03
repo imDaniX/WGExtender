@@ -20,7 +20,6 @@ package wgextender.utils;
 import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.minecraft.util.commands.CommandContext;
 import com.sk89q.minecraft.util.commands.CommandException;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
@@ -39,6 +38,7 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,83 +48,92 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static wgextender.utils.WEUtils.weLocation;
+import static wgextender.utils.WEUtils.weWorld;
+
 public final class WGUtils {
 	public static final RegionQuery REGION_QUERY = getRegionContainer().createQuery();
 
-	private static final RegionCommands REGION_COMMANDS = new RegionCommands(getWorldGuard());
+	public static final RegionCommands REGION_COMMANDS = new RegionCommands(getWorldGuard());
 	private static final Set<Character> FLAG_COMMAND_FLAGS = getFlagCommandFlags();
 
 	private WGUtils() { }
 
-	public static LocalPlayer wgPlayer(Player player) {
+	// This is, in fact, weSender... but whatever
+	public static @NotNull Actor wgSender(@NotNull CommandSender sender) {
+		return WorldGuardPlugin.inst().wrapCommandSender(sender);
+	}
+
+	public static @NotNull LocalPlayer wgPlayer(@NotNull Player player) {
 		return WorldGuardPlugin.inst().wrapPlayer(player);
 	}
 
-	public static WorldGuard getWorldGuard() {
+	public static @NotNull WorldGuard getWorldGuard() {
 		return WorldGuard.getInstance();
 	}
 
-	public static WorldGuardPlatform getPlatform() {
+	public static @NotNull WorldGuardPlatform getPlatform() {
 		return getWorldGuard().getPlatform();
 	}
 
-	public static RegionContainer getRegionContainer() {
+	public static @NotNull RegionContainer getRegionContainer() {
 		return getPlatform().getRegionContainer();
 	}
 
-	public static RegionManager getRegionManager(World world) {
-		return getRegionContainer().get(BukkitAdapter.adapt(world));
+	// TODO Handle null in more places
+	public static @Nullable RegionManager getRegionManager(@NotNull World world) {
+		return getRegionContainer().get(weWorld(world));
 	}
 
-	public static BukkitWorldConfiguration getWorldConfig(World world) {
-		return (BukkitWorldConfiguration) getPlatform().getGlobalStateManager().get(BukkitAdapter.adapt(world));
+	public static @NotNull BukkitWorldConfiguration getWorldConfig(@NotNull World world) {
+		return (BukkitWorldConfiguration) getPlatform().getGlobalStateManager().get(weWorld(world));
 	}
 
-	public static BukkitWorldConfiguration getWorldConfig(Player player) {
+	public static @NotNull BukkitWorldConfiguration getWorldConfig(@NotNull Player player) {
 		return getWorldConfig(player.getWorld());
 	}
 
-	public static boolean canBypassProtection(Player player) {
-		return getPlatform().getSessionManager().hasBypass(wgPlayer(player), BukkitAdapter.adapt(player.getWorld()));
+	public static boolean canBypassProtection(@NotNull Player player) {
+		return getPlatform().getSessionManager().hasBypass(wgPlayer(player), weWorld(player.getWorld()));
 	}
 
-	public static boolean isInRegion(Location location) {
+	public static boolean isInRegion(@NotNull Location location) {
 		return getRegionsAt(location).size() > 0;
 	}
 
-	public static boolean isInTheSameRegionOrWild(Location location1, Location location2) {
+	public static boolean isInTheSameRegionOrWild(@NotNull Location location1, @NotNull Location location2) {
 		return getRegionsAt(location1).getRegions().equals(getRegionsAt(location2).getRegions());
 	}
 
-	public static boolean isInTheSameRegion(Location location1, Location location2) {
+	public static boolean isInTheSameRegion(@NotNull Location location1, @NotNull Location location2) {
 		ApplicableRegionSet ars1 = getRegionsAt(location1);
 		ApplicableRegionSet ars2 = getRegionsAt(location2);
 		return (ars1.size() > 0) && ars1.getRegions().equals(ars2.getRegions());
 	}
 
-	public static boolean canBuild(Player player, Location location) {
-		return isFlagAllows(player, location, Flags.BUILD);
+	public static boolean canBuild(@NotNull Player player, @NotNull Location at) {
+		return isFlagAllows(player, at, Flags.BUILD);
 	}
 
 	public static <T> @Nullable T getFlagValue(@NotNull Player player, @NotNull Location location, @NotNull Flag<T> flag) {
-		return REGION_QUERY.queryValue(BukkitAdapter.adapt(location), WorldGuardPlugin.inst().wrapPlayer(player), flag);
+		return REGION_QUERY.queryValue(weLocation(location), WorldGuardPlugin.inst().wrapPlayer(player), flag);
 	}
 
 	public static <T> @Nullable T getFlagValue(@NotNull Location location, @NotNull Flag<T> flag) {
-		return REGION_QUERY.queryValue(BukkitAdapter.adapt(location), null, flag);
+		return REGION_QUERY.queryValue(weLocation(location), null, flag);
 	}
 
 	public static boolean isFlagAllows(@NotNull Player player, @NotNull Location location, @NotNull StateFlag flag) {
-		return REGION_QUERY.testState(BukkitAdapter.adapt(location), WorldGuardPlugin.inst().wrapPlayer(player), flag);
+		return REGION_QUERY.testState(weLocation(location), WorldGuardPlugin.inst().wrapPlayer(player), flag);
 	}
 
 	public static boolean isFlagTrue(@NotNull Location location, @NotNull BooleanFlag flag) {
-		Boolean bool = REGION_QUERY.queryValue(BukkitAdapter.adapt(location), null, flag);
+		Boolean bool = REGION_QUERY.queryValue(weLocation(location), null, flag);
 		return (bool != null) && bool;
 	}
 
 	public static @NotNull ApplicableRegionSet getRegionsAt(@NotNull Location location) {
-		return REGION_QUERY.getApplicableRegions(BukkitAdapter.adapt(location));
+		return REGION_QUERY.getApplicableRegions(weLocation(location));
 	}
 
 	public static boolean hasRegion(@NotNull World world, @NotNull String regionName) {
@@ -136,7 +145,8 @@ public final class WGUtils {
 		return rm == null ? null : rm.getRegion(regionName);
 	}
 
-	public static <T> void setFlagNaturally(
+	@SuppressWarnings("deprecation")
+    public static <T> void setFlagNaturally(
 			@NotNull Actor actor,
 			@NotNull World world,
 			@NotNull ProtectedRegion region,
@@ -150,7 +160,8 @@ public final class WGUtils {
 		REGION_COMMANDS.flag(context, actor);
 	}
 
-	private static Set<Character> getFlagCommandFlags() {
+	@SuppressWarnings("deprecation")
+    private static Set<Character> getFlagCommandFlags() {
 		try {
 			Method method = RegionCommands.class.getMethod("flag", CommandContext.class, Actor.class);
 			Command annotation = method.getAnnotation(Command.class);

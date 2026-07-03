@@ -18,6 +18,7 @@
 package wgextender.features.claimcommand;
 
 import com.google.common.base.Strings;
+import com.sk89q.minecraft.util.commands.CommandContext;
 import com.sk89q.minecraft.util.commands.CommandException;
 import com.sk89q.minecraft.util.commands.CommandPermissionsException;
 import com.sk89q.worldedit.IncompleteRegionException;
@@ -53,30 +54,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings("deprecation") // WE's Command API, which is used by WG all over the place, is deprecated
 public final class WGRegionCommandWrapper extends CommandWrapper {
 	private final Messages msg;
 	private final BlockLimitsHandler limits;
 
-	private ConfigurationProvider.Claim claim;
-	private ConfigurationProvider.AutoFlags autoFlags;
+	private ConfigurationProvider.Claim claimCfg;
+	private ConfigurationProvider.AutoFlags autoFlagsCfg;
 
 	public WGRegionCommandWrapper(@NotNull WGExtender plugin) {
 		super("region");
 		ConfigurationProvider config = plugin.getConfigurationProvider();
 		this.msg = config.messages();
 		this.limits = plugin.getBlockLimitsHandler();
-		this.claim = config.claim();
-		this.autoFlags = config.autoFlags();
-		config.register(section -> this.claim = section, ConfigurationProvider.Claim.SECTION);
-		config.register(section -> this.autoFlags = section, ConfigurationProvider.AutoFlags.SECTION);
+		this.claimCfg = config.claim();
+		this.autoFlagsCfg = config.autoFlags();
+		config.register(section -> this.claimCfg = section, ConfigurationProvider.Claim.SECTION);
+		config.register(section -> this.autoFlagsCfg = section, ConfigurationProvider.AutoFlags.SECTION);
 	}
 
 	@Override
 	public boolean execute(@NonNull CommandSender sender, @NonNull String label, @NotNull String @NonNull [] args, @NotNull Command originalCmd) {
 		if (sender instanceof Player player && args.length >= 2 && args[0].equalsIgnoreCase("claim")) {
 			String regionName = args[1];
-			if (claim.expandSelectionVertical() && WEUtils.expandVert(player)) {
+			if (claimCfg.expandSelectionVertical() && WEUtils.expandVert(player)) {
 				msg.sendMessage(player, MKey.CLAIM__AUTO_VERT);
 			}
 			if (!processLimits(player)) {
@@ -84,14 +85,23 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 			}
 			boolean hasRegion = WGUtils.hasRegion(player.getWorld(), regionName);
 			try {
-				claim(regionName, sender);
-				if (!hasRegion && autoFlags.enabled()) {
-					Actor actor = WEUtils.privilegedActor(player, autoFlags.showMessages());
+				if (claimCfg.hijackHandler()) {
+					hijackClaim(regionName, sender);
+				} else {
+					if (regionName.startsWith("-")) { // Not handled by WG
+						throw new CommandException(msg.get(MKey.CLAIM__ERROR__RESTRICTED_SYMBOLS, regionName));
+					}
+					// Not using `originalCmd` because we still want to catch the exceptions
+					WGUtils.REGION_COMMANDS.claim(new CommandContext(new String[] {regionName}), WGUtils.wgSender(sender));
+				}
+
+				if (!hasRegion && autoFlagsCfg.enabled()) {
+					Actor actor = WEUtils.privilegedActor(player, autoFlagsCfg.showMessages());
 					World world = player.getWorld();
 					ProtectedRegion rg = WGUtils.getRegion(world, regionName);
                     if (rg == null) return true;
 					List<CommandException> exceptions = new ArrayList<>(0);
-                    for (Map.Entry<Flag<?>, String> entry : autoFlags.flags().entrySet()) {
+                    for (Map.Entry<Flag<?>, String> entry : autoFlagsCfg.flags().entrySet()) {
                         try {
                             WGUtils.setFlagNaturally(actor, world, rg, entry.getKey(), entry.getValue());
                         } catch (CommandException ex) {
@@ -102,7 +112,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 						if (exceptions.size() == 1) {
 							throw exceptions.getFirst();
 						}
-						CommandException ex = new CommandException(); // TODO Handle it better?
+						CommandException ex = new CommandException();
 						exceptions.forEach(ex::addSuppressed);
 						throw ex;
 					}
@@ -132,7 +142,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	/**
      * <a href="https://github.com/EngineHub/WorldGuard/blob/d1a3193754280a633d901901313fd326905dbcd9/worldguard-core/src/main/java/com/sk89q/worldguard/commands/region/RegionCommands.java#L248">Original code</a>
      */
-	private void claim(String id, CommandSender sender) throws CommandException {
+	private void hijackClaim(String id, CommandSender sender) throws CommandException {
 		if (!(sender instanceof Player player)) {
 			throw new CommandException(msg.get(MKey.COMMON__ERROR__PLAYER_ONLY));
 		}
@@ -156,7 +166,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 			throw new CommandPermissionsException();
 		}
 
-		RegionManager manager = WGUtils.getRegionManager(player.getWorld());
+		RegionManager manager = checkRegionManager(player.getWorld());
 
 		if (manager.hasRegion(id)) {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__ALREADY_EXISTS));
@@ -214,5 +224,18 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 		} catch (IncompleteRegionException e) {
 			throw new CommandException(msg.get(MKey.CLAIM__ERROR__INCOMPLETE));
 		}
+	}
+
+	private @NotNull RegionManager checkRegionManager(World bukkitWorld) throws CommandException {
+		var world = WEUtils.weWorld(bukkitWorld);
+		if (!WGUtils.getPlatform().getGlobalStateManager().get(world).useRegions) {
+			throw new CommandException(msg.get(MKey.CLAIM__ERROR__DISABLED));
+		}
+
+		RegionManager manager = WGUtils.getPlatform().getRegionContainer().get(world);
+		if (manager == null) {
+			throw new CommandException(msg.get(MKey.CLAIM__ERROR__REGION_DATA_FAIL));
+		}
+		return manager;
 	}
 }

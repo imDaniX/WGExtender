@@ -24,6 +24,8 @@ public enum MKey {
     CLAIM__ERROR__DENY_MIN_VOLUME("limit", "volume"),
     CLAIM__ERROR__DENY_HORIZONTAL("limit", "volume"),
     CLAIM__ERROR__DENY_VERTICAL("limit", "volume"),
+    CLAIM__ERROR__DISABLED,
+    CLAIM__ERROR__REGION_DATA_FAIL,
     CLAIM__SUCCESS("id"),
     CLAIM__AUTO_VERT,
 

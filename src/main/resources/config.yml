@@ -1,6 +1,6 @@
 claim:
   # Auto-expand claim selection from world top to bottom
-  # Do note that the size checks are performed after the expansion
+  # Do note that the limits checks are performed after the expansion
   vertexpand: false
   
   blocklimits:
@@ -21,6 +21,11 @@ claim:
       horizontal: 0
       # Minimal height
       vertical: 0
+
+  # Do you want WGExtender to fully handle the '/rg claim' claim process? Limits will get processed either way
+  # Practically, it just allows messages customization
+  # WARNING: The behavior might get inconsistent with WG in the future
+  hijack-handler: true
 
 regionprotect:
   # Block liquid flow across region borders
