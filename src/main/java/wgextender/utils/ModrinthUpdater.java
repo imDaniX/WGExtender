@@ -74,19 +74,22 @@ public final class ModrinthUpdater implements AutoCloseable {
             return (lastResult = new CheckResult.Failure(currentVersion, e));
         }
 
-        Optional<Artifact> latest = latestMatchingVersion(versions, allowStaging);
-        if (latest.isEmpty()) {
-            return (lastResult = new CheckResult.Failure(currentVersion, new NoSuchElementException("No matching versions found")));
-        }
-
-        int cmp = latest.get().version().compareTo(currentVersion);
-        if (cmp > 0) {
-            return (lastResult = new CheckResult.Success(currentVersion, latest.get(), Status.AVAILABLE));
-        } else if (cmp < 0) {
-            return (lastResult = new CheckResult.Success(currentVersion, latest.get(), Status.AHEAD));
-        } else {
-            return (lastResult = new CheckResult.Success(currentVersion, latest.get(), Status.UP_TO_DATE));
-        }
+        return lastResult = latestMatchingVersion(versions, allowStaging).<CheckResult>map(artifact ->
+                new CheckResult.Success(
+                        currentVersion,
+                        artifact,
+                        switch (Comparison.of(artifact.version, currentVersion)) {
+                            case ABOVE -> Status.AVAILABLE;
+                            case EQUAL -> Status.UP_TO_DATE;
+                            case BELOW -> Status.AHEAD;
+                        }
+                )
+        ).orElseGet(() ->
+                new CheckResult.Failure(
+                        currentVersion,
+                        new NoSuchElementException("No matching versions found")
+                )
+        );
     }
 
     public @NotNull Optional<Artifact> getLatestVersion(boolean allowStaging) throws IOException, InterruptedException {

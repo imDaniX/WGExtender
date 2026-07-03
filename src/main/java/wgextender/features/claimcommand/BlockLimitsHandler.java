@@ -29,12 +29,15 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
 import wgextender.features.ConfigurableListenerBase;
+import wgextender.utils.Comparison;
 import wgextender.utils.WEUtils;
 
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static wgextender.utils.Comparison.is;
 
 public final class BlockLimitsHandler extends ConfigurableListenerBase<ConfigurationProvider.BlockLimits> {
 	private static final BigInteger MAX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
@@ -116,7 +119,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 		BigInteger minHorizontal = xDistance.min(zDistance);
 
 		BigInteger volume = BigInteger.valueOf(selection.getVolume());
-		if (volume.compareTo(MAX_VALUE) > 0) {
+		if (is(volume, Comparison.ABOVE, MAX_VALUE)) {
 			return new EvaluationResult(
 					ResultType.DENY_MAX_VOLUME,
 					volume,
@@ -127,21 +130,21 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 			if (player.hasPermission("worldguard.region.unlimited")) {
 				return EvaluationResult.EMPTY_ALLOW;
 			}
-			if (volume.compareTo(config.minimalVolume()) < 0) {
+			if (is(volume, Comparison.BELOW, config.minimalVolume())) {
 				return new EvaluationResult(
 						ResultType.DENY_MIN_VOLUME,
 						volume,
 						config.minimalVolume()
 				);
 			}
-			if (minHorizontal.compareTo(config.minimalHorizontal()) < 0) {
+			if (is(minHorizontal, Comparison.BELOW, config.minimalHorizontal())) {
 				return new EvaluationResult(
 						ResultType.DENY_MIN_VOLUME,
 						minHorizontal,
 						config.minimalHorizontal()
 				);
 			}
-			if (yDistance.compareTo(config.minimalVertical()) < 0) {
+			if (is(yDistance, Comparison.BELOW, config.minimalVertical())) {
 				return new EvaluationResult(
 						ResultType.DENY_VERTICAL,
 						yDistance,
@@ -149,7 +152,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 				);
 			}
 			BigInteger maxBlocks = refreshBlockLimit(player);
-			if (volume.compareTo(maxBlocks) > 0) {
+			if (is(volume, Comparison.ABOVE, maxBlocks)) {
 				return new EvaluationResult(
 						ResultType.DENY_MAX_VOLUME,
 						volume,
