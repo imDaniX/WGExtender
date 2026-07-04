@@ -26,7 +26,7 @@ public final class ModrinthUpdaterTest {
     @ParameterizedTest
     @MethodSource("parseData")
     public void parseTest(@NotNull String input, @NotNull List<Long> core, boolean snapshot, @NotNull List<Long> tail) {
-        ModrinthUpdater.PluginVersion v = ModrinthUpdater.PluginVersion.parse(input);
+        ModrinthUpdater.Version v = ModrinthUpdater.Version.parse(input);
         assertThat((List<? extends Long>) v.core()).isEqualTo(core);
         assertThat(v.snapshot()).isEqualTo(snapshot);
         assertThat((List<? extends Long>) v.tail()).isEqualTo(tail);
@@ -48,8 +48,8 @@ public final class ModrinthUpdaterTest {
     @ParameterizedTest
     @MethodSource("compareToData")
     public void compareToTest(@NotNull String a, @NotNull String b, int expectedSign) {
-        ModrinthUpdater.PluginVersion aVer = ModrinthUpdater.PluginVersion.parse(a);
-        ModrinthUpdater.PluginVersion bVer = ModrinthUpdater.PluginVersion.parse(b);
+        ModrinthUpdater.Version aVer = ModrinthUpdater.Version.parse(a);
+        ModrinthUpdater.Version bVer = ModrinthUpdater.Version.parse(b);
         assertThat(Integer.signum(aVer.compareTo(bVer))).isEqualTo(expectedSign);
     }
 
@@ -64,9 +64,9 @@ public final class ModrinthUpdaterTest {
     @ParameterizedTest
     @MethodSource("resultData")
     public void resultTest(@NotNull String currentVersion, @NotNull String latestVersion, @NotNull ModrinthUpdater.Status status) {
-        ModrinthUpdater.PluginVersion current = ModrinthUpdater.PluginVersion.parse(currentVersion);
-        ModrinthUpdater.Artifact latest = versionFile(latestVersion);
-        ModrinthUpdater.CheckResult.Success result = new ModrinthUpdater.CheckResult.Success(current, latest, status);
+        ModrinthUpdater.Version current = ModrinthUpdater.Version.parse(currentVersion);
+        ModrinthUpdater.Artifact latest = artifact(latestVersion);
+        ModrinthUpdater.Result.Success result = new ModrinthUpdater.Result.Success(current, latest, status);
         assertThat(result.current()).isEqualTo(current);
         assertThat(result.status()).isEqualTo(status);
         assertThat(result.latestFile()).isEqualTo(latest);
@@ -74,14 +74,14 @@ public final class ModrinthUpdaterTest {
 
     @Test
     public void failureTest() {
-        ModrinthUpdater.PluginVersion current = ModrinthUpdater.PluginVersion.parse("1.0.0");
+        ModrinthUpdater.Version current = ModrinthUpdater.Version.parse("1.0.0");
         Exception cause = new IOException("no");
-        ModrinthUpdater.CheckResult.Failure failure = new ModrinthUpdater.CheckResult.Failure(current, cause);
+        ModrinthUpdater.Result.Failure failure = new ModrinthUpdater.Result.Failure(current, cause);
         assertThat(failure.current()).isEqualTo(current);
         assertThat(failure.cause()).isEqualTo(cause);
     }
 
-    private static @NotNull ModrinthUpdater.Artifact versionFile(@NotNull String version) {
-        return new ModrinthUpdater.Artifact(ModrinthUpdater.PluginVersion.parse(version), ModrinthUpdater.VersionType.RELEASE, "http://x", "f.jar");
+    private static @NotNull ModrinthUpdater.Artifact artifact(@NotNull String version) {
+        return new ModrinthUpdater.Artifact(ModrinthUpdater.Version.parse(version), ModrinthUpdater.Version.Type.RELEASE, "http://x", "f.jar");
     }
 }

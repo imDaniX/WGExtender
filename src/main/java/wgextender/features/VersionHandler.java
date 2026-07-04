@@ -9,7 +9,6 @@ import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.utils.ModrinthUpdater;
-import wgextender.utils.ModrinthUpdater.CheckResult;
 
 import java.util.concurrent.TimeUnit;
 
@@ -54,9 +53,9 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
 
     private void checkForUpdate() {
         ComponentLogger logger = plugin.logger();
-        CheckResult result = updater.checkForUpdate(config.allowStaging());
+        ModrinthUpdater.Result result = updater.checkForUpdate(config.allowStaging());
         switch (result) {
-            case CheckResult.Success success -> {
+            case ModrinthUpdater.Result.Success success -> {
                 if (success.status() != ModrinthUpdater.Status.AVAILABLE) return;
                 logger.info(
                         msg.rich(
@@ -76,7 +75,7 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
                     );
                 }
             }
-            case CheckResult.Failure failure -> {
+            case ModrinthUpdater.Result.Failure failure -> {
                 if (plugin.getConfigurationProvider().updater().logFailures()) {
                     logger.error(
                             msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
@@ -95,7 +94,7 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
         }
 
         updater.lastResult().ifPresent(result -> {
-            if (result instanceof CheckResult.Success success && success.status() == ModrinthUpdater.Status.AVAILABLE) {
+            if (result instanceof ModrinthUpdater.Result.Success success && success.status() == ModrinthUpdater.Status.AVAILABLE) {
                 msg.sendMessage(
                         event.getPlayer(),
                         MKey.WGEX_COMMAND__UPDATE__AVAILABLE,

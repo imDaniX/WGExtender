@@ -30,10 +30,10 @@ public final class ModrinthUpdater implements AutoCloseable {
 
     private final String urlBaseDefault;
     private final String projectId;
-    private final PluginVersion currentVersion;
+    private final Version currentVersion;
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
-    private CheckResult lastResult;
+    private Result lastResult;
 
     public ModrinthUpdater(@NotNull String projectId, @NotNull String currentVersion) {
         this(MODRINTH_BASE, projectId, currentVersion);
@@ -42,7 +42,7 @@ public final class ModrinthUpdater implements AutoCloseable {
     public ModrinthUpdater(@NotNull String urlBase, @NotNull String projectId, @NotNull String currentVersion) {
         this.urlBaseDefault = normalizeUrlBase(urlBase);
         this.projectId = projectId;
-        this.currentVersion = PluginVersion.parse(currentVersion);
+        this.currentVersion = Version.parse(currentVersion);
     }
 
     @Override
@@ -54,28 +54,28 @@ public final class ModrinthUpdater implements AutoCloseable {
         return urlBase.endsWith("/") ? urlBase.substring(0, urlBase.length() - 1) : urlBase;
     }
 
-    public @NotNull Optional<CheckResult> lastResult() {
+    public @NotNull Optional<Result> lastResult() {
         return Optional.ofNullable(lastResult);
     }
 
-    public @NotNull CheckResult checkForUpdate(boolean allowStaging) {
+    public @NotNull Result checkForUpdate(boolean allowStaging) {
         return _checkForUpdate(urlBaseDefault, allowStaging);
     }
 
-    public @NotNull CheckResult checkForUpdate(@NotNull String urlBase, boolean allowStaging) {
+    public @NotNull Result checkForUpdate(@NotNull String urlBase, boolean allowStaging) {
         return _checkForUpdate(normalizeUrlBase(urlBase), allowStaging);
     }
 
-    private @NotNull CheckResult _checkForUpdate(@NotNull String normalizedUrlBase, boolean allowStaging) {
+    private @NotNull Result _checkForUpdate(@NotNull String normalizedUrlBase, boolean allowStaging) {
         List<Artifact> versions;
         try {
             versions = _fetchVersions(normalizedUrlBase);
         } catch (IOException | InterruptedException e) {
-            return (lastResult = new CheckResult.Failure(currentVersion, e));
+            return (lastResult = new Result.Failure(currentVersion, e));
         }
 
-        return lastResult = latestMatchingVersion(versions, allowStaging).<CheckResult>map(artifact ->
-                new CheckResult.Success(
+        return lastResult = latestMatchingVersion(versions, allowStaging).<Result>map(artifact ->
+                new Result.Success(
                         currentVersion,
                         artifact,
                         switch (Comparison.of(artifact.version, currentVersion)) {
@@ -85,7 +85,7 @@ public final class ModrinthUpdater implements AutoCloseable {
                         }
                 )
         ).orElseGet(() ->
-                new CheckResult.Failure(
+                new Result.Failure(
                         currentVersion,
                         new NoSuchElementException("No matching versions found")
                 )
@@ -107,7 +107,7 @@ public final class ModrinthUpdater implements AutoCloseable {
     private @NotNull Optional<Artifact> latestMatchingVersion(@NotNull List<Artifact> versions, boolean allowStaging) {
         return versions.stream()
                 .filter(v -> currentVersion.snapshot() || !v.version().snapshot())
-                .filter(v -> allowStaging || v.versionType() == VersionType.RELEASE)
+                .filter(v -> allowStaging || v.versionType() == Version.Type.RELEASE)
                 .max(BY_VERSION);
     }
 
@@ -134,8 +134,8 @@ public final class ModrinthUpdater implements AutoCloseable {
 
             for (JsonElement element : array) {
                 JsonObject obj = element.getAsJsonObject();
-                PluginVersion parsed = PluginVersion.parse(obj.get("version_number").getAsString());
-                VersionType versionType = VersionType.parse(obj.get("version_type").getAsString());
+                Version parsed = Version.parse(obj.get("version_number").getAsString());
+                Version.Type versionType = Version.Type.of(obj.get("version_type").getAsString());
                 JsonObject primaryFile = extractPrimaryFile(obj.getAsJsonArray("files"));
                 if (primaryFile == null) {
                     throw new IOException("Missing primary file for version " + parsed.raw());
@@ -167,19 +167,19 @@ public final class ModrinthUpdater implements AutoCloseable {
         return chosen;
     }
 
-    public record PluginVersion(
+    public record Version(
             @NotNull LongList core,
             boolean snapshot,
             @NotNull LongList tail,
             @NotNull String raw
-    ) implements Comparable<PluginVersion> {
-        public static @NotNull PluginVersion parse(@NotNull String version) {
+    ) implements Comparable<Version> {
+        public static @NotNull Version parse(@NotNull String version) {
             String trimmed = version.trim();
             int snapshotIndex = trimmed.toUpperCase(Locale.ROOT).indexOf(SNAPSHOT_TOKEN);
             boolean isSnapshot = snapshotIndex != -1;
             String corePart = isSnapshot ? trimmed.substring(0, snapshotIndex) : trimmed;
             String tailPart = isSnapshot ? trimmed.substring(snapshotIndex + SNAPSHOT_TOKEN.length()) : "";
-            return new PluginVersion(extractNumbers(corePart), isSnapshot, extractNumbers(tailPart), trimmed);
+            return new Version(extractNumbers(corePart), isSnapshot, extractNumbers(tailPart), trimmed);
         }
 
         private static @NotNull LongList extractNumbers(@NotNull String text) {
@@ -192,7 +192,7 @@ public final class ModrinthUpdater implements AutoCloseable {
         }
 
         @Override
-        public int compareTo(@NotNull PluginVersion other) {
+        public int compareTo(@NotNull Version other) {
             int coreCmp = compareNumbers(core, other.core);
             if (coreCmp != 0) return coreCmp;
             if (snapshot != other.snapshot) return Boolean.compare(other.snapshot, snapshot);
@@ -207,24 +207,25 @@ public final class ModrinthUpdater implements AutoCloseable {
             }
             return Integer.compare(a.size(), b.size());
         }
-    }
 
-    public enum VersionType {
-        RELEASE, BETA, ALPHA, UNKNOWN;
+        public enum Type {
+            UNKNOWN, ALPHA, BETA, RELEASE;
 
-        public static @NotNull VersionType parse(@Nullable String raw) {
-            if (raw == null) return UNKNOWN;
-            try {
-                return valueOf(raw.trim().toUpperCase(Locale.ROOT));
-            } catch (IllegalArgumentException e) {
-                return UNKNOWN;
+            public static @NotNull Type of(@Nullable String raw) {
+                if (raw == null) return UNKNOWN;
+                return switch (raw.toLowerCase(Locale.ROOT)) {
+                    case "release" -> RELEASE;
+                    case "beta" -> BETA;
+                    case "alpha" -> ALPHA;
+                    default -> UNKNOWN;
+                };
             }
         }
     }
 
     public record Artifact(
-            @NotNull PluginVersion version,
-            @NotNull VersionType versionType,
+            @NotNull Version version,
+            @NotNull Version.Type versionType,
             @NotNull String fileUrl,
             @NotNull String fileName
     ) {
@@ -233,8 +234,8 @@ public final class ModrinthUpdater implements AutoCloseable {
         }
     }
 
-    public sealed interface CheckResult {
-        @NotNull PluginVersion current();
+    public sealed interface Result {
+        @NotNull Version current();
 
         default @NotNull String currentRaw() {
             return current().raw;
@@ -242,15 +243,15 @@ public final class ModrinthUpdater implements AutoCloseable {
 
         @NotNull Status status();
 
-        record Failure(@NotNull PluginVersion current, @NotNull Exception cause) implements CheckResult {
+        record Failure(@NotNull Version current, @NotNull Exception cause) implements Result {
             @Override
             public @NotNull Status status() {
                 return Status.FAILURE;
             }
         }
 
-        record Success(@NotNull PluginVersion current, @NotNull ModrinthUpdater.Artifact latestFile, @NotNull Status status) implements CheckResult {
-            public @NotNull PluginVersion latest() {
+        record Success(@NotNull Version current, @NotNull ModrinthUpdater.Artifact latestFile, @NotNull Status status) implements Result {
+            public @NotNull Version latest() {
                 return latestFile().version;
             }
 
@@ -261,9 +262,9 @@ public final class ModrinthUpdater implements AutoCloseable {
     }
 
     public enum Status {
-        AHEAD,
-        UP_TO_DATE,
+        FAILURE,
         AVAILABLE,
-        FAILURE
+        UP_TO_DATE,
+        AHEAD
     }
 }
