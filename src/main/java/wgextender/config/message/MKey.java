@@ -7,6 +7,7 @@ public enum MKey {
     COMMON__ERROR__PLAYER_ONLY,
     COMMON__ERROR__NO_PERMISSION,
     COMMON__ERROR__PLAYER_NOT_FOUND("player"),
+    COMMON__ERROR__WORLD_DISABLED("world"),
 
     CLAIM__ERROR__GLOBAL,
     CLAIM__ERROR__FORMAT("error"),
@@ -24,7 +25,6 @@ public enum MKey {
     CLAIM__ERROR__DENY_MIN_VOLUME("limit", "volume"),
     CLAIM__ERROR__DENY_HORIZONTAL("limit", "volume"),
     CLAIM__ERROR__DENY_VERTICAL("limit", "volume"),
-    CLAIM__ERROR__DISABLED,
     CLAIM__ERROR__REGION_DATA_FAIL,
     CLAIM__SUCCESS("id"),
     CLAIM__AUTO_VERT,

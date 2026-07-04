@@ -229,7 +229,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	private @NotNull RegionManager checkRegionManager(World bukkitWorld) throws CommandException {
 		var world = WEUtils.weWorld(bukkitWorld);
 		if (!WGUtils.getPlatform().getGlobalStateManager().get(world).useRegions) {
-			throw new CommandException(msg.get(MKey.CLAIM__ERROR__DISABLED));
+			throw new CommandException(msg.get(MKey.COMMON__ERROR__WORLD_DISABLED, world.getName()));
 		}
 
 		RegionManager manager = WGUtils.getPlatform().getRegionContainer().get(world);

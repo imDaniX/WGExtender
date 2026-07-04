@@ -10,6 +10,7 @@ import com.sk89q.worldguard.protection.flags.BooleanFlag;
 import com.sk89q.worldguard.protection.flags.EnumFlag;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
+import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.GlobalProtectedRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -92,7 +93,12 @@ final class SetFlagSubCommand extends SubCommandBase {
         }
         String value = StringArgumentType.getString(ctx, "value");
         try {
-            for (ProtectedRegion region : WGUtils.getRegionManager(world).getRegions().values()) {
+            RegionManager regionManager = WGUtils.getRegionManager(world);
+            if (regionManager == null) {
+                msg.sendMessage(sender, MKey.COMMON__ERROR__WORLD_DISABLED, world.getName());
+                return;
+            }
+            for (ProtectedRegion region : regionManager.getRegions().values()) {
                 if (region instanceof GlobalProtectedRegion) {
                     continue;
                 }

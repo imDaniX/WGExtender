@@ -4,6 +4,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -31,7 +32,12 @@ final class SearchSubCommand extends SubCommandBase.Simple {
         }
         try {
             Region sel = WEUtils.getSelection(player);
-            ApplicableRegionSet regions = WGUtils.getRegionManager(player.getWorld()).getApplicableRegions(
+            RegionManager regionManager = WGUtils.getRegionManager(player.getWorld()); // TODO Use world from selection
+            if (regionManager == null) {
+                msg.sendMessage(player, MKey.COMMON__ERROR__WORLD_DISABLED, player.getWorld().getName());
+                return;
+            }
+            ApplicableRegionSet regions = regionManager.getApplicableRegions(
                     new ProtectedCuboidRegion("wgexfakerg", sel.getMaximumPoint(), sel.getMinimumPoint())
             );
             List<String> regionIds = new ArrayList<>(regions.size());
