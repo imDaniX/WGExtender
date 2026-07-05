@@ -71,7 +71,8 @@ restrictcommands:
   commands:
     - sethome
     - setwarp
-  # Match commands by their aliases (e.g. 'tp' also matches 'teleport')
+  # Match commands by their aliases
+  # (e.g. 'tp' also matches 'teleport')
   aliased-search: true
   # Match commands that are a prefix of the input, split by spaces
   # (e.g. 'home bed' matches 'home bed here')

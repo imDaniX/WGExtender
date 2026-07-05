@@ -161,7 +161,7 @@ public final class WGUtils {
 	}
 
 	@SuppressWarnings("deprecation")
-    private static Set<Character> getFlagCommandFlags() {
+    private static @NotNull Set<Character> getFlagCommandFlags() {
 		try {
 			Method method = RegionCommands.class.getMethod("flag", CommandContext.class, Actor.class);
 			Command annotation = method.getAnnotation(Command.class);
@@ -180,7 +180,7 @@ public final class WGUtils {
 		}
 	}
 
-	public static Flag<?> matchFlag(String flagStr) {
+	public static @Nullable Flag<?> matchFlag(String flagStr) {
 		return Flags.fuzzyMatchFlag(getWorldGuard().getFlagRegistry(), flagStr);
 	}
 }

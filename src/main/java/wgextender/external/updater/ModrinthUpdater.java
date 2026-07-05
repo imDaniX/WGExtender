@@ -1,4 +1,4 @@
-package wgextender.utils;
+package wgextender.external.updater;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongLists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import wgextender.utils.Comparison;
 
 import java.io.IOException;
 import java.net.URI;
@@ -138,7 +139,7 @@ public final class ModrinthUpdater implements AutoCloseable {
                 Version.Type versionType = Version.Type.of(obj.get("version_type").getAsString());
                 JsonObject primaryFile = extractPrimaryFile(obj.getAsJsonArray("files"));
                 if (primaryFile == null) {
-                    throw new IOException("Missing primary file for version " + parsed.raw());
+                    throw new IOException("Missing primary file for version " + parsed.raw);
                 }
                 versions.add(new Artifact(
                         parsed,
@@ -230,7 +231,7 @@ public final class ModrinthUpdater implements AutoCloseable {
             @NotNull String fileName
     ) {
         public @NotNull String versionRaw() {
-            return version.raw();
+            return version.raw;
         }
     }
 

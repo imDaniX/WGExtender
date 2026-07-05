@@ -81,7 +81,7 @@ public final class CommandsUtils {
 			@NotNull Function<String, Iterable<String>> aliases
 	) {
 		ArgNode root = new ArgNode();
-		processCommands(commands, aliases, s -> insertChildren(root, s));
+		processCommands(commands, aliases, command -> insertChildren(root, command));
 		return input -> {
 			ArgNode node = root;
 			int index = 0;
@@ -112,9 +112,9 @@ public final class CommandsUtils {
 		}
 	}
 
-	private static void insertChildren(ArgNode node, String s) {
-		for (String word : SPACE_PATTERN.split(s)) {
-			node = node.children.computeIfAbsent(word, k -> new ArgNode());
+	private static void insertChildren(@NotNull ArgNode node, @NotNull String command) {
+		for (String word : SPACE_PATTERN.split(command)) {
+			node = node.children.computeIfAbsent(word, key -> new ArgNode());
 		}
 		node.end = true;
 	}

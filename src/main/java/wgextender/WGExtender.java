@@ -19,6 +19,9 @@ package wgextender;
 
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.DrilldownPie;
+import org.bstats.charts.SimplePie;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 import wgextender.command.impl.WGExCommand;
 import wgextender.config.ConfigurationProvider;
+import wgextender.external.updater.ModrinthUpdater;
 import wgextender.features.VersionHandler;
 import wgextender.features.claimcommand.BlockLimitsHandler;
 import wgextender.features.claimcommand.WGRegionCommandWrapper;
@@ -45,10 +49,8 @@ import wgextender.integration.LpIntegration;
 import wgextender.integration.PapiIntegration;
 import wgextender.integration.PluginIntegration;
 import wgextender.utils.Injectable;
-import wgextender.utils.ModrinthUpdater;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 // TODO Might wanna separate for the actual API?
@@ -139,6 +141,8 @@ public final class WGExtender extends JavaPlugin {
 			}
 		}
 		cfgProvider.reloadSubscribers();
+
+		initMetrics();
 	}
 	
 	private void listener(@NotNull Listener listener) {
@@ -184,5 +188,57 @@ public final class WGExtender extends JavaPlugin {
 	@Override
 	public @NotNull ComponentLogger getComponentLogger() {
 		return super.getComponentLogger();
+	}
+
+	private void initMetrics() {
+		Metrics metrics = new Metrics(this, 32104);
+
+		metrics.addCustomChart(
+				new SimplePie(
+						"old_pvp_flags",
+						() -> cfgProvider.misc().oldPvpFlags() ? "enabled" : "disabled"
+				)
+		);
+
+		metrics.addCustomChart(
+				new SimplePie(
+						"pvp_mode",
+						() -> {
+							var pvpMode = cfgProvider.misc().pvpMode();
+							return pvpMode == null ? "default" : pvpMode.name().toLowerCase(Locale.ROOT);
+						}
+				)
+		);
+
+		metrics.addCustomChart(
+				new DrilldownPie(
+						"message_serializer",
+						() -> {
+							Map<String, Map<String, Integer>> data = new HashMap<>();
+							Map<String, Integer> sub = new HashMap<>();
+
+							String serializer = cfgProvider.messagesConfig().serializer().toLowerCase(Locale.ROOT);
+							String category;
+							String value = switch (serializer) {
+								case "legacy", "legacy_section", "legacy_ampersand" -> {
+									category = "legacy";
+									yield serializer;
+								}
+								case "minimessage", "mini_message" -> {
+									category = "rich";
+									yield "minimessage";
+								}
+								default -> {
+									category = "unknown";
+									yield serializer;
+								}
+							};
+
+							sub.put(value, 1);
+							data.put(category, sub);
+							return data;
+						}
+				)
+		);
 	}
 }

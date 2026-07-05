@@ -1,4 +1,4 @@
-package wgextender.utils;
+package wgextender.external.updater;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;

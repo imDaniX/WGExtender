@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
-import wgextender.utils.ModrinthUpdater;
+import wgextender.external.updater.ModrinthUpdater;
 
 import java.util.concurrent.TimeUnit;
 

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.command.SubCommandBase;
 import wgextender.config.message.MKey;
-import wgextender.utils.ModrinthUpdater;
+import wgextender.external.updater.ModrinthUpdater;
 
 final class UpdateSubCommand extends SubCommandBase.Simple {
     UpdateSubCommand(@NotNull WGExtender plugin) {
@@ -23,7 +23,7 @@ final class UpdateSubCommand extends SubCommandBase.Simple {
             switch (result) {
                 case ModrinthUpdater.Result.Failure failure -> {
                     msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage());
-                    if (plugin.getConfigurationProvider().updater().logFailures()) {
+                    if (!sender.equals(server.getConsoleSender()) && plugin.getConfigurationProvider().updater().logFailures()) {
                         plugin.logger().error(
                                 msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
                                 failure.cause()

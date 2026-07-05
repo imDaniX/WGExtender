@@ -26,14 +26,14 @@ public final class ConsumeFlagsHandler implements Listener {
             return;
         }
 
-        if (event.getItem().getType() == Material.CHORUS_FRUIT && !WGUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.CHORUS_FRUIT_USE_FLAG)) {
-            msg.sendMessage(player, MKey.FLAGS__CHORUS_RESTRICTED);
+        if (!WGUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.ITEM_CONSUME_FLAG)) {
+            msg.sendMessage(player, MKey.FLAGS__CONSUME_RESTRICTED);
             event.setCancelled(true);
             return;
         }
 
-        if (!WGUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.ITEM_CONSUME_FLAG)) {
-            msg.sendMessage(player, MKey.FLAGS__CONSUME_RESTRICTED);
+        if (event.getItem().getType() == Material.CHORUS_FRUIT && !WGUtils.isFlagAllows(player, player.getLocation(), WGExtenderFlags.CHORUS_FRUIT_USE_FLAG)) {
+            msg.sendMessage(player, MKey.FLAGS__CHORUS_RESTRICTED);
             event.setCancelled(true);
         }
     }
