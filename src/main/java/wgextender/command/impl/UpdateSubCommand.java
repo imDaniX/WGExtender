@@ -19,11 +19,11 @@ final class UpdateSubCommand extends SubCommandBase.Simple {
         CommandSender sender = ctx.getSource().getSender();
         msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__START);
         server.getAsyncScheduler().runNow(plugin, task -> {
-            ModrinthUpdater.Result result = plugin.getUpdater().checkForUpdate(cfgProvider.updater().allowStaging());
+            ModrinthUpdater.Result result = plugin.getUpdater().checkForUpdate(cfgProvider.updaterCfg().allowStaging());
             switch (result) {
                 case ModrinthUpdater.Result.Failure failure -> {
                     msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage());
-                    if (!sender.equals(server.getConsoleSender()) && plugin.getConfigurationProvider().updater().logFailures()) {
+                    if (!sender.equals(server.getConsoleSender()) && plugin.getConfigurationProvider().updaterCfg().logFailures()) {
                         plugin.logger().error(
                                 msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
                                 failure.cause()

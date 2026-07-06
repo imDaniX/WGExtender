@@ -7,14 +7,14 @@ import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 import wgextender.utils.WGUtils;
 
 public final class MobRenameFlagHandler implements Listener {
-    private final Messages msg;
+    private final MessagesProvider msg;
 
     public MobRenameFlagHandler(@NotNull ConfigurationProvider provider) {
-        this.msg = provider.messages();
+        this.msg = provider.messageProvider();
     }
 
     @EventHandler(ignoreCancelled = true)

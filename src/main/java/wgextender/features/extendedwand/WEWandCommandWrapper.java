@@ -23,19 +23,19 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 import wgextender.utils.command.CommandWrapper;
 
 public final class WEWandCommandWrapper extends CommandWrapper {
-	private final Messages msg;
+	private final MessagesProvider msg;
 	private final WEWand weWand;
 	private ConfigurationProvider.Misc misc;
 
 	public WEWandCommandWrapper(@NotNull ConfigurationProvider config, @NotNull WEWand weWand) {
 		super("/wand");
-		this.msg = config.messages();
+		this.msg = config.messageProvider();
 		this.weWand = weWand;
-		this.misc = config.misc();
+		this.misc = config.miscCfg();
 		config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);
 	}
 

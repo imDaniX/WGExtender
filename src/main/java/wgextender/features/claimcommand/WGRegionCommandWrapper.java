@@ -45,7 +45,7 @@ import org.jspecify.annotations.NonNull;
 import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
 import wgextender.utils.command.CommandWrapper;
@@ -56,7 +56,7 @@ import java.util.Map;
 
 @SuppressWarnings("deprecation") // WE's Command API, which is used by WG all over the place, is deprecated
 public final class WGRegionCommandWrapper extends CommandWrapper {
-	private final Messages msg;
+	private final MessagesProvider msg;
 	private final BlockLimitsHandler limits;
 
 	private ConfigurationProvider.Claim claimCfg;
@@ -65,10 +65,10 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 	public WGRegionCommandWrapper(@NotNull WGExtender plugin) {
 		super("region");
 		ConfigurationProvider config = plugin.getConfigurationProvider();
-		this.msg = config.messages();
+		this.msg = config.messageProvider();
 		this.limits = plugin.getBlockLimitsHandler();
-		this.claimCfg = config.claim();
-		this.autoFlagsCfg = config.autoFlags();
+		this.claimCfg = config.claimCfg();
+		this.autoFlagsCfg = config.autoFlagsCfg();
 		config.register(section -> this.claimCfg = section, ConfigurationProvider.Claim.SECTION);
 		config.register(section -> this.autoFlagsCfg = section, ConfigurationProvider.AutoFlags.SECTION);
 	}

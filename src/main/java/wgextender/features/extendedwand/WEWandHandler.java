@@ -34,7 +34,7 @@ public final class WEWandHandler extends ConfigurableListenerBase<ConfigurationP
 	private final WEWand weWand;
 
 	public WEWandHandler(@NotNull ConfigurationProvider cfgProvider, @NotNull WEWand weWand) {
-		super(cfgProvider, ConfigurationProvider::misc);
+		super(cfgProvider, ConfigurationProvider::miscCfg);
 		this.weWand = weWand;
 	}
 

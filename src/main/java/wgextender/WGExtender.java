@@ -108,7 +108,7 @@ public final class WGExtender extends JavaPlugin {
 		injectables.add(new WGRegionCommandWrapper(this));
 		injectables.add(new WEWandCommandWrapper(cfgProvider, weWand));
         injectables.add(new PvPHandlingListener(cfgProvider));
-		if (cfgProvider.misc().oldPvpFlags()) {
+		if (cfgProvider.miscCfg().oldPvpFlags()) {
 			logger().warn(
 					"Enabling the old-PvP flags. Do note that they're not supported, " +
 					"as they're very out of scope of extending WG capabilities and may harm performance. " +
@@ -183,8 +183,7 @@ public final class WGExtender extends JavaPlugin {
 		return super.getSLF4JLogger();
 	}
 
-	@SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
+	@ApiStatus.Obsolete
 	@Override
 	public @NotNull ComponentLogger getComponentLogger() {
 		return super.getComponentLogger();
@@ -196,7 +195,7 @@ public final class WGExtender extends JavaPlugin {
 		metrics.addCustomChart(
 				new SimplePie(
 						"old_pvp_flags",
-						() -> cfgProvider.misc().oldPvpFlags() ? "enabled" : "disabled"
+						() -> cfgProvider.miscCfg().oldPvpFlags() ? "enabled" : "disabled"
 				)
 		);
 
@@ -204,7 +203,7 @@ public final class WGExtender extends JavaPlugin {
 				new SimplePie(
 						"pvp_mode",
 						() -> {
-							var pvpMode = cfgProvider.misc().pvpMode();
+							var pvpMode = cfgProvider.miscCfg().pvpMode();
 							return pvpMode == null ? "default" : pvpMode.name().toLowerCase(Locale.ROOT);
 						}
 				)
@@ -217,7 +216,7 @@ public final class WGExtender extends JavaPlugin {
 							Map<String, Map<String, Integer>> data = new HashMap<>();
 							Map<String, Integer> sub = new HashMap<>();
 
-							String serializer = cfgProvider.messagesConfig().serializer().toLowerCase(Locale.ROOT);
+							String serializer = cfgProvider.messagesCfg().serializer().toLowerCase(Locale.ROOT);
 							String category;
 							String value = switch (serializer) {
 								case "legacy", "legacy_section", "legacy_ampersand" -> {

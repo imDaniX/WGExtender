@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 
 import static wgextender.command.Brigadierable.cmd;
 
@@ -18,14 +18,14 @@ public abstract class SubCommandBase implements Brigadierable {
     protected final WGExtender plugin;
     protected final Server server;
     protected final ConfigurationProvider cfgProvider;
-    protected final Messages msg;
+    protected final MessagesProvider msg;
     private final String name;
 
     protected SubCommandBase(@NotNull WGExtender plugin, @NotNull String name) {
         this.plugin = plugin;
         this.server = plugin.getServer();
         this.cfgProvider = plugin.getConfigurationProvider();
-        this.msg = cfgProvider.messages();
+        this.msg = cfgProvider.messageProvider();
         this.name = name;
     }
 

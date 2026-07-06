@@ -24,8 +24,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import wgextender.WGExtender;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 import wgextender.utils.CaseInsensitive;
 import wgextender.utils.WGUtils;
 
@@ -38,7 +39,7 @@ import java.util.function.Function;
 public final class ConfigurationProvider {
     private final WGExtender plugin;
     private final File configFile;
-    private final Messages messages;
+    private final MessagesProvider msgProvider;
     private final List<Consumer<ConfigurationProvider>> subscribers = new ArrayList<>();
 
     private Claim claim;
@@ -46,25 +47,25 @@ public final class ConfigurationProvider {
     private AutoFlags autoFlags;
     private RestrictCommands restrictCommands;
     private Misc misc;
-    private MessagesConfig messagesConfig;
+    private Messages messages;
     private Updater updater;
 
     public ConfigurationProvider(WGExtender plugin) {
         this.plugin = plugin;
         this.configFile = new File(plugin.getDataFolder(), "config.yml");
-        this.messages = new Messages(plugin, this);
+        this.msgProvider = new MessagesProvider(plugin, this);
     }
 
     public void reload() {
         plugin.saveDefaultConfig();
         FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-        this.claim = loadClaim(config);
-        this.protection = loadProtection(config);
-        this.autoFlags = loadAutoFlags(config);
-        this.restrictCommands = loadRestrictCommands(config);
-        this.misc = loadMisc(config);
-        this.messagesConfig = loadMessagesConfig(config);
-        this.updater = loadUpdater(config);
+        this.claim = Claim.load(config);
+        this.protection = Protection.load(config);
+        this.autoFlags = AutoFlags.load(config, plugin.logger());
+        this.restrictCommands = RestrictCommands.load(config);
+        this.misc = Misc.load(config);
+        this.messages = Messages.load(config);
+        this.updater = Updater.load(config);
     }
 
     public void reloadSubscribers() {
@@ -80,149 +81,36 @@ public final class ConfigurationProvider {
         register(reloadable, Function.identity());
     }
 
-    public @NotNull Claim claim() {
+    public @NotNull MessagesProvider messageProvider() {
+        return msgProvider;
+    }
+
+    public @NotNull Claim claimCfg() {
         return claim;
     }
 
-    public @NotNull Protection protection() {
+    public @NotNull Protection protectionCfg() {
         return protection;
     }
 
-    public @NotNull AutoFlags autoFlags() {
+    public @NotNull AutoFlags autoFlagsCfg() {
         return autoFlags;
     }
 
-    public @NotNull RestrictCommands restrictCommands() {
+    public @NotNull RestrictCommands restrictCommandsCfg() {
         return restrictCommands;
     }
 
-    public @NotNull Misc misc() {
+    public @NotNull Misc miscCfg() {
         return misc;
     }
 
-    public @NotNull MessagesConfig messagesConfig() {
-        return messagesConfig;
-    }
-
-    public @NotNull Messages messages() {
+    public @NotNull Messages messagesCfg() {
         return messages;
     }
 
-    public @NotNull Updater updater() {
+    public @NotNull Updater updaterCfg() {
         return updater;
-    }
-
-    private @NotNull Claim loadClaim(@NotNull FileConfiguration config) {
-        return at(config, "claim", claimSection -> new Claim(
-                claimSection.getBoolean("vertexpand", false),
-                claimSection.getBoolean("hijack-handler", true),
-                loadBlockLimits(claimSection)
-        ));
-    }
-
-    private @NotNull BlockLimits loadBlockLimits(@NotNull ConfigurationSection claimSection) {
-        return at(claimSection, "blocklimits", blockLimitsSection -> at(blockLimitsSection, "minimal", minimalSection -> {
-            ConfigurationSection limitsSection = blockLimitsSection.getConfigurationSection("limits");
-            Map<String, BigInteger> limits = CaseInsensitive.newMap();
-            BigInteger defaultLimit = BigInteger.ZERO;
-            if (limitsSection != null) {
-                defaultLimit = readBigInteger(limitsSection, "default");
-                for (String group : limitsSection.getKeys(false)) {
-                    limits.put(group.toLowerCase(Locale.ROOT), readBigInteger(limitsSection, group));
-                }
-            }
-            // TODO Compare max limit with the WG's and warn the user
-            return new BlockLimits(
-                    blockLimitsSection.getBoolean("enabled", false),
-                    defaultLimit,
-                    Collections.unmodifiableMap(limits),
-                    readBigInteger(minimalSection, "volume"),
-                    readBigInteger(minimalSection, "horizontal"),
-                    readBigInteger(minimalSection, "vertical")
-            );
-        }));
-    }
-
-    private @NotNull Protection loadProtection(@NotNull FileConfiguration config) {
-        return at(config, "regionprotect", protectionSection -> new Protection(
-                at(protectionSection, "flow", flowSection -> new Flow(
-                        flowSection.getBoolean("lava", false),
-                        flowSection.getBoolean("water", false),
-                        flowSection.getBoolean("other", false)
-                )),
-                at(protectionSection, "fire", fireSection -> new Fire(
-                        fireSection.getBoolean("spread.toregion", false),
-                        fireSection.getBoolean("spread.inregion", false),
-                        fireSection.getBoolean("burn", false)
-                )),
-                at(protectionSection, "explosion", explosionSection -> new Explosion(
-                        explosionSection.getBoolean("block", false),
-                        explosionSection.getBoolean("entity", false),
-                        explosionSection.getBoolean("source-detection.creeper-target", false),
-                        explosionSection.getBoolean("source-detection.tnt-prime", false),
-                        explosionSection.getBoolean("source-detection.end-crystal-damager", false)
-                ))
-        ));
-    }
-
-    private @NotNull AutoFlags loadAutoFlags(@NotNull FileConfiguration config) {
-        return at(config, "autoflags", autoFlagsSection -> new AutoFlags(
-                autoFlagsSection.getBoolean("enabled", false),
-                autoFlagsSection.getBoolean("show-messages", false),
-                at(autoFlagsSection, "flags", flagsSection -> {
-                    Map<Flag<?>, String> flags = new HashMap<>();
-                    for (String key : flagsSection.getKeys(false)) {
-                        Flag<?> flag = WGUtils.matchFlag(key);
-                        if (flag != null) {
-                            flags.put(flag, flagsSection.getString(key));
-                        } else {
-                            plugin.logger().warn("Unknown flag provided for autoflags: {}", key);
-                        }
-                    }
-                    return Map.copyOf(flags);
-                })
-        ));
-    }
-
-    private @NotNull RestrictCommands loadRestrictCommands(@NotNull FileConfiguration config) {
-        return at(config, "restrictcommands", rcSection -> new RestrictCommands(
-                rcSection.getBoolean("enabled", false),
-                rcSection.getBoolean("aliased-search", true),
-                rcSection.getBoolean("prefixed-search", true),
-                rcSection.getInt("recheck-ticks", 100),
-                List.copyOf(rcSection.getStringList("commands"))
-        ));
-    }
-
-    private @NotNull Misc loadMisc(@NotNull FileConfiguration config) {
-        return at(config, "misc", miscSection -> new Misc(
-                config.getBoolean("extendedwewand", false),
-                switch (miscSection.getString("pvpmode", "default").toLowerCase(Locale.ROOT)) {
-                    case "allow" -> State.ALLOW;
-                    case "deny" -> State.DENY;
-                    default -> null;
-                },
-                miscSection.getBoolean("old-pvp-flags", false)
-        ));
-    }
-
-    private @NotNull MessagesConfig loadMessagesConfig(@NotNull FileConfiguration config) {
-        return at(config, "messages", messagesSection -> new MessagesConfig(
-                messagesSection.getString("serializer", "LEGACY"),
-                messagesSection.getString("locale", "en")
-        ));
-    }
-
-    private @NotNull Updater loadUpdater(@NotNull FileConfiguration config) {
-        return at(config, "updater", updaterSection -> at(updaterSection, "notify", notifySection -> new Updater(
-                updaterSection.getBoolean("enabled", true),
-                updaterSection.getInt("check-interval", 86400),
-                notifySection.getBoolean("on-join", true),
-                notifySection.getBoolean("on-interval", false),
-                updaterSection.getBoolean("allow-staging", false),
-                updaterSection.getString("url-base", "https://api.modrinth.com"),
-                updaterSection.getBoolean("log-failures", true)
-        )));
     }
 
     private static <T> T at(@NotNull ConfigurationSection config, @NotNull String path, @NotNull Function<ConfigurationSection, T> creator) {
@@ -242,7 +130,15 @@ public final class ConfigurationProvider {
             boolean hijackHandler,
             @NotNull BlockLimits blockLimits
     ) {
-        public static final Function<ConfigurationProvider, Claim> SECTION = ConfigurationProvider::claim;
+        public static final Function<ConfigurationProvider, Claim> SECTION = ConfigurationProvider::claimCfg;
+
+        static @NotNull Claim load(@NotNull FileConfiguration config) {
+            return at(config, "claim", claimSection -> new Claim(
+                    claimSection.getBoolean("vertexpand", false),
+                    claimSection.getBoolean("hijack-handler", true),
+                    BlockLimits.load(claimSection)
+            ));
+        }
     }
 
     public record BlockLimits(
@@ -253,27 +149,103 @@ public final class ConfigurationProvider {
             @NotNull BigInteger minimalHorizontal,
             @NotNull BigInteger minimalVertical
     ) {
-        public static final Function<ConfigurationProvider, BlockLimits> SECTION = cfg -> cfg.claim().blockLimits();
+        public static final Function<ConfigurationProvider, BlockLimits> SECTION = cfg -> cfg.claimCfg().blockLimits();
+
+        static @NotNull BlockLimits load(@NotNull ConfigurationSection claimSection) {
+            return at(claimSection, "blocklimits", blockLimitsSection -> at(blockLimitsSection, "minimal", minimalSection -> {
+                ConfigurationSection limitsSection = blockLimitsSection.getConfigurationSection("limits");
+                Map<String, BigInteger> limits = CaseInsensitive.newMap();
+                BigInteger defaultLimit = BigInteger.ZERO;
+                if (limitsSection != null) {
+                    defaultLimit = readBigInteger(limitsSection, "default");
+                    for (String group : limitsSection.getKeys(false)) {
+                        limits.put(group.toLowerCase(Locale.ROOT), readBigInteger(limitsSection, group));
+                    }
+                }
+                // TODO Compare max limit with the WG's and warn the user
+                return new BlockLimits(
+                        blockLimitsSection.getBoolean("enabled", false),
+                        defaultLimit,
+                        Collections.unmodifiableMap(limits),
+                        readBigInteger(minimalSection, "volume"),
+                        readBigInteger(minimalSection, "horizontal"),
+                        readBigInteger(minimalSection, "vertical")
+                );
+            }));
+        }
     }
 
     public record Protection(@NotNull Flow flow, @NotNull Fire fire, @NotNull Explosion explosion) {
-        public static final Function<ConfigurationProvider, Protection> SECTION = ConfigurationProvider::protection;
+        public static final Function<ConfigurationProvider, Protection> SECTION = ConfigurationProvider::protectionCfg;
+
+        static @NotNull Protection load(@NotNull FileConfiguration config) {
+            return at(config, "regionprotect", protectionSection -> new Protection(
+                    Flow.load(protectionSection),
+                    Fire.load(protectionSection),
+                    Explosion.load(protectionSection)
+            ));
+        }
     }
 
     public record Flow(boolean lava, boolean water, boolean other) {
-        public static final Function<ConfigurationProvider, Flow> SECTION = cfg -> cfg.protection().flow();
+        public static final Function<ConfigurationProvider, Flow> SECTION = cfg -> cfg.protectionCfg().flow();
+
+        static @NotNull Flow load(@NotNull ConfigurationSection protectionSection) {
+            return at(protectionSection, "flow", flowSection -> new Flow(
+                    flowSection.getBoolean("lava", false),
+                    flowSection.getBoolean("water", false),
+                    flowSection.getBoolean("other", false)
+            ));
+        }
     }
 
     public record Fire(boolean spreadToRegion, boolean spreadInRegion, boolean burn) {
-        public static final Function<ConfigurationProvider, Fire> SECTION = cfg -> cfg.protection().fire();
+        public static final Function<ConfigurationProvider, Fire> SECTION = cfg -> cfg.protectionCfg().fire();
+
+        static @NotNull Fire load(@NotNull ConfigurationSection protectionSection) {
+            return at(protectionSection, "fire", fireSection -> new Fire(
+                    fireSection.getBoolean("spread.toregion", false),
+                    fireSection.getBoolean("spread.inregion", false),
+                    fireSection.getBoolean("burn", false)
+            ));
+        }
     }
 
     public record Explosion(boolean block, boolean entity, boolean creeperTarget, boolean tntPrime, boolean endCrystalDamager) {
-        public static final Function<ConfigurationProvider, Explosion> SECTION = cfg -> cfg.protection().explosion();
+        public static final Function<ConfigurationProvider, Explosion> SECTION = cfg -> cfg.protectionCfg().explosion();
+
+        static @NotNull Explosion load(@NotNull ConfigurationSection protectionSection) {
+            return at(protectionSection, "explosion", explosionSection -> new Explosion(
+                    explosionSection.getBoolean("block", false),
+                    explosionSection.getBoolean("entity", false),
+                    explosionSection.getBoolean("source-detection.creeper-target", false),
+                    explosionSection.getBoolean("source-detection.tnt-prime", false),
+                    explosionSection.getBoolean("source-detection.end-crystal-damager", false)
+            ));
+        }
     }
 
     public record AutoFlags(boolean enabled, boolean showMessages, @NotNull Map<Flag<?>, String> flags) {
-        public static final Function<ConfigurationProvider, AutoFlags> SECTION = ConfigurationProvider::autoFlags;
+        public static final Function<ConfigurationProvider, AutoFlags> SECTION = ConfigurationProvider::autoFlagsCfg;
+
+        static @NotNull AutoFlags load(@NotNull FileConfiguration config, @NotNull Logger logger) {
+            return at(config, "autoflags", autoFlagsSection -> new AutoFlags(
+                    autoFlagsSection.getBoolean("enabled", false),
+                    autoFlagsSection.getBoolean("show-messages", false),
+                    at(autoFlagsSection, "flags", flagsSection -> {
+                        Map<Flag<?>, String> flags = new HashMap<>();
+                        for (String key : flagsSection.getKeys(false)) {
+                            Flag<?> flag = WGUtils.matchFlag(key);
+                            if (flag != null) {
+                                flags.put(flag, flagsSection.getString(key));
+                            } else {
+                                logger.warn("Unknown flag provided for autoflags: {}", key);
+                            }
+                        }
+                        return Map.copyOf(flags);
+                    })
+            ));
+        }
     }
 
     public record RestrictCommands(
@@ -283,16 +255,44 @@ public final class ConfigurationProvider {
             int recheckTicks,
             List<String> commands
     ) {
-        public static final Function<ConfigurationProvider, RestrictCommands> SECTION = ConfigurationProvider::restrictCommands;
+        public static final Function<ConfigurationProvider, RestrictCommands> SECTION = ConfigurationProvider::restrictCommandsCfg;
+
+        static @NotNull RestrictCommands load(@NotNull FileConfiguration config) {
+            return at(config, "restrictcommands", rcSection -> new RestrictCommands(
+                    rcSection.getBoolean("enabled", false),
+                    rcSection.getBoolean("aliased-search", true),
+                    rcSection.getBoolean("prefixed-search", true),
+                    rcSection.getInt("recheck-ticks", 100),
+                    List.copyOf(rcSection.getStringList("commands"))
+            ));
+        }
     }
 
     public record Misc(boolean extendedWeWand, @Nullable State pvpMode, boolean oldPvpFlags) {
-        public static final Function<ConfigurationProvider, Misc> SECTION = ConfigurationProvider::misc;
+        public static final Function<ConfigurationProvider, Misc> SECTION = ConfigurationProvider::miscCfg;
+
+        static @NotNull Misc load(@NotNull FileConfiguration config) {
+            return at(config, "misc", miscSection -> new Misc(
+                    config.getBoolean("extendedwewand", false),
+                    switch (miscSection.getString("pvpmode", "default").toLowerCase(Locale.ROOT)) {
+                        case "allow" -> State.ALLOW;
+                        case "deny" -> State.DENY;
+                        default -> null;
+                    },
+                    miscSection.getBoolean("old-pvp-flags", false)
+            ));
+        }
     }
 
-    // TODO ConfigurationProvider.Messages would collide with the Messages class name
-    public record MessagesConfig(@NotNull String serializer, @NotNull String locale) {
-        public static final Function<ConfigurationProvider, MessagesConfig> SECTION = ConfigurationProvider::messagesConfig;
+    public record Messages(@NotNull String serializer, @NotNull String locale) {
+        public static final Function<ConfigurationProvider, Messages> SECTION = ConfigurationProvider::messagesCfg;
+
+        static @NotNull Messages load(@NotNull FileConfiguration config) {
+            return at(config, "messages", messagesSection -> new Messages(
+                    messagesSection.getString("serializer", "LEGACY"),
+                    messagesSection.getString("locale", "en")
+            ));
+        }
     }
 
     public record Updater(
@@ -304,6 +304,18 @@ public final class ConfigurationProvider {
             @NotNull String baseUrl,
             boolean logFailures
     ) {
-        public static final Function<ConfigurationProvider, Updater> SECTION = ConfigurationProvider::updater;
+        public static final Function<ConfigurationProvider, Updater> SECTION = ConfigurationProvider::updaterCfg;
+
+        static @NotNull Updater load(@NotNull FileConfiguration config) {
+            return at(config, "updater", updaterSection -> at(updaterSection, "notify", notifySection -> new Updater(
+                    updaterSection.getBoolean("enabled", true),
+                    updaterSection.getInt("check-interval", 86400),
+                    notifySection.getBoolean("on-join", true),
+                    notifySection.getBoolean("on-interval", false),
+                    updaterSection.getBoolean("allow-staging", false),
+                    updaterSection.getString("url-base", "https://api.modrinth.com"),
+                    updaterSection.getBoolean("log-failures", true)
+            )));
+        }
     }
 }

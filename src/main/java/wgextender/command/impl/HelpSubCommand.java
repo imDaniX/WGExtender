@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.command.SubCommandBase;
 import wgextender.config.message.MKey;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 
 final class HelpSubCommand extends SubCommandBase.Simple {
     HelpSubCommand(@NotNull WGExtender plugin) {
@@ -19,7 +19,7 @@ final class HelpSubCommand extends SubCommandBase.Simple {
         sendHelp(ctx.getSource().getSender(), msg);
     }
 
-    static void sendHelp(@NotNull CommandSender sender, @NotNull Messages msg) {
+    static void sendHelp(@NotNull CommandSender sender, @NotNull MessagesProvider msg) {
         msg.sendMessage(sender, MKey.WGEX_COMMAND__RELOAD__HELP);
         msg.sendMessage(sender, MKey.WGEX_COMMAND__SEARCH__HELP);
         msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__HELP);

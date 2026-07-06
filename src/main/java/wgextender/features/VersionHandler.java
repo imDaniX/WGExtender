@@ -19,7 +19,7 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
     private ScheduledTask checkTask;
 
     public VersionHandler(@NotNull WGExtender plugin) {
-        super(plugin.getConfigurationProvider(), ConfigurationProvider::updater);
+        super(plugin.getConfigurationProvider(), ConfigurationProvider::updaterCfg);
         this.plugin = plugin;
         this.updater = plugin.getUpdater();
     }
@@ -76,7 +76,7 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
                 }
             }
             case ModrinthUpdater.Result.Failure failure -> {
-                if (plugin.getConfigurationProvider().updater().logFailures()) {
+                if (plugin.getConfigurationProvider().updaterCfg().logFailures()) {
                     logger.error(
                             msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
                             failure.cause()

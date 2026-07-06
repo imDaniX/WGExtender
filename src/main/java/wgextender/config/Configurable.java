@@ -2,7 +2,7 @@ package wgextender.config;
 
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 
 import java.util.function.Function;
 
@@ -12,7 +12,7 @@ public interface Configurable<T> {
 
     abstract class Base<T> implements Configurable<T> {
         protected final ConfigurationProvider configProvider;
-        protected final Messages msg;
+        protected final MessagesProvider msg;
         protected T config;
 
         public Base(
@@ -20,7 +20,7 @@ public interface Configurable<T> {
                 @NotNull Function<ConfigurationProvider, T> sectionGetter
         ) {
             this.configProvider = configProvider;
-            this.msg = configProvider.messages();
+            this.msg = configProvider.messageProvider();
             this.config = sectionGetter.apply(configProvider);
             configProvider.register(this, sectionGetter);
         }

@@ -19,7 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 
 // TODO Option for per-player?
-public final class Messages implements Configurable<ConfigurationProvider.MessagesConfig> { // TODO Use MM placeholders properly?
+// TODO Use MM placeholders properly? No common API for different serializers though
+public final class MessagesProvider implements Configurable<ConfigurationProvider.Messages> {
     private static final LegacyComponentSerializer LEGACY_SECTION = fixup(LegacyComponentSerializer.legacySection());
     private static final LegacyComponentSerializer LEGACY_AMPERSAND = fixup(LegacyComponentSerializer.legacyAmpersand());
 
@@ -41,15 +42,15 @@ public final class Messages implements Configurable<ConfigurationProvider.Messag
 
     private ComponentDecoder<String, ? extends Component> decoder;
 
-    public Messages(@NotNull WGExtender plugin, @NotNull ConfigurationProvider configProvider) {
+    public MessagesProvider(@NotNull WGExtender plugin, @NotNull ConfigurationProvider configProvider) {
         this.plugin = plugin;
         this.messagesFolder = new File(plugin.getDataFolder(), "messages");
         this.decoder = LEGACY;
-        configProvider.register(this, ConfigurationProvider.MessagesConfig.SECTION);
+        configProvider.register(this, ConfigurationProvider.Messages.SECTION);
     }
 
     @Override
-    public void onReload(@NotNull ConfigurationProvider.MessagesConfig section) {
+    public void onReload(@NotNull ConfigurationProvider.Messages section) {
         this.decoder = switch (section.serializer().toUpperCase(Locale.ROOT)) {
             // TODO InkyMessage? Decoders registry?
             case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();

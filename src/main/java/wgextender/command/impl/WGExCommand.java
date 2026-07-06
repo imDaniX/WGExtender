@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.command.Brigadierable;
 import wgextender.command.SubCommandBase;
-import wgextender.config.message.Messages;
+import wgextender.config.message.MessagesProvider;
 
 import java.util.List;
 
@@ -15,11 +15,11 @@ import static wgextender.command.Brigadierable.cmd;
 
 // TODO Make silent flag for more subcommands
 public final class WGExCommand implements Brigadierable {
-    private final Messages msg;
+    private final MessagesProvider msg;
     private final List<SubCommandBase> subCommands;
 
     public WGExCommand(@NotNull WGExtender plugin) {
-        this.msg = plugin.getConfigurationProvider().messages();
+        this.msg = plugin.getConfigurationProvider().messageProvider();
         this.subCommands = List.of(
                 new HelpSubCommand(plugin),
                 new ReloadSubCommand(plugin),
