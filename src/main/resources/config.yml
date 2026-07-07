@@ -99,7 +99,7 @@ messages:
   # Possible values: 'LEGACY' (&c or §c), 'LEGACY_AMPERSAND' (&c), 'LEGACY_SECTION' (§c), 'MINIMESSAGE' (<red>)
   serializer: LEGACY
   # Localization to load messages from
-  # Supported locales: 'en', 'ru'
+  # Supported locales: 'en', 'ru', 'uk'
   # Messages are loaded from messages/messages_<locale>.yml files
   locale: en
 

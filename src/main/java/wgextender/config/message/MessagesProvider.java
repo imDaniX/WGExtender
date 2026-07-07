@@ -175,7 +175,7 @@ public final class MessagesProvider implements Configurable<ConfigurationProvide
     }
 
     public enum SupportedLocale {
-        EN, RU;
+        EN, RU, UK;
 
         @Override
         public String toString() {
