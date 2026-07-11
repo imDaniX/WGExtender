@@ -15,6 +15,7 @@ final class ReloadSubCommand extends SubCommandBase.Simple {
     @Override
     protected void execute(@NotNull CommandContext<CommandSourceStack> ctx) {
         cfgProvider.reload();
+        cfgProvider.reloadSubscribers();
         msg.sendMessage(ctx.getSource().getSender(), MKey.WGEX_COMMAND__RELOAD__SUCCESS);
     }
 }
