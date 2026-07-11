@@ -110,13 +110,6 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 		} catch (IncompleteRegionException e) {
 			return EvaluationResult.EMPTY_ALLOW;
 		}
-		BlockVector3 min = selection.getMinimumPoint();
-		BlockVector3 max = selection.getMaximumPoint();
-
-		BigInteger yDistance = distance(min.y(), max.y());
-		BigInteger xDistance = distance(min.x(), max.x());
-		BigInteger zDistance = distance(min.z(), max.z());
-		BigInteger minHorizontal = xDistance.min(zDistance);
 
 		BigInteger volume = BigInteger.valueOf(selection.getVolume());
 		if (is(volume, Comparison.ABOVE, MAX_VALUE)) {
@@ -130,6 +123,15 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 			if (player.hasPermission("worldguard.region.unlimited")) {
 				return EvaluationResult.EMPTY_ALLOW;
 			}
+
+			BlockVector3 min = selection.getMinimumPoint();
+			BlockVector3 max = selection.getMaximumPoint();
+
+			BigInteger yDistance = distance(min.y(), max.y());
+			BigInteger xDistance = distance(min.x(), max.x());
+			BigInteger zDistance = distance(min.z(), max.z());
+			BigInteger minHorizontal = xDistance.min(zDistance);
+
 			if (is(volume, Comparison.BELOW, config.minimalVolume())) {
 				return new EvaluationResult(
 						ResultType.DENY_MIN_VOLUME,
@@ -139,7 +141,7 @@ public final class BlockLimitsHandler extends ConfigurableListenerBase<Configura
 			}
 			if (is(minHorizontal, Comparison.BELOW, config.minimalHorizontal())) {
 				return new EvaluationResult(
-						ResultType.DENY_MIN_VOLUME,
+						ResultType.DENY_HORIZONTAL,
 						minHorizontal,
 						config.minimalHorizontal()
 				);
