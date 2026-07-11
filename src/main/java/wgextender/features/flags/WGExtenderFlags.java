@@ -7,6 +7,7 @@ import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StringFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ public final class WGExtenderFlags {
 
     private static final List<Flag<?>> FLAGS = new ArrayList<>();
 
+    @Deprecated // WG has chorus-fruit-teleport
     public static final StateFlag CHORUS_FRUIT_USE_FLAG = cache(new StateFlag("chorus-fruit-use", true));
     public static final StateFlag ITEM_CONSUME_FLAG = cache(new StateFlag("item-consume", true));
     public static final StateFlag MOB_RENAME_FLAG = cache(new StateFlag("mob-rename", true));
@@ -27,12 +29,12 @@ public final class WGExtenderFlags {
     public static final BooleanFlag OLDPVP_NOBOW = cache(new BooleanFlag("oldpvp-nobow"));
     public static final BooleanFlag OLDPVP_NOSHIELDBLOCK = cache(new BooleanFlag("oldpvp-noshieldblock"));
 
-    private static <T, F extends Flag<T>> F cache(F flag) {
+    private static <T, F extends Flag<T>> @NotNull F cache(@NotNull F flag) {
         FLAGS.add(flag);
         return flag;
     }
 
-    public static void registerFlags(Logger log) {
+    public static void registerFlags(@NotNull Logger log) {
         FlagRegistry flagRegistry = WorldGuard.getInstance().getFlagRegistry();
         for (var flag : FLAGS) {
             try {

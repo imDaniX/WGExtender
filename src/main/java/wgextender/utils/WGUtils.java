@@ -80,7 +80,6 @@ public final class WGUtils {
 		return getPlatform().getRegionContainer();
 	}
 
-	// TODO Handle null in more places
 	public static @Nullable RegionManager getRegionManager(@NotNull World world) {
 		return getRegionContainer().get(weWorld(world));
 	}

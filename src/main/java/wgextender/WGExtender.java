@@ -40,7 +40,7 @@ import wgextender.features.flags.ConsumeFlagsHandler;
 import wgextender.features.flags.MobRenameFlagHandler;
 import wgextender.features.flags.OldPVPFlagsHandler;
 import wgextender.features.flags.WGExtenderFlags;
-import wgextender.features.regionprotect.ownormembased.PvPHandlingListener;
+import wgextender.features.regionprotect.ownormembased.PvPModeHandler;
 import wgextender.features.regionprotect.ownormembased.RestrictCommandsHandler;
 import wgextender.features.regionprotect.regionbased.Explode;
 import wgextender.features.regionprotect.regionbased.FireBurn;
@@ -104,10 +104,10 @@ public final class WGExtender extends JavaPlugin {
 		listener(new Explode(cfgProvider));
 		listener(new WEWandHandler(cfgProvider, weWand));
 		listener(new ConsumeFlagsHandler(cfgProvider));
+		listener(new PvPModeHandler(cfgProvider));
 
 		injectables.add(new WGRegionCommandWrapper(this));
 		injectables.add(new WEWandCommandWrapper(cfgProvider, weWand));
-        injectables.add(new PvPHandlingListener(cfgProvider));
 		if (cfgProvider.miscCfg().oldPvpFlags()) {
 			logger().warn(
 					"Enabling the old-PvP flags. Do note that they're not supported, " +

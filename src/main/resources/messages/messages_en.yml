@@ -42,13 +42,7 @@ flags:
   consume-restricted: '&4You cannot consume items in this region.'
   rename-restricted: '&4You cannot rename mobs in this region.'
 damage:
-  mob: hit that
-  vehicle: change that
-  decoration: change this
   pvp: PvP
-  player: damage that
-  non-hostile: harm that
-  other: hit that
 restricted-command: '&4You cannot use this command in another player''s region.'
 wgex-command:
   reload:

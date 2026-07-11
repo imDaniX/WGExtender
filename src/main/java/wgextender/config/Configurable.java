@@ -1,6 +1,7 @@
 package wgextender.config;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 import wgextender.config.message.MessagesProvider;
 
@@ -32,7 +33,7 @@ public interface Configurable<T> {
             subReload(oldConfig);
         }
 
-        protected void subReload(T oldConfig) {
+        protected void subReload(@Nullable T oldConfig) {
             // No-op by default
         }
     }

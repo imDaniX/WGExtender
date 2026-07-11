@@ -5,6 +5,7 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
@@ -25,7 +26,7 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
     }
 
     @Override
-    protected void subReload(ConfigurationProvider.Updater oldConfig) {
+    protected void subReload(@Nullable ConfigurationProvider.Updater oldConfig) {
         if (checkTask != null && !checkTask.isCancelled()) {
             checkTask.cancel();
         }

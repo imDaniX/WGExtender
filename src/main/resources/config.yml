@@ -87,7 +87,6 @@ extendedwewand: false
 misc:
   # Default PvP behavior for regions without an explicit flag
   # Possible values: 'allow', 'deny', or 'default' (WorldGuard behavior)
-  # WARNING: Deprecated - may have issues or inconsistencies
   pvpmode: default
   
   # Enables the usage of legacy 1.8 PvP flags
