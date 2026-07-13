@@ -27,27 +27,27 @@ import wgextender.config.message.MessagesProvider;
 import wgextender.utils.command.CommandWrapper;
 
 public final class WEWandCommandWrapper extends CommandWrapper {
-	private final MessagesProvider msg;
-	private final WEWand weWand;
-	private ConfigurationProvider.Misc misc;
+    private final MessagesProvider msg;
+    private final WEWand weWand;
+    private ConfigurationProvider.Misc misc;
 
-	public WEWandCommandWrapper(@NotNull ConfigurationProvider config, @NotNull WEWand weWand) {
-		super("/wand");
-		this.msg = config.messageProvider();
-		this.weWand = weWand;
-		this.misc = config.miscCfg();
-		config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);
-	}
+    public WEWandCommandWrapper(@NotNull ConfigurationProvider config, @NotNull WEWand weWand) {
+        super("/wand");
+        this.msg = config.messageProvider();
+        this.weWand = weWand;
+        this.misc = config.miscCfg();
+        config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);
+    }
 
-	@Override
-	public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args, @NotNull Command originalCmd) {
-		if (!misc.extendedWeWand()) {
-			return originalCmd.execute(sender, label, args);
-		}
-		if (sender instanceof Player player) {
-			player.getInventory().addItem(weWand.getWand(msg.rich(MKey.WAND__ITEM_NAME)));
-			msg.sendMessage(player, MKey.WAND__GIVEN);
-		}
-		return true;
-	}
+    @Override
+    public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args, @NotNull Command originalCmd) {
+        if (!misc.extendedWeWand()) {
+            return originalCmd.execute(sender, label, args);
+        }
+        if (sender instanceof Player player) {
+            player.getInventory().addItem(weWand.getWand(msg.rich(MKey.WAND__ITEM_NAME)));
+            msg.sendMessage(player, MKey.WAND__GIVEN);
+        }
+        return true;
+    }
 }

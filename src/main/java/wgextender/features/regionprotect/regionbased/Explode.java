@@ -35,41 +35,41 @@ import wgextender.utils.WGUtils;
 import java.util.function.Predicate;
 
 public final class Explode extends ConfigurableListenerBase<ConfigurationProvider.Explosion> {
-	public Explode(@NotNull ConfigurationProvider cfgProvider) {
-		super(cfgProvider, ConfigurationProvider.Explosion.SECTION);
-	}
+    public Explode(@NotNull ConfigurationProvider cfgProvider) {
+        super(cfgProvider, ConfigurationProvider.Explosion.SECTION);
+    }
 
-	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onEntityExplode(EntityExplodeEvent event) {
-		if (!config.block()) {
-			return;
-		}
-		Player source = findExplosionSource(event.getEntity());
-		Predicate<Location> shouldProtectBlockPredicate;
-		if (source != null) {
-			boolean canBypass = WGUtils.canBypassProtection(source);
-			shouldProtectBlockPredicate = location -> !canBypass && !WGUtils.canBuild(source, location);
-		} else {
-			shouldProtectBlockPredicate = WGUtils::isInRegion;
-		}
-		event.blockList().removeIf(block -> shouldProtectBlockPredicate.test(block.getLocation()));
-	}
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        if (!config.block()) {
+            return;
+        }
+        Player source = findExplosionSource(event.getEntity());
+        Predicate<Location> shouldProtectBlockPredicate;
+        if (source != null) {
+            boolean canBypass = WGUtils.canBypassProtection(source);
+            shouldProtectBlockPredicate = location -> !canBypass && !WGUtils.canBuild(source, location);
+        } else {
+            shouldProtectBlockPredicate = WGUtils::isInRegion;
+        }
+        event.blockList().removeIf(block -> shouldProtectBlockPredicate.test(block.getLocation()));
+    }
 
-	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onBlockExplode(BlockExplodeEvent event) {
-		if (!config.block()) {
-			return;
-		}
-		event.blockList().removeIf(block -> WGUtils.isInRegion(block.getLocation()));
-	}
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        if (!config.block()) {
+            return;
+        }
+        event.blockList().removeIf(block -> WGUtils.isInRegion(block.getLocation()));
+    }
 
-	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onEntityDamageByExplosion(EntityDamageEvent event) {
-		if (!config.entity()) {
-			return;
-		}
-		if ((event.getCause() == DamageCause.BLOCK_EXPLOSION) || (event.getCause() == DamageCause.ENTITY_EXPLOSION)) {
-			Location location = event.getEntity().getLocation();
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onEntityDamageByExplosion(EntityDamageEvent event) {
+        if (!config.entity()) {
+            return;
+        }
+        if ((event.getCause() == DamageCause.BLOCK_EXPLOSION) || (event.getCause() == DamageCause.ENTITY_EXPLOSION)) {
+            Location location = event.getEntity().getLocation();
             if (!WGUtils.isInRegion(location)) {
                 return;
             }
@@ -82,22 +82,22 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
                 event.setCancelled(true);
             }
         }
-	}
+    }
 
-	// TODO Beds, anchors
-	private @Nullable Player findExplosionSource(@Nullable Entity exploded) {
+    // TODO Beds, anchors
+    private @Nullable Player findExplosionSource(@Nullable Entity exploded) {
         return switch (exploded) {
             case TNTPrimed primed -> config.tntPrime()
-					? primed.getSource() // TODO Dispensers?
-					: null;
-			// TODO Creepers can be ignited using flint and steel
+                    ? primed.getSource() // TODO Dispensers?
+                    : null;
+            // TODO Creepers can be ignited using flint and steel
             case Creeper creeper -> config.creeperTarget()
-					? creeper.getTarget()
-					: null;
+                    ? creeper.getTarget()
+                    : null;
             case EnderCrystal enderCrystal -> config.endCrystalDamager() && enderCrystal.getLastDamageCause() instanceof EntityDamageByEntityEvent damageEvent
-					? damageEvent.getDamageSource().getCausingEntity()
-					: null;
+                    ? damageEvent.getDamageSource().getCausingEntity()
+                    : null;
             case null, default -> null;
         } instanceof Player player ? player : null;
-	}
+    }
 }

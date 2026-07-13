@@ -35,56 +35,56 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Proxy;
 
 public final class WEUtils {
-	private WEUtils() { }
+    private WEUtils() { }
 
-	public static @NotNull Location weLocation(@NotNull org.bukkit.Location location) {
-		return BukkitAdapter.adapt(location);
-	}
+    public static @NotNull Location weLocation(@NotNull org.bukkit.Location location) {
+        return BukkitAdapter.adapt(location);
+    }
 
-	public static @NotNull World weWorld(@NotNull org.bukkit.World world) {
-		return BukkitAdapter.adapt(world);
-	}
+    public static @NotNull World weWorld(@NotNull org.bukkit.World world) {
+        return BukkitAdapter.adapt(world);
+    }
 
-	public static WorldEditPlugin getWorldEditPlugin() {
-		return JavaPlugin.getPlugin(WorldEditPlugin.class);
-	}
+    public static WorldEditPlugin getWorldEditPlugin() {
+        return JavaPlugin.getPlugin(WorldEditPlugin.class);
+    }
 
     public static @NotNull Region getSelection(@NotNull Player player) throws IncompleteRegionException {
-		return getWorldEditPlugin().getSession(player).getSelection(weWorld(player.getWorld()));
-	}
+        return getWorldEditPlugin().getSession(player).getSelection(weWorld(player.getWorld()));
+    }
 
-	public static boolean expandVert(@NotNull Player player) {
-		LocalSession session = getWorldEditPlugin().getSession(player);
-		com.sk89q.worldedit.world.World weWorld = weWorld(player.getWorld());
+    public static boolean expandVert(@NotNull Player player) {
+        LocalSession session = getWorldEditPlugin().getSession(player);
+        com.sk89q.worldedit.world.World weWorld = weWorld(player.getWorld());
         try {
-			Region region = session.getSelection(weWorld);
-			region.expand(
-					BlockVector3.at(0, (weWorld.getMaxY() + 1), 0),
-					BlockVector3.at(0, -(weWorld.getMaxY() + 1), 0)
-			);
+            Region region = session.getSelection(weWorld);
+            region.expand(
+                    BlockVector3.at(0, (weWorld.getMaxY() + 1), 0),
+                    BlockVector3.at(0, -(weWorld.getMaxY() + 1), 0)
+            );
             session.getRegionSelector(weWorld).learnChanges();
             return true;
-		} catch (Throwable ignored) { }
+        } catch (Throwable ignored) { }
         return false;
-	}
+    }
 
-	public static @NotNull Actor privilegedActor(@NotNull CommandSender sender, boolean showMessages) {
-		Actor actor;
-		if (sender instanceof Player player) {
-			actor = WGUtils.wgPlayer(player);
-		} else {
-			actor = WorldGuardPlugin.inst().wrapCommandSender(sender);
-		}
-		return (Actor) Proxy.newProxyInstance(
-				actor.getClass().getClassLoader(),
-				actor.getClass().getInterfaces(),
-				(proxy, method, args) -> switch (method.getName()) {
-					case "print", "printRaw", "printDebug", "printError", "printInfo" ->
-							showMessages ? method.invoke(actor, args) : null;
-					case "hasPermission" -> true;
-					case "checkPermission" -> null;
-					default -> method.invoke(actor, args);
-				}
-		);
-	}
+    public static @NotNull Actor privilegedActor(@NotNull CommandSender sender, boolean showMessages) {
+        Actor actor;
+        if (sender instanceof Player player) {
+            actor = WGUtils.wgPlayer(player);
+        } else {
+            actor = WorldGuardPlugin.inst().wrapCommandSender(sender);
+        }
+        return (Actor) Proxy.newProxyInstance(
+                actor.getClass().getClassLoader(),
+                actor.getClass().getInterfaces(),
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "print", "printRaw", "printDebug", "printError", "printInfo" ->
+                            showMessages ? method.invoke(actor, args) : null;
+                    case "hasPermission" -> true;
+                    case "checkPermission" -> null;
+                    default -> method.invoke(actor, args);
+                }
+        );
+    }
 }

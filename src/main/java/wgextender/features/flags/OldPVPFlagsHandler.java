@@ -30,101 +30,101 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Deprecated
 public final class OldPVPFlagsHandler implements Listener, Injectable {
-	private static final Set<EntityDamageEvent.DamageModifier> PVP_MODIFIERS = EnumSet.of(
-			DamageModifier.ARMOR, DamageModifier.RESISTANCE, DamageModifier.MAGIC, DamageModifier.ABSORPTION
-	);
-	private final WGExtender plugin;
-	private final Map<UUID, Double> oldValues = new ConcurrentHashMap<>();
-	private Field functionsField;
+    private static final Set<EntityDamageEvent.DamageModifier> PVP_MODIFIERS = EnumSet.of(
+            DamageModifier.ARMOR, DamageModifier.RESISTANCE, DamageModifier.MAGIC, DamageModifier.ABSORPTION
+    );
+    private final WGExtender plugin;
+    private final Map<UUID, Double> oldValues = new ConcurrentHashMap<>();
+    private Field functionsField;
 
-	public OldPVPFlagsHandler(@NotNull WGExtender plugin) {
-		this.plugin = plugin;
-	}
+    public OldPVPFlagsHandler(@NotNull WGExtender plugin) {
+        this.plugin = plugin;
+    }
 
-	@Override
-	public void inject(@NotNull WGExtender plugin) throws Exception {
-		functionsField = EntityDamageEvent.class.getDeclaredField("modifierFunctions");
-		functionsField.setAccessible(true);
+    @Override
+    public void inject(@NotNull WGExtender plugin) throws Exception {
+        functionsField = EntityDamageEvent.class.getDeclaredField("modifierFunctions");
+        functionsField.setAccessible(true);
 
-		plugin.getServer().getPluginManager().registerEvents(this, plugin);
-	}
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    }
 
-	@Override
-	public void uninject(@NotNull WGExtender plugin) {
-		for (Player player : plugin.getServer().getOnlinePlayers()) {
-			reset(player);
-		}
-	}
+    @Override
+    public void uninject(@NotNull WGExtender plugin) {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            reset(player);
+        }
+    }
 
-	private void handlePlayer(Player player) {
-		if (WGUtils.isFlagTrue(player.getLocation(), WGExtenderFlags.OLDPVP_ATTACKSPEED)) {
-			if (oldValues.containsKey(player.getUniqueId())) return;
-			AttributeInstance attribute = player.getAttribute(Attribute.ATTACK_SPEED);
-			oldValues.put(player.getUniqueId(), attribute.getBaseValue());
-			attribute.setBaseValue(16.0);
-		} else {
-			reset(player);
-		}
-	}
+    private void handlePlayer(Player player) {
+        if (WGUtils.isFlagTrue(player.getLocation(), WGExtenderFlags.OLDPVP_ATTACKSPEED)) {
+            if (oldValues.containsKey(player.getUniqueId())) return;
+            AttributeInstance attribute = player.getAttribute(Attribute.ATTACK_SPEED);
+            oldValues.put(player.getUniqueId(), attribute.getBaseValue());
+            attribute.setBaseValue(16.0);
+        } else {
+            reset(player);
+        }
+    }
 
-	private void reset(Player player) {
-		Double oldValue = oldValues.remove(player.getUniqueId());
-		if (oldValue != null) {
-			player.getAttribute(Attribute.ATTACK_SPEED).setBaseValue(oldValue);
-		}
-	}
+    private void reset(Player player) {
+        Double oldValue = oldValues.remove(player.getUniqueId());
+        if (oldValue != null) {
+            player.getAttribute(Attribute.ATTACK_SPEED).setBaseValue(oldValue);
+        }
+    }
 
-	@EventHandler
-	public void onJoin(PlayerJoinEvent event) {
-		Player player = event.getPlayer();
-		handlePlayer(player);
-		player.getScheduler().runAtFixedRate(plugin,
-				(task) -> handlePlayer(player),
-				() -> reset(player),
-				1, 1
-		);
-	}
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        handlePlayer(player);
+        player.getScheduler().runAtFixedRate(plugin,
+                (task) -> handlePlayer(player),
+                () -> reset(player),
+                1, 1
+        );
+    }
 
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void onQuit(PlayerQuitEvent event) {
-		reset(event.getPlayer());
-	}
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onQuit(PlayerQuitEvent event) {
+        reset(event.getPlayer());
+    }
 
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-		Entity entity = event.getEntity();
-		if (!(entity instanceof Player player) ||
-				!player.isBlocking() ||
-				!WGUtils.isFlagTrue(entity.getLocation(), WGExtenderFlags.OLDPVP_NOSHIELDBLOCK)) {
-			return;
-		}
-		Map<DamageModifier, Function<Double, Double>> func;
-		try {
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        Entity entity = event.getEntity();
+        if (!(entity instanceof Player player) ||
+                !player.isBlocking() ||
+                !WGUtils.isFlagTrue(entity.getLocation(), WGExtenderFlags.OLDPVP_NOSHIELDBLOCK)) {
+            return;
+        }
+        Map<DamageModifier, Function<Double, Double>> func;
+        try {
             //noinspection unchecked
             func = (Map<DamageModifier, Function<Double, Double>>) functionsField.get(event);
-		} catch (IllegalArgumentException | IllegalAccessException e) {
-			plugin.logger().error("Unable to recalculate blocking damage", e);
-			return;
-		}
-		double totalDamage = event.getDamage() + event.getDamage(DamageModifier.HARD_HAT);
-		// Reset blocking modifier
-		event.setDamage(DamageModifier.BLOCKING, 0);
-		// Recalculate other modifiers
-		for (var modifier : PVP_MODIFIERS) {
-			double damage = func.get(modifier).apply(totalDamage);
-			event.setDamage(modifier, damage);
-			totalDamage += damage;
-		}
-	}
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            plugin.logger().error("Unable to recalculate blocking damage", e);
+            return;
+        }
+        double totalDamage = event.getDamage() + event.getDamage(DamageModifier.HARD_HAT);
+        // Reset blocking modifier
+        event.setDamage(DamageModifier.BLOCKING, 0);
+        // Recalculate other modifiers
+        for (var modifier : PVP_MODIFIERS) {
+            double damage = func.get(modifier).apply(totalDamage);
+            event.setDamage(modifier, damage);
+            totalDamage += damage;
+        }
+    }
 
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void onInteract(PlayerInteractEvent event) {
-		if (event.getAction().isRightClick() &&
-				event.getHand() == EquipmentSlot.OFF_HAND &&
-				event.getItem() != null &&
-				event.getItem().getType() == Material.BOW &&
-				WGUtils.isFlagTrue(event.getPlayer().getLocation(), WGExtenderFlags.OLDPVP_NOBOW)) {
-			event.setCancelled(true);
-		}
-	}
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getAction().isRightClick() &&
+                event.getHand() == EquipmentSlot.OFF_HAND &&
+                event.getItem() != null &&
+                event.getItem().getType() == Material.BOW &&
+                WGUtils.isFlagTrue(event.getPlayer().getLocation(), WGExtenderFlags.OLDPVP_NOBOW)) {
+            event.setCancelled(true);
+        }
+    }
 }

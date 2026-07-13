@@ -37,73 +37,72 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class RestrictCommandsHandler extends ConfigurableListenerBase<ConfigurationProvider.RestrictCommands> {
+    private final WGExtender plugin;
+    private final Server server;
 
-	private final WGExtender plugin;
-	private final Server server;
+    private Predicate<String> restrictedCommands = command -> false;
+    private ScheduledTask recheckTask;
 
-	private Predicate<String> restrictedCommands = command -> false;
-	private ScheduledTask recheckTask;
+    public RestrictCommandsHandler(WGExtender plugin) {
+        super(plugin.getConfigurationProvider(), ConfigurationProvider.RestrictCommands.SECTION);
+        this.plugin = plugin;
+        this.server = plugin.getServer();
+        scheduleRecheckTask();
+    }
 
-	public RestrictCommandsHandler(WGExtender plugin) {
-		super(plugin.getConfigurationProvider(), ConfigurationProvider.RestrictCommands.SECTION);
-		this.plugin = plugin;
-		this.server = plugin.getServer();
-		scheduleRecheckTask();
-	}
+    @Override
+    protected void subReload(@Nullable ConfigurationProvider.RestrictCommands oldConfig) {
+        if (recheckTask != null && !recheckTask.isCancelled()) {
+            recheckTask.cancel();
+        }
+        if (!config.enabled()) {
+            return;
+        }
+        rebuildPredicate();
+        scheduleRecheckTask();
+    }
 
-	@Override
-	protected void subReload(@Nullable ConfigurationProvider.RestrictCommands oldConfig) {
-		if (recheckTask != null && !recheckTask.isCancelled()) {
-			recheckTask.cancel();
-		}
-		if (!config.enabled()) {
-			return;
-		}
-		rebuildPredicate();
-		scheduleRecheckTask();
-	}
+    private void rebuildPredicate() {
+        if (!config.enabled()) {
+            restrictedCommands = command -> false;
+            return;
+        }
+        Function<String, Iterable<String>> aliases = config.aliasedSearch()
+                ? base -> CommandsUtils.getCommandAliases(server, base)
+                : base -> Set.of(base.split(" ", 2)[0]);
+        restrictedCommands = config.prefixedSearch()
+                ? CommandsUtils.computePrefixedVariants(config.commands(), aliases)
+                : CommandsUtils.computeVariants(config.commands(), aliases);
+    }
 
-	private void rebuildPredicate() {
-		if (!config.enabled()) {
-			restrictedCommands = command -> false;
-			return;
-		}
-		Function<String, Iterable<String>> aliases = config.aliasedSearch()
-				? base -> CommandsUtils.getCommandAliases(server, base)
-				: base -> Set.of(base.split(" ", 2)[0]);
-		restrictedCommands = config.prefixedSearch()
-				? CommandsUtils.computePrefixedVariants(config.commands(), aliases)
-				: CommandsUtils.computeVariants(config.commands(), aliases);
-	}
+    private void scheduleRecheckTask() {
+        if (config.recheckTicks() <= 0) {
+            return;
+        }
+        recheckTask = server.getGlobalRegionScheduler().runAtFixedRate(
+                plugin,
+                task -> rebuildPredicate(),
+                1, config.recheckTicks()
+        );
+    }
 
-	private void scheduleRecheckTask() {
-		if (config.recheckTicks() <= 0) {
-			return;
-		}
-		recheckTask = server.getGlobalRegionScheduler().runAtFixedRate(
-				plugin,
-				task -> rebuildPredicate(),
-				1, config.recheckTicks()
-		);
-	}
-
-	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-	public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
-		if (!config.enabled()) {
-			return;
-		}
-		Player player = event.getPlayer();
-		if (WGUtils.canBypassProtection(player)) {
-			return;
-		}
-		Location loc = player.getLocation();
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        if (!config.enabled()) {
+            return;
+        }
+        Player player = event.getPlayer();
+        if (WGUtils.canBypassProtection(player)) {
+            return;
+        }
+        Location loc = player.getLocation();
         if (!WGUtils.isInRegion(loc) || WGUtils.canBuild(player, loc)) { // TODO canBuild is not a great check for commands?
             return;
         }
 
-		if (restrictedCommands.test(event.getMessage().substring(1).trim())) {
-			event.setCancelled(true);
-			msg.sendMessage(player, MKey.RESTRICTED_COMMAND);
-		}
-	}
+        if (restrictedCommands.test(event.getMessage().substring(1).trim())) {
+            event.setCancelled(true);
+            msg.sendMessage(player, MKey.RESTRICTED_COMMAND);
+        }
+    }
 }

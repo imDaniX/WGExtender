@@ -55,189 +55,189 @@ import java.util.logging.Logger;
 
 // TODO Might wanna separate for the actual API?
 public final class WGExtender extends JavaPlugin {
-	private final List<PluginIntegration> integrations = new ArrayList<>();
-	private final List<Injectable> injectables = new ArrayList<>();
-	private ModrinthUpdater updater;
-	private ConfigurationProvider cfgProvider;
-	private BlockLimitsHandler blockLimitsHandler;
+    private final List<PluginIntegration> integrations = new ArrayList<>();
+    private final List<Injectable> injectables = new ArrayList<>();
+    private ModrinthUpdater updater;
+    private ConfigurationProvider cfgProvider;
+    private BlockLimitsHandler blockLimitsHandler;
 
     @ApiStatus.Internal
-	public @UnknownNullability ConfigurationProvider getConfigurationProvider() {
-		return cfgProvider;
-	}
+    public @UnknownNullability ConfigurationProvider getConfigurationProvider() {
+        return cfgProvider;
+    }
 
-	public @UnknownNullability BlockLimitsHandler getBlockLimitsHandler() {
-		return blockLimitsHandler;
-	}
+    public @UnknownNullability BlockLimitsHandler getBlockLimitsHandler() {
+        return blockLimitsHandler;
+    }
 
-	public @UnknownNullability ModrinthUpdater getUpdater() {
-		return updater;
-	}
+    public @UnknownNullability ModrinthUpdater getUpdater() {
+        return updater;
+    }
 
-	@ApiStatus.Internal
-	@Override
-	public void onLoad() {
-		updater = new ModrinthUpdater("JFMgRt9t", getPluginMeta().getVersion());
-		WGExtenderFlags.registerFlags(logger());
-		integrations.add(new LpIntegration());
-		integrations.add(new PapiIntegration(this));
-	}
+    @ApiStatus.Internal
+    @Override
+    public void onLoad() {
+        updater = new ModrinthUpdater("JFMgRt9t", getPluginMeta().getVersion());
+        WGExtenderFlags.registerFlags(logger());
+        integrations.add(new LpIntegration());
+        integrations.add(new PapiIntegration(this));
+    }
 
-	@ApiStatus.Internal
-	@Override
-	public void onEnable() {
-		cfgProvider = new ConfigurationProvider(this);
-		cfgProvider.reload();
+    @ApiStatus.Internal
+    @Override
+    public void onEnable() {
+        cfgProvider = new ConfigurationProvider(this);
+        cfgProvider.reload();
 
-		getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
-			commands.registrar().register(new WGExCommand(this).node().build(), List.of("wgextender"));
-		});
+        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+            commands.registrar().register(new WGExCommand(this).node().build(), List.of("wgextender"));
+        });
 
-		WEWand weWand = new WEWand();
+        WEWand weWand = new WEWand();
 
-		listener(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
-		listener(new VersionHandler(this));
-		listener(new MobRenameFlagHandler(cfgProvider));
-		listener(new RestrictCommandsHandler(this));
-		listener(new LiquidFlow(cfgProvider));
-		listener(new FireBurn(cfgProvider));
-		listener(new Explode(cfgProvider));
-		listener(new WEWandHandler(cfgProvider, weWand));
-		listener(new ConsumeFlagsHandler(cfgProvider));
-		listener(new PvPModeHandler(cfgProvider));
+        listener(blockLimitsHandler = new BlockLimitsHandler(cfgProvider));
+        listener(new VersionHandler(this));
+        listener(new MobRenameFlagHandler(cfgProvider));
+        listener(new RestrictCommandsHandler(this));
+        listener(new LiquidFlow(cfgProvider));
+        listener(new FireBurn(cfgProvider));
+        listener(new Explode(cfgProvider));
+        listener(new WEWandHandler(cfgProvider, weWand));
+        listener(new ConsumeFlagsHandler(cfgProvider));
+        listener(new PvPModeHandler(cfgProvider));
 
-		injectables.add(new WGRegionCommandWrapper(this));
-		injectables.add(new WEWandCommandWrapper(cfgProvider, weWand));
-		if (cfgProvider.miscCfg().oldPvpFlags()) {
-			logger().warn(
-					"Enabling the old-PvP flags. Do note that they're not supported, " +
-					"as they're very out of scope of extending WG capabilities and may harm performance. " +
-					"Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
-			);
+        injectables.add(new WGRegionCommandWrapper(this));
+        injectables.add(new WEWandCommandWrapper(cfgProvider, weWand));
+        if (cfgProvider.miscCfg().oldPvpFlags()) {
+            logger().warn(
+                    "Enabling the old-PvP flags. Do note that they're not supported, " +
+                            "as they're very out of scope of extending WG capabilities and may harm performance. " +
+                            "Consider turning them off by setting 'misc.old-pvp-flags' to 'false'"
+            );
             injectables.add(new OldPVPFlagsHandler(this));
-		}
-		try {
+        }
+        try {
             for (Injectable injectable : injectables) {
                 logger().debug("Injecting {}", injectable.getClass().getSimpleName());
                 injectable.inject(this);
             }
         } catch (Exception e) {
-			logger().error("Unable to inject, shutting down", e);
-			getServer().shutdown();
-		}
+            logger().error("Unable to inject, shutting down", e);
+            getServer().shutdown();
+        }
 
-		var pluginManager = getServer().getPluginManager();
-		for (PluginIntegration integration : integrations) {
-			boolean enable = true;
-			for (var pluginName : integration.requiredPlugins()) {
-				if (!pluginManager.isPluginEnabled(pluginName)) {
-					enable = false;
-					break;
-				}
-			}
-			if (enable) {
+        var pluginManager = getServer().getPluginManager();
+        for (PluginIntegration integration : integrations) {
+            boolean enable = true;
+            for (var pluginName : integration.requiredPlugins()) {
+                if (!pluginManager.isPluginEnabled(pluginName)) {
+                    enable = false;
+                    break;
+                }
+            }
+            if (enable) {
                 logger().info("Enabling {} integration", integration.requiredPlugins());
-				integration.onEnable(this);
-			}
-		}
-		cfgProvider.reloadSubscribers();
+                integration.onEnable(this);
+            }
+        }
+        cfgProvider.reloadSubscribers();
 
-		initMetrics();
-	}
-	
-	private void listener(@NotNull Listener listener) {
-		getServer().getPluginManager().registerEvents(listener, this);
-	}
+        initMetrics();
+    }
 
-	@ApiStatus.Internal
-	@Override
-	public void onDisable() {
-		try {
+    private void listener(@NotNull Listener listener) {
+        getServer().getPluginManager().registerEvents(listener, this);
+    }
+
+    @ApiStatus.Internal
+    @Override
+    public void onDisable() {
+        try {
             for (Injectable injectable : injectables) {
-				logger().debug("Uninjecting {}", injectable.getClass().getSimpleName());
+                logger().debug("Uninjecting {}", injectable.getClass().getSimpleName());
                 injectable.uninject(this);
             }
         } catch (Exception e) {
-			if (getServer().isStopping()) {
-				logger().error("Unable to uninject", e);
-			} else {
-				logger().error("Unable to uninject, shutting down", e);
-				getServer().shutdown();
-			}
-		}
-	}
-	
-	public @NotNull ComponentLogger logger() {
-		return getComponentLogger();
-	}
+            if (getServer().isStopping()) {
+                logger().error("Unable to uninject", e);
+            } else {
+                logger().error("Unable to uninject, shutting down", e);
+                getServer().shutdown();
+            }
+        }
+    }
 
-	@Deprecated
-	@Override
-	public @NotNull Logger getLogger() {
-		return super.getLogger();
-	}
+    public @NotNull ComponentLogger logger() {
+        return getComponentLogger();
+    }
 
-	@Deprecated
-	@Override
-	public org.slf4j.@NotNull Logger getSLF4JLogger() {
-		return super.getSLF4JLogger();
-	}
+    @Deprecated
+    @Override
+    public @NotNull Logger getLogger() {
+        return super.getLogger();
+    }
 
-	@ApiStatus.Obsolete
-	@Override
-	public @NotNull ComponentLogger getComponentLogger() {
-		return super.getComponentLogger();
-	}
+    @Deprecated
+    @Override
+    public org.slf4j.@NotNull Logger getSLF4JLogger() {
+        return super.getSLF4JLogger();
+    }
 
-	private void initMetrics() {
-		Metrics metrics = new Metrics(this, 32104);
+    @ApiStatus.Obsolete
+    @Override
+    public @NotNull ComponentLogger getComponentLogger() {
+        return super.getComponentLogger();
+    }
 
-		metrics.addCustomChart(
-				new SimplePie(
-						"old_pvp_flags",
-						() -> cfgProvider.miscCfg().oldPvpFlags() ? "enabled" : "disabled"
-				)
-		);
+    private void initMetrics() {
+        Metrics metrics = new Metrics(this, 32104);
 
-		metrics.addCustomChart(
-				new SimplePie(
-						"pvp_mode",
-						() -> {
-							var pvpMode = cfgProvider.miscCfg().pvpMode();
-							return pvpMode == null ? "default" : pvpMode.name().toLowerCase(Locale.ROOT);
-						}
-				)
-		);
+        metrics.addCustomChart(
+                new SimplePie(
+                        "old_pvp_flags",
+                        () -> cfgProvider.miscCfg().oldPvpFlags() ? "enabled" : "disabled"
+                )
+        );
 
-		metrics.addCustomChart(
-				new DrilldownPie(
-						"message_serializer",
-						() -> {
-							Map<String, Map<String, Integer>> data = new HashMap<>();
-							Map<String, Integer> sub = new HashMap<>();
+        metrics.addCustomChart(
+                new SimplePie(
+                        "pvp_mode",
+                        () -> {
+                            var pvpMode = cfgProvider.miscCfg().pvpMode();
+                            return pvpMode == null ? "default" : pvpMode.name().toLowerCase(Locale.ROOT);
+                        }
+                )
+        );
 
-							String serializer = cfgProvider.messagesCfg().serializer().toLowerCase(Locale.ROOT);
-							String category;
-							String value = switch (serializer) {
-								case "legacy", "legacy_section", "legacy_ampersand" -> {
-									category = "legacy";
-									yield serializer;
-								}
-								case "minimessage", "mini_message" -> {
-									category = "rich";
-									yield "minimessage";
-								}
-								default -> {
-									category = "unknown";
-									yield serializer;
-								}
-							};
+        metrics.addCustomChart(
+                new DrilldownPie(
+                        "message_serializer",
+                        () -> {
+                            Map<String, Map<String, Integer>> data = new HashMap<>();
+                            Map<String, Integer> sub = new HashMap<>();
 
-							sub.put(value, 1);
-							data.put(category, sub);
-							return data;
-						}
-				)
-		);
-	}
+                            String serializer = cfgProvider.messagesCfg().serializer().toLowerCase(Locale.ROOT);
+                            String category;
+                            String value = switch (serializer) {
+                                case "legacy", "legacy_section", "legacy_ampersand" -> {
+                                    category = "legacy";
+                                    yield serializer;
+                                }
+                                case "minimessage", "mini_message" -> {
+                                    category = "rich";
+                                    yield "minimessage";
+                                }
+                                default -> {
+                                    category = "unknown";
+                                    yield serializer;
+                                }
+                            };
+
+                            sub.put(value, 1);
+                            data.put(category, sub);
+                            return data;
+                        }
+                )
+        );
+    }
 }

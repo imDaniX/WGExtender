@@ -31,36 +31,36 @@ import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.WGUtils;
 
 public final class LiquidFlow extends ConfigurableListenerBase<ConfigurationProvider.Flow> {
-	public LiquidFlow(@NotNull ConfigurationProvider cfgProvider) {
-		super(cfgProvider, ConfigurationProvider.Flow.SECTION);
-	}
+    public LiquidFlow(@NotNull ConfigurationProvider cfgProvider) {
+        super(cfgProvider, ConfigurationProvider.Flow.SECTION);
+    }
 
-	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onLiquidFlow(BlockFromToEvent event) {
-		if (event.getBlock().isLiquid()) {
-			check(event.getBlock(), event.getToBlock(), event, true);
-		}
-	}
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onLiquidFlow(BlockFromToEvent event) {
+        if (event.getBlock().isLiquid()) {
+            check(event.getBlock(), event.getToBlock(), event, true);
+        }
+    }
 
-	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onDispense(BlockDispenseEvent event) { // TODO This probably is quite borked
-		Block block = event.getBlock();
-		BlockData blockData = block.getBlockData();
-		if (blockData instanceof Directional directional) {
-			Block relative = block.getRelative(directional.getFacing());
-			if (relative.isLiquid()) {
-				check(block, relative, event, false);
-			}
-		}
-	}
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onDispense(BlockDispenseEvent event) { // TODO This probably is quite borked
+        Block block = event.getBlock();
+        BlockData blockData = block.getBlockData();
+        if (blockData instanceof Directional directional) {
+            Block relative = block.getRelative(directional.getFacing());
+            if (relative.isLiquid()) {
+                check(block, relative, event, false);
+            }
+        }
+    }
 
-	private void check(Block source, Block to, Cancellable event, boolean checkSource) {
-		if (switch (checkSource ? source.getType() : to.getType()) {
-			case LAVA -> config.lava();
-			case WATER -> config.water();
-			default -> config.other();
-		} && !WGUtils.isInTheSameRegionOrWild(source.getLocation(), to.getLocation())) {
-			event.setCancelled(true);
-		}
-	}
+    private void check(Block source, Block to, Cancellable event, boolean checkSource) {
+        if (switch (checkSource ? source.getType() : to.getType()) {
+            case LAVA -> config.lava();
+            case WATER -> config.water();
+            default -> config.other();
+        } && !WGUtils.isInTheSameRegionOrWild(source.getLocation(), to.getLocation())) {
+            event.setCancelled(true);
+        }
+    }
 }

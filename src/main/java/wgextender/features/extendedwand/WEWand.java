@@ -28,41 +28,41 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.utils.WEUtils;
 
 public final class WEWand {
-	public static final NamespacedKey WAND_KEY = new NamespacedKey("wgextender", "wand");
+    public static final NamespacedKey WAND_KEY = new NamespacedKey("wgextender", "wand");
 
-	private String cachedTypeName;
-	private Material cachedType;
+    private String cachedTypeName;
+    private Material cachedType;
 
-	public WEWand() {
-		this.cachedTypeName = "minecraft:wooden_axe";
-		this.cachedType = Material.WOODEN_AXE;
-	}
+    public WEWand() {
+        this.cachedTypeName = "minecraft:wooden_axe";
+        this.cachedType = Material.WOODEN_AXE;
+    }
 
-	@SuppressWarnings("PatternValidation")
+    @SuppressWarnings("PatternValidation")
     private Material getWandMaterial() {
-		String weName = WEUtils.getWorldEditPlugin().getLocalConfiguration().wandItem;
-		if (!weName.equals(cachedTypeName)) {
-			if (!Key.parseable(weName)) {
-				cachedType = Material.WOODEN_AXE;
-				// TODO Log
-			} else {
-				cachedType = Registry.MATERIAL.get(Key.key(weName));
-				cachedTypeName = weName;
-			}
-		}
-		return cachedType;
-	}
+        String weName = WEUtils.getWorldEditPlugin().getLocalConfiguration().wandItem;
+        if (!weName.equals(cachedTypeName)) {
+            if (!Key.parseable(weName)) {
+                cachedType = Material.WOODEN_AXE;
+                // TODO Log
+            } else {
+                cachedType = Registry.MATERIAL.get(Key.key(weName));
+                cachedTypeName = weName;
+            }
+        }
+        return cachedType;
+    }
 
-	public @NotNull ItemStack getWand(@NotNull Component name) {
-		ItemStack wandItem = ItemStack.of(getWandMaterial());
-		wandItem.editMeta(meta -> {
-			meta.getPersistentDataContainer().set(WAND_KEY, PersistentDataType.BOOLEAN, true);
-			meta.displayName(name);
-		});
-		return wandItem;
-	}
+    public @NotNull ItemStack getWand(@NotNull Component name) {
+        ItemStack wandItem = ItemStack.of(getWandMaterial());
+        wandItem.editMeta(meta -> {
+            meta.getPersistentDataContainer().set(WAND_KEY, PersistentDataType.BOOLEAN, true);
+            meta.displayName(name);
+        });
+        return wandItem;
+    }
 
-	public boolean isWand(@NotNull ItemStack item) {
+    public boolean isWand(@NotNull ItemStack item) {
         return item.getType().equals(getWandMaterial()) && item.getPersistentDataContainer().getOrDefault(WAND_KEY, PersistentDataType.BOOLEAN, false);
     }
 }

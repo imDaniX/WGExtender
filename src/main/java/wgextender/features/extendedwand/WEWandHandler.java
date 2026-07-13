@@ -31,36 +31,36 @@ import wgextender.features.ConfigurableListenerBase;
 
 // TODO We can disable listening
 public final class WEWandHandler extends ConfigurableListenerBase<ConfigurationProvider.Misc> {
-	private final WEWand weWand;
+    private final WEWand weWand;
 
-	public WEWandHandler(@NotNull ConfigurationProvider cfgProvider, @NotNull WEWand weWand) {
-		super(cfgProvider, ConfigurationProvider::miscCfg);
-		this.weWand = weWand;
-	}
+    public WEWandHandler(@NotNull ConfigurationProvider cfgProvider, @NotNull WEWand weWand) {
+        super(cfgProvider, ConfigurationProvider::miscCfg);
+        this.weWand = weWand;
+    }
 
-	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-	public void onEntityAttack(EntityDamageByEntityEvent event) {
-		if (!config.extendedWeWand()) return;
-		if (event.getDamager() instanceof Player player) {
-			ItemStack item = player.getInventory().getItemInMainHand();
-			if (weWand.isWand(item)) {
-				event.setCancelled(true);
-			}
-		}
-	}
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onEntityAttack(EntityDamageByEntityEvent event) {
+        if (!config.extendedWeWand()) return;
+        if (event.getDamager() instanceof Player player) {
+            ItemStack item = player.getInventory().getItemInMainHand();
+            if (weWand.isWand(item)) {
+                event.setCancelled(true);
+            }
+        }
+    }
 
-	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-	public void onPlayerDeath(PlayerDeathEvent event) {
-		if (!config.extendedWeWand()) return;
-		event.getDrops().removeIf(weWand::isWand);
-	}
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!config.extendedWeWand()) return;
+        event.getDrops().removeIf(weWand::isWand);
+    }
 
-	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-	public void onItemDrop(PlayerDropItemEvent event) {
-		if (!config.extendedWeWand()) return;
-		Item drop = event.getItemDrop();
-		if (weWand.isWand(drop.getItemStack())) {
-			drop.remove();
-		}
-	}
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onItemDrop(PlayerDropItemEvent event) {
+        if (!config.extendedWeWand()) return;
+        Item drop = event.getItemDrop();
+        if (weWand.isWand(drop.getItemStack())) {
+            drop.remove();
+        }
+    }
 }

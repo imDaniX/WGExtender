@@ -28,31 +28,31 @@ import wgextender.features.ConfigurableListenerBase;
 import wgextender.utils.WGUtils;
 
 public final class FireBurn extends ConfigurableListenerBase<ConfigurationProvider.Fire> {
-	public FireBurn(@NotNull ConfigurationProvider cfgProvider) {
-		super(cfgProvider, ConfigurationProvider.Fire.SECTION);
-	}
+    public FireBurn(@NotNull ConfigurationProvider cfgProvider) {
+        super(cfgProvider, ConfigurationProvider.Fire.SECTION);
+    }
 
-	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onBlockIgniteBySpread(BlockSpreadEvent event) {
-		if (event.getNewState().getType() == Material.FIRE) {
-			if (config.spreadToRegion()) {
-				if (!WGUtils.isInTheSameRegionOrWild(event.getSource().getLocation(), event.getBlock().getLocation())) {
-					event.setCancelled(true);
-					return;
-				}
-			}
-			if (config.spreadInRegion()) {
-				if (WGUtils.isInTheSameRegion(event.getSource().getLocation(), event.getBlock().getLocation())) {
-					event.setCancelled(true);
-				}
-			}
-		}
-	}
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onBlockIgniteBySpread(BlockSpreadEvent event) {
+        if (event.getNewState().getType() == Material.FIRE) {
+            if (config.spreadToRegion()) {
+                if (!WGUtils.isInTheSameRegionOrWild(event.getSource().getLocation(), event.getBlock().getLocation())) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+            if (config.spreadInRegion()) {
+                if (WGUtils.isInTheSameRegion(event.getSource().getLocation(), event.getBlock().getLocation())) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
 
-	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-	public void onBlockBurn(BlockBurnEvent event) {
-		if (config.burn() && WGUtils.isInRegion(event.getBlock().getLocation())) {
-			event.setCancelled(true);
-		}
-	}
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onBlockBurn(BlockBurnEvent event) {
+        if (config.burn() && WGUtils.isInRegion(event.getBlock().getLocation())) {
+            event.setCancelled(true);
+        }
+    }
 }
