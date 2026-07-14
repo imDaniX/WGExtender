@@ -262,7 +262,7 @@ public final class ConfigurationProvider {
                     rcSection.getBoolean("enabled", false),
                     rcSection.getBoolean("aliased-search", true),
                     rcSection.getBoolean("prefixed-search", true),
-                    rcSection.getInt("recheck-ticks", 100),
+                    rcSection.getInt("recheck-ticks", 12000),
                     List.copyOf(rcSection.getStringList("commands"))
             ));
         }

@@ -78,7 +78,7 @@ restrictcommands:
   # (e.g. 'home bed' matches 'home bed here')
   prefixed-search: true
   # How often to recheck commands list, in ticks
-  recheck-ticks: 100
+  recheck-ticks: 12000
 
 # Handle the item given by the //wand command
 # The wand is deleted when dropped
@@ -86,7 +86,7 @@ extendedwewand: false
 
 misc:
   # Default PvP behavior for regions without an explicit flag
-  # Possible values: 'allow', 'deny', or 'default' (WorldGuard behavior)
+  # Possible values: 'default' (WorldGuard behavior), 'allow' and 'deny'
   pvpmode: default
   
   # Enables the usage of legacy 1.8 PvP flags
