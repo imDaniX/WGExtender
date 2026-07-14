@@ -135,9 +135,11 @@ public final class WGExtender extends JavaPlugin {
                     break;
                 }
             }
-            if (enable) {
+            if (enable) try {
                 logger().info("Enabling {} integration", integration.requiredPlugins());
                 integration.onEnable(this);
+            } catch (Exception ex) {
+                logger().error("Unable to enable {} integration, skipping", integration.requiredPlugins(), ex);
             }
         }
         cfgProvider.reloadSubscribers();
