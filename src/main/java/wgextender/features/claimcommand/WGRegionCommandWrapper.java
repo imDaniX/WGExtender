@@ -96,7 +96,7 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
                 }
 
                 if (!hasRegion && autoFlagsCfg.enabled()) {
-                    Actor actor = WEUtils.privilegedActor(player, autoFlagsCfg.showMessages());
+                    Actor actor = WGUtils.privilegedActor(player, autoFlagsCfg.showMessages());
                     World world = player.getWorld();
                     ProtectedRegion rg = WGUtils.getRegion(world, regionName);
                     if (rg == null) return true;

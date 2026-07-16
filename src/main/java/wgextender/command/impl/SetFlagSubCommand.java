@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.command.SubCommandBase;
 import wgextender.config.message.MKey;
-import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
 
 import java.util.List;
@@ -102,7 +101,7 @@ final class SetFlagSubCommand extends SubCommandBase {
                 if (region instanceof GlobalProtectedRegion) {
                     continue;
                 }
-                WGUtils.setFlagNaturally(WEUtils.privilegedActor(sender, false), world, region, flag, value);
+                WGUtils.setFlagNaturally(WGUtils.privilegedActor(sender, false), world, region, flag, value);
             }
             msg.sendMessage(sender, MKey.WGEX_COMMAND__SETFLAG__SUCCESS);
         } catch (CommandException e) {

@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -66,6 +67,28 @@ public final class WGUtils {
 
     public static @NotNull LocalPlayer wgPlayer(@NotNull Player player) {
         return WorldGuardPlugin.inst().wrapPlayer(player);
+    }
+
+    public static @NotNull Actor privilegedActor(@NotNull CommandSender sender, boolean showMessages) {
+        Actor actor;
+        if (sender instanceof Player player) {
+            actor = wgPlayer(player);
+        } else {
+            // While WG's wrapCommandSender does check for player, we don't really expect non-player senders,
+            // so it's generally faster for our case
+            actor = wgSender(sender);
+        }
+        return (Actor) Proxy.newProxyInstance(
+                actor.getClass().getClassLoader(),
+                actor.getClass().getInterfaces(),
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "print", "printRaw", "printDebug", "printError", "printInfo" ->
+                            showMessages ? method.invoke(actor, args) : null;
+                    case "hasPermission" -> true;
+                    case "checkPermission" -> null;
+                    default -> method.invoke(actor, args);
+                }
+        );
     }
 
     public static @NotNull WorldGuard getWorldGuard() {
