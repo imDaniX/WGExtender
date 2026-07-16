@@ -70,6 +70,7 @@ public final class WGExtender extends JavaPlugin {
         return blockLimitsHandler;
     }
 
+    @ApiStatus.Internal
     public @UnknownNullability ModrinthUpdater getUpdater() {
         return updater;
     }
