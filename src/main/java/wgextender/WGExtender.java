@@ -156,17 +156,18 @@ public final class WGExtender extends JavaPlugin {
     @ApiStatus.Internal
     @Override
     public void onDisable() {
-        try {
-            for (Injectable injectable : injectables) {
-                logger().debug("Uninjecting {}", injectable.getClass().getSimpleName());
+        for (Injectable injectable : injectables) {
+            String className = injectable.getClass().getSimpleName();
+            logger().debug("Uninjecting {}", className);
+            try {
                 injectable.uninject(this);
-            }
-        } catch (Exception e) {
-            if (getServer().isStopping()) {
-                logger().error("Unable to uninject", e);
-            } else {
-                logger().error("Unable to uninject, shutting down", e);
-                getServer().shutdown();
+            } catch (Exception e) {
+                if (getServer().isStopping()) {
+                    logger().error("Unable to uninject {}", className, e);
+                } else {
+                    logger().error("Unable to uninject {}, shutting down", className, e);
+                    getServer().shutdown();
+                }
             }
         }
     }
