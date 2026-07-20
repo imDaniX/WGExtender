@@ -12,8 +12,8 @@ claim:
     config-too-big: The maximum claim volume set in the configuration is higher than is supported. 
       Currently, it must be 2147483647 or smaller. Please contact a server administrator.
     already-exists: A region with that name already exists, please choose another.
-    too-many: You have too many regions, delete one before claiming a new one.
-    too-big: 'Region size is too large. Maximum size: {maxVolume}, your size: {volume}.'
+    too-many: You have too many regions ({count}/{limit}), delete one before claiming a new one.
+    too-big: 'Region size is too large. Maximum size: {limit}, your size: {volume}.'
     overlap: This region overlaps another player''s region.
     only-inside-own: You can only claim inside your own regions.
     wrong-shape: You can only use cuboid or polygonal selection to claim regions.

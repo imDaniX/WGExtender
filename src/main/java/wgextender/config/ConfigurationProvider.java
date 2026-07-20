@@ -284,12 +284,12 @@ public final class ConfigurationProvider {
         }
     }
 
-    public record Messages(@NotNull String serializer, @NotNull String locale) {
+    public record Messages(@Nullable MessagesProvider.Serializer serializer, @NotNull String locale) {
         public static final Function<ConfigurationProvider, Messages> SECTION = ConfigurationProvider::messagesCfg;
 
         static @NotNull Messages load(@NotNull FileConfiguration config) {
             return at(config, "messages", messagesSection -> new Messages(
-                    messagesSection.getString("serializer", "LEGACY"),
+                    MessagesProvider.Serializer.byName(messagesSection.getString("serializer", "LEGACY")),
                     messagesSection.getString("locale", "en")
             ));
         }

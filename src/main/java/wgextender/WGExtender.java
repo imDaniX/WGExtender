@@ -221,20 +221,20 @@ public final class WGExtender extends JavaPlugin {
                             Map<String, Map<String, Integer>> data = new HashMap<>();
                             Map<String, Integer> sub = new HashMap<>();
 
-                            String serializer = cfgProvider.messagesCfg().serializer().toLowerCase(Locale.ROOT);
+                            var serializer = cfgProvider.messagesCfg().serializer();
                             String category;
                             String value = switch (serializer) {
-                                case "legacy", "legacy_section", "legacy_ampersand" -> {
+                                case LEGACY, LEGACY_AMPERSAND, LEGACY_SECTION -> {
                                     category = "legacy";
-                                    yield serializer;
+                                    yield serializer.name();
                                 }
-                                case "minimessage", "mini_message" -> {
+                                case MINIMESSAGE -> {
                                     category = "rich";
-                                    yield "minimessage";
+                                    yield serializer.name();
                                 }
-                                default -> {
+                                case null, default -> {
                                     category = "unknown";
-                                    yield serializer;
+                                    yield "unknown";
                                 }
                             };
 

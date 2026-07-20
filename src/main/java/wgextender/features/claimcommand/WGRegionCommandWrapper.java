@@ -176,11 +176,12 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
 
         if (!permModel.mayClaimRegionsUnbounded()) {
             int maxRegionCount = wcfg.getMaxRegionCount(localPlayer);
-            if ((maxRegionCount >= 0) && (manager.getRegionCountOfPlayer(localPlayer) >= maxRegionCount)) {
-                throw new CommandException(msg.get(MKey.CLAIM__ERROR__TOO_MANY));
+            int playerCount = manager.getRegionCountOfPlayer(localPlayer);
+            if ((maxRegionCount >= 0) && (playerCount >= maxRegionCount)) {
+                throw new CommandException(msg.get(MKey.CLAIM__ERROR__TOO_MANY, maxRegionCount, playerCount));
             }
             if (region.volume() > wcfg.maxClaimVolume) {
-                throw new CommandException(msg.get(MKey.CLAIM__ERROR__TOO_BIG));
+                throw new CommandException(msg.get(MKey.CLAIM__ERROR__TOO_BIG, wcfg.maxClaimVolume, region.volume()));
             }
         }
 

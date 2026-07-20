@@ -8,6 +8,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import wgextender.WGExtender;
 import wgextender.config.Configurable;
 import wgextender.config.ConfigurationProvider;
@@ -21,19 +22,6 @@ import java.util.Map;
 // TODO Option for per-player?
 // TODO Use MM placeholders properly? No common API for different serializers though
 public final class MessagesProvider implements Configurable<ConfigurationProvider.Messages> {
-    private static final LegacyComponentSerializer LEGACY_SECTION = fixup(LegacyComponentSerializer.legacySection());
-    private static final LegacyComponentSerializer LEGACY_AMPERSAND = fixup(LegacyComponentSerializer.legacyAmpersand());
-
-    private static @NotNull LegacyComponentSerializer fixup(@NotNull LegacyComponentSerializer serializer) {
-        return serializer.toBuilder()
-                .extractUrls()
-                .hexColors()
-                .useUnusualXRepeatedCharacterHexFormat()
-                .build();
-    }
-
-    private static final ComponentDecoder<String, ? extends Component> LEGACY = input -> LEGACY_AMPERSAND.deserialize(input.replace('§', '&'));
-
     private final WGExtender plugin;
     private final Map<MKey, String> messages = new EnumMap<>(MKey.class);
     private final File messagesFolder;
@@ -45,26 +33,18 @@ public final class MessagesProvider implements Configurable<ConfigurationProvide
     public MessagesProvider(@NotNull WGExtender plugin, @NotNull ConfigurationProvider configProvider) {
         this.plugin = plugin;
         this.messagesFolder = new File(plugin.getDataFolder(), "messages");
-        this.decoder = LEGACY;
+        this.decoder = Serializer.LEGACY.decoder;
         configProvider.register(this, ConfigurationProvider.Messages.SECTION);
     }
 
     @Override
     public void onReload(@NotNull ConfigurationProvider.Messages section) {
-        this.decoder = switch (section.serializer().toUpperCase(Locale.ROOT)) {
-            // TODO InkyMessage? Decoders registry?
-            case "MINIMESSAGE", "MINI_MESSAGE" -> MiniMessage.miniMessage();
-            case "LEGACY" -> LEGACY;
-            case "LEGACY_SECTION" -> LEGACY_SECTION;
-            case "LEGACY_AMPERSAND" -> LEGACY_AMPERSAND;
-            default -> {
-                plugin.logger().warn(
-                        "Unknown messages serializer provided: {}, falling back to LEGACY",
-                        section.serializer()
-                );
-                yield LEGACY;
-            }
-        };
+        var serializer = section.serializer();
+        if (serializer == null) {
+            plugin.logger().warn("Unknown messages serializer provided, falling back to LEGACY");
+            serializer = Serializer.LEGACY;
+        }
+        this.decoder = serializer.decoder;
         loadMessages(section.locale());
     }
 
@@ -180,6 +160,42 @@ public final class MessagesProvider implements Configurable<ConfigurationProvide
         @Override
         public String toString() {
             return name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    // TODO InkyMessage? Decoders registry?
+    public enum Serializer {
+        LEGACY_AMPERSAND(fixup(LegacyComponentSerializer.legacyAmpersand())),
+        LEGACY_SECTION(fixup(LegacyComponentSerializer.legacySection())),
+        LEGACY(input -> LEGACY_AMPERSAND.decoder.deserialize(input.replace('§', '&'))),
+        MINIMESSAGE(MiniMessage.miniMessage());
+
+        private final ComponentDecoder<String, ? extends Component> decoder;
+
+        Serializer(ComponentDecoder<String, ? extends Component> decoder) {
+            this.decoder = decoder;
+        }
+
+        private static @NotNull LegacyComponentSerializer fixup(@NotNull LegacyComponentSerializer serializer) {
+            return serializer.toBuilder()
+                    .extractUrls()
+                    .hexColors()
+                    .useUnusualXRepeatedCharacterHexFormat()
+                    .build();
+        }
+
+        public @NotNull ComponentDecoder<String, ? extends Component> decoder() {
+            return decoder;
+        }
+
+        public static @Nullable Serializer byName(@NotNull String name) {
+            return switch (name.toUpperCase(Locale.ROOT)) {
+                case "MINIMESSAGE", "MINI_MESSAGE" -> MINIMESSAGE;
+                case "LEGACY" -> LEGACY;
+                case "LEGACY_SECTION" -> LEGACY_SECTION;
+                case "LEGACY_AMPERSAND" -> LEGACY_AMPERSAND;
+                default -> null;
+            };
         }
     }
 }
