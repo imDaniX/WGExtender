@@ -4,6 +4,7 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.ComponentDecoder;
+import net.kyori.adventure.text.serializer.legacy.CharacterAndFormat;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -165,20 +166,23 @@ public final class MessagesProvider implements Configurable<ConfigurationProvide
 
     // TODO InkyMessage? Decoders registry?
     public enum Serializer {
-        LEGACY_AMPERSAND(fixup(LegacyComponentSerializer.legacyAmpersand())),
-        LEGACY_SECTION(fixup(LegacyComponentSerializer.legacySection())),
+        LEGACY_AMPERSAND(legacy('&')),
+        LEGACY_SECTION(legacy('§')),
         LEGACY(input -> LEGACY_AMPERSAND.decoder.deserialize(input.replace('§', '&'))),
         MINIMESSAGE(MiniMessage.miniMessage());
 
         private final ComponentDecoder<String, ? extends Component> decoder;
 
-        Serializer(ComponentDecoder<String, ? extends Component> decoder) {
+        Serializer(@NotNull ComponentDecoder<String, ? extends Component> decoder) {
             this.decoder = decoder;
         }
 
-        private static @NotNull LegacyComponentSerializer fixup(@NotNull LegacyComponentSerializer serializer) {
-            return serializer.toBuilder()
+        private static @NotNull LegacyComponentSerializer legacy(char ch) {
+            return LegacyComponentSerializer.builder()
+                    .character(ch)
+                    .formats(CharacterAndFormat.defaults())
                     .extractUrls()
+                    .hexCharacter('#')
                     .hexColors()
                     .useUnusualXRepeatedCharacterHexFormat()
                     .build();
