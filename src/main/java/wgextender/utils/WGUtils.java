@@ -60,7 +60,6 @@ public final class WGUtils {
 
     private WGUtils() { }
 
-    // This is, in fact, weSender... but whatever
     public static @NotNull Actor wgSender(@NotNull CommandSender sender) {
         return WorldGuardPlugin.inst().wrapCommandSender(sender);
     }
@@ -74,7 +73,7 @@ public final class WGUtils {
         if (sender instanceof Player player) {
             actor = wgPlayer(player);
         } else {
-            // While WG's wrapCommandSender does check for player, we don't really expect non-player senders,
+            // While WG's wrapCommandSender does check for player, we don't expect non-player senders here,
             // so it's generally faster for our case
             actor = wgSender(sender);
         }
