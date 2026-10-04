@@ -90,6 +90,7 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
             case TNTPrimed primed -> config.tntPrime()
                     ? primed.getSource() // TODO Dispensers?
                     : null;
+            // TODO Sulfur Cubes
             // TODO Creepers can be ignited using flint and steel
             case Creeper creeper -> config.creeperTarget()
                     ? creeper.getTarget()

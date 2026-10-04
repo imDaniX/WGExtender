@@ -42,7 +42,8 @@ regionprotect:
       inregion: false
     # Prevent fire from destroying blocks
     burn: false
-  
+
+  # Explosions behavior withing regions
   explosion:
     # Prevent explosions from destroying blocks
     block: false
