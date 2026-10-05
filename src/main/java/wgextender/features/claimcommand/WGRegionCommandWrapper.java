@@ -46,6 +46,8 @@ import wgextender.WGExtender;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.MessagesProvider;
+import wgextender.config.section.AutoFlags;
+import wgextender.config.section.Claim;
 import wgextender.utils.WEUtils;
 import wgextender.utils.WGUtils;
 import wgextender.utils.command.CommandWrapper;
@@ -59,24 +61,21 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
     private final MessagesProvider msg;
     private final BlockLimitsHandler limits;
 
-    private ConfigurationProvider.Claim claimCfg;
-    private ConfigurationProvider.AutoFlags autoFlagsCfg;
+    private final ConfigurationProvider config;
 
     public WGRegionCommandWrapper(@NotNull WGExtender plugin) {
         super("region");
-        ConfigurationProvider config = plugin.getConfigurationProvider();
+        this.config = plugin.getConfigurationProvider();
         this.msg = config.messageProvider();
         this.limits = plugin.getBlockLimitsHandler();
-        this.claimCfg = config.claimCfg();
-        this.autoFlagsCfg = config.autoFlagsCfg();
-        config.register(section -> this.claimCfg = section, ConfigurationProvider.Claim.SECTION);
-        config.register(section -> this.autoFlagsCfg = section, ConfigurationProvider.AutoFlags.SECTION);
     }
 
     @Override
     public boolean execute(@NonNull CommandSender sender, @NonNull String label, @NotNull String @NonNull [] args, @NotNull Command originalCmd) {
         if (sender instanceof Player player && args.length >= 2 && args[0].equalsIgnoreCase("claim")) {
             String regionName = args[1];
+            var claimCfg = config.section(Claim.POINTER, player.getWorld());
+            var autoFlagsCfg = config.section(AutoFlags.POINTER, player.getWorld());
             if (claimCfg.expandSelectionVertical() && WEUtils.expandVert(player)) {
                 msg.sendMessage(player, MKey.CLAIM__AUTO_VERT);
             }

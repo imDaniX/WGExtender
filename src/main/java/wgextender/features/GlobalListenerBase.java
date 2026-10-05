@@ -4,15 +4,14 @@ import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.Configurable;
 import wgextender.config.ConfigurationProvider;
-
-import java.util.function.Function;
+import wgextender.config.Pointer;
 
 // TODO We can disable the listening itself, but requires some more engineering, might not worth it
-public abstract class ConfigurableListenerBase<T> extends Configurable.Base<T> implements Listener {
-    protected ConfigurableListenerBase(
+public abstract class GlobalListenerBase<T> extends Configurable.GlobalBase<T> implements Listener {
+    protected GlobalListenerBase(
             @NotNull ConfigurationProvider cfgProvider,
-            @NotNull Function<ConfigurationProvider, T> sectionGetter
+            @NotNull Pointer.Global<T> pointer
     ) {
-        super(cfgProvider, sectionGetter);
+        super(cfgProvider, pointer);
     }
 }

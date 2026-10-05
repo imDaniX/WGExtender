@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// TODO This should go as a separate generic API
+// TODO This should go as a separate general API
 public final class ModrinthUpdater implements AutoCloseable {
     public static final String MODRINTH_BASE = "https://api.modrinth.com/";
 

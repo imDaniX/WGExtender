@@ -7,26 +7,26 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import wgextender.WGExtender;
-import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
+import wgextender.config.section.Updater;
 import wgextender.external.updater.ModrinthUpdater;
 
 import java.util.concurrent.TimeUnit;
 
-public final class VersionHandler extends ConfigurableListenerBase<ConfigurationProvider.Updater> {
+public final class VersionHandler extends GlobalListenerBase<Updater> {
     private final WGExtender plugin;
     private final ModrinthUpdater updater;
 
     private ScheduledTask checkTask;
 
     public VersionHandler(@NotNull WGExtender plugin) {
-        super(plugin.getConfigurationProvider(), ConfigurationProvider::updaterCfg);
+        super(plugin.getConfigurationProvider(), Updater.POINTER);
         this.plugin = plugin;
         this.updater = plugin.getUpdater();
     }
 
     @Override
-    protected void subReload(@Nullable ConfigurationProvider.Updater oldConfig) {
+    protected void subReload(@Nullable Updater oldConfig) {
         if (checkTask != null && !checkTask.isCancelled()) {
             checkTask.cancel();
         }
@@ -77,7 +77,7 @@ public final class VersionHandler extends ConfigurableListenerBase<Configuration
                 }
             }
             case ModrinthUpdater.Result.Failure failure -> {
-                if (plugin.getConfigurationProvider().updaterCfg().logFailures()) {
+                if (config.logFailures()) {
                     logger.error(
                             msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
                             failure.cause()

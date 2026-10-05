@@ -27,21 +27,22 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
-import wgextender.features.ConfigurableListenerBase;
+import wgextender.config.section.Misc;
+import wgextender.features.ScopedListenerBase;
 
 // TODO We can disable listening
-public final class WEWandHandler extends ConfigurableListenerBase<ConfigurationProvider.Misc> {
+public final class WEWandHandler extends ScopedListenerBase<Misc> {
     private final WEWand weWand;
 
     public WEWandHandler(@NotNull ConfigurationProvider cfgProvider, @NotNull WEWand weWand) {
-        super(cfgProvider, ConfigurationProvider::miscCfg);
+        super(cfgProvider, Misc.POINTER);
         this.weWand = weWand;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityAttack(EntityDamageByEntityEvent event) {
-        if (!config.extendedWeWand()) return;
         if (event.getDamager() instanceof Player player) {
+            if (!config(player.getWorld()).extendedWeWand()) return;
             ItemStack item = player.getInventory().getItemInMainHand();
             if (weWand.isWand(item)) {
                 event.setCancelled(true);
@@ -51,13 +52,13 @@ public final class WEWandHandler extends ConfigurableListenerBase<ConfigurationP
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!config.extendedWeWand()) return;
+        if (!config(event.getEntity().getWorld()).extendedWeWand()) return;
         event.getDrops().removeIf(weWand::isWand);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onItemDrop(PlayerDropItemEvent event) {
-        if (!config.extendedWeWand()) return;
+        if (!config(event.getPlayer().getWorld()).extendedWeWand()) return;
         Item drop = event.getItemDrop();
         if (weWand.isWand(drop.getItemStack())) {
             drop.remove();

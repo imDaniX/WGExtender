@@ -24,23 +24,24 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
 import wgextender.config.message.MessagesProvider;
+import wgextender.config.section.Misc;
 import wgextender.utils.command.CommandWrapper;
 
 public final class WEWandCommandWrapper extends CommandWrapper {
     private final MessagesProvider msg;
     private final WEWand weWand;
-    private ConfigurationProvider.Misc misc;
+    private final ConfigurationProvider config;
 
     public WEWandCommandWrapper(@NotNull ConfigurationProvider config, @NotNull WEWand weWand) {
         super("/wand");
         this.msg = config.messageProvider();
         this.weWand = weWand;
-        this.misc = config.miscCfg();
-        config.register(section -> this.misc = section, ConfigurationProvider.Misc.SECTION);
+        this.config = config;
     }
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String label, String @NotNull [] args, @NotNull Command originalCmd) {
+        var misc = sender instanceof Player player ? config.section(Misc.POINTER, player.getWorld()) : config.section(Misc.POINTER);
         if (!misc.extendedWeWand()) {
             return originalCmd.execute(sender, label, args);
         }
