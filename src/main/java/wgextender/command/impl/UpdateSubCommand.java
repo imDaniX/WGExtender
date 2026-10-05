@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import wgextender.WGExtender;
 import wgextender.command.SubCommandBase;
 import wgextender.config.message.MKey;
+import wgextender.config.section.Updater;
 import wgextender.external.updater.ModrinthUpdater;
 
 final class UpdateSubCommand extends SubCommandBase.Simple {
@@ -19,11 +20,11 @@ final class UpdateSubCommand extends SubCommandBase.Simple {
         CommandSender sender = ctx.getSource().getSender();
         msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__START);
         server.getAsyncScheduler().runNow(plugin, task -> {
-            ModrinthUpdater.Result result = plugin.getUpdater().checkForUpdate(cfgProvider.updaterCfg().allowStaging());
+            ModrinthUpdater.Result result = plugin.getUpdater().checkForUpdate(cfgProvider.section(Updater.POINTER).allowStaging());
             switch (result) {
                 case ModrinthUpdater.Result.Failure failure -> {
                     msg.sendMessage(sender, MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage());
-                    if (!sender.equals(server.getConsoleSender()) && plugin.getConfigurationProvider().updaterCfg().logFailures()) {
+                    if (!sender.equals(server.getConsoleSender()) && cfgProvider.section(Updater.POINTER).logFailures()) {
                         plugin.logger().error(
                                 msg.rich(MKey.WGEX_COMMAND__UPDATE__FAILURE, failure.cause().getMessage()),
                                 failure.cause()

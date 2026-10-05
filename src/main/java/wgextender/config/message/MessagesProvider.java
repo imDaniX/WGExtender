@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import wgextender.WGExtender;
 import wgextender.config.Configurable;
 import wgextender.config.ConfigurationProvider;
+import wgextender.config.section.Messages;
 
 import java.io.File;
 import java.util.Arrays;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 // TODO Option for per-player?
 // TODO Use MM placeholders properly? No common API for different serializers though
-public final class MessagesProvider implements Configurable<ConfigurationProvider.Messages> {
+public final class MessagesProvider implements Configurable<Messages> {
     private final WGExtender plugin;
     private final Map<MKey, String> messages = new EnumMap<>(MKey.class);
     private final File messagesFolder;
@@ -31,15 +32,15 @@ public final class MessagesProvider implements Configurable<ConfigurationProvide
 
     private ComponentDecoder<String, ? extends Component> decoder;
 
-    public MessagesProvider(@NotNull WGExtender plugin, @NotNull ConfigurationProvider configProvider) {
+    public MessagesProvider(@NotNull WGExtender plugin, @NotNull ConfigurationProvider cfgProvider) {
         this.plugin = plugin;
         this.messagesFolder = new File(plugin.getDataFolder(), "messages");
         this.decoder = Serializer.LEGACY.decoder;
-        configProvider.register(this, ConfigurationProvider.Messages.SECTION);
+        cfgProvider.register(this, Messages.POINTER);
     }
 
     @Override
-    public void onReload(@NotNull ConfigurationProvider.Messages section) {
+    public void onReload(@NotNull Messages section) {
         var serializer = section.serializer();
         if (serializer == null) {
             plugin.logger().warn("Unknown messages serializer provided, falling back to LEGACY");

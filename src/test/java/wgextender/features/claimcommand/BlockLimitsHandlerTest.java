@@ -6,6 +6,7 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 import wgextender.config.ConfigurationProvider;
+import wgextender.config.section.BlockLimits;
 import wgextender.features.claimcommand.BlockLimitsHandler.EvaluationResult;
 import wgextender.features.claimcommand.BlockLimitsHandler.ResultType;
 import wgextender.utils.WEUtils;
@@ -64,7 +66,7 @@ class BlockLimitsHandlerTest {
     @MethodSource("calculateBlockLimitData")
     void calculateBlockLimitTest(List<String> groups, Map<String, BigInteger> limits, BigInteger defaultLimit, BigInteger expected) {
         PermissionsResolverManager resolver = mock(PermissionsResolverManager.class);
-        Player player = mock(Player.class);
+        Player player = mockPlayer();
 
         try (var permissions = setupPermissions(resolver, groups)) {
             BlockLimitsHandler handler = createHandler(blockLimits(defaultLimit, limits, ZERO, ZERO, ZERO));
@@ -79,7 +81,7 @@ class BlockLimitsHandlerTest {
 
     @Test
     void cachedBlockLimitTest() {
-        Player player = mock(Player.class);
+        Player player = mockPlayer();
         when(player.getUniqueId()).thenReturn(UUID.randomUUID());
 
         PermissionsResolverManager resolver = mock(PermissionsResolverManager.class);
@@ -97,8 +99,75 @@ class BlockLimitsHandlerTest {
     }
 
     @Test
+    void worldSpecificLimitTest() {
+        Player overworld = mockPlayer("world");
+        when(overworld.getUniqueId()).thenReturn(UUID.randomUUID());
+        Player nether = mockPlayer("nether");
+        when(nether.getUniqueId()).thenReturn(UUID.randomUUID());
+
+        PermissionsResolverManager resolver = mock(PermissionsResolverManager.class);
+
+        try (var permissions = setupPermissions(resolver, List.of("vip"))) {
+            ConfigurationProvider cfgProvider = mock(ConfigurationProvider.class);
+            var general = blockLimits(TEN, Map.of("vip", HUNDRED), ZERO, ZERO, ZERO);
+            var netherCfg = blockLimits(TEN, Map.of("vip", FIFTY), ZERO, ZERO, ZERO);
+            when(cfgProvider.section(eq(BlockLimits.POINTER), nullable(String.class))).thenReturn(general);
+            when(cfgProvider.section(BlockLimits.POINTER, "nether")).thenReturn(netherCfg);
+            BlockLimitsHandler handler = new BlockLimitsHandler(cfgProvider);
+
+            assertEquals(HUNDRED, handler.cachedBlockLimit(overworld));
+            assertEquals(FIFTY, handler.cachedBlockLimit(nether));
+            assertEquals(HUNDRED, handler.groupBlockLimit("vip"));
+            assertEquals(FIFTY, handler.groupBlockLimit("vip", "nether"));
+        }
+    }
+
+    @Test
+    void worldSpecificCacheTest() {
+        Player player = mockPlayer("world");
+        when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+
+        PermissionsResolverManager resolver = mock(PermissionsResolverManager.class);
+
+        try (var permissions = setupPermissions(resolver, List.of("vip"))) {
+            BlockLimitsHandler handler = createHandler(blockLimits(TEN, Map.of("vip", HUNDRED), ZERO, ZERO, ZERO));
+
+            handler.cachedBlockLimit(player, "nether");
+            handler.cachedBlockLimit(player, "NETHER"); // world names are case-insensitive
+            verify(resolver, times(1)).getGroups(player);
+
+            handler.cachedBlockLimit(player); // "world" is cached separately
+            handler.cachedBlockLimit(player, null); // so is the general one
+            verify(resolver, times(3)).getGroups(player);
+
+            handler.refreshBlockLimit(player, "nether");
+            verify(resolver, times(4)).getGroups(player);
+            handler.cachedBlockLimit(player, "nether");
+            verify(resolver, times(4)).getGroups(player); // refreshed value is cached
+        }
+    }
+
+    @Test
+    void reloadClearsCache() {
+        Player player = mockPlayer();
+        when(player.getUniqueId()).thenReturn(UUID.randomUUID());
+
+        PermissionsResolverManager resolver = mock(PermissionsResolverManager.class);
+
+        try (var permissions = setupPermissions(resolver, List.of("vip"))) {
+            BlockLimitsHandler handler = createHandler(blockLimits(TEN, Map.of("vip", HUNDRED), ZERO, ZERO, ZERO));
+
+            handler.cachedBlockLimit(player);
+            handler.onReload(blockLimits(TEN, Map.of("vip", FIFTY), ZERO, ZERO, ZERO));
+            handler.cachedBlockLimit(player);
+
+            verify(resolver, times(2)).getGroups(player); // the cache was cleared in between
+        }
+    }
+
+    @Test
     void refreshBlockLimitTest() {
-        Player player = mock(Player.class);
+        Player player = mockPlayer();
         when(player.getUniqueId()).thenReturn(UUID.randomUUID());
 
         PermissionsResolverManager resolver = mock(PermissionsResolverManager.class);
@@ -116,7 +185,7 @@ class BlockLimitsHandlerTest {
 
     @Test
     void evaluateResultIncompleteSelectionTest() {
-        Player player = mock(Player.class);
+        Player player = mockPlayer();
 
         try (var weUtils = mockStatic(WEUtils.class)) {
             weUtils.when(() -> WEUtils.getSelection(player)).thenThrow(new IncompleteRegionException());
@@ -132,7 +201,7 @@ class BlockLimitsHandlerTest {
 
     @Test
     void evaluateResultUnlimitedBypassTest() {
-        Player player = mock(Player.class);
+        Player player = mockPlayer();
         when(player.getUniqueId()).thenReturn(UUID.randomUUID());
         when(player.hasPermission("worldguard.region.unlimited")).thenReturn(true);
 
@@ -207,10 +276,10 @@ class BlockLimitsHandlerTest {
     @ParameterizedTest
     @MethodSource("evaluateResultData")
     void evaluateResultTest(
-            Region region, ConfigurationProvider.BlockLimits blockLimits,
+            Region region, BlockLimits blockLimits,
             ResultType expectedType, BigInteger expectedSize, BigInteger expectedLimit
     ) {
-        Player player = mock(Player.class);
+        Player player = mockPlayer();
         when(player.getUniqueId()).thenReturn(UUID.randomUUID());
 
         PermissionsResolverManager resolver = mock(PermissionsResolverManager.class);
@@ -241,26 +310,37 @@ class BlockLimitsHandlerTest {
         return permissions;
     }
 
-    private static BlockLimitsHandler createHandler(ConfigurationProvider.BlockLimits blockLimits) {
+    private static Player mockPlayer() {
+        return mockPlayer("world");
+    }
+
+    private static Player mockPlayer(String worldName) {
+        World world = mock(World.class);
+        when(world.getName()).thenReturn(worldName);
+        Player player = mock(Player.class);
+        when(player.getWorld()).thenReturn(world);
+        return player;
+    }
+
+    private static BlockLimitsHandler createHandler(BlockLimits blockLimits) {
         ConfigurationProvider cfgProvider = mock(ConfigurationProvider.class);
-        ConfigurationProvider.Claim claim = new ConfigurationProvider.Claim(true, true, blockLimits);
-        when(cfgProvider.claimCfg()).thenReturn(claim);
+        when(cfgProvider.section(eq(BlockLimits.POINTER), nullable(String.class))).thenReturn(blockLimits);
         return new BlockLimitsHandler(cfgProvider);
     }
 
-    private static ConfigurationProvider.BlockLimits blockLimits(
+    private static BlockLimits blockLimits(
             BigInteger defaultLimit,
             Map<String, BigInteger> limits,
             BigInteger minimalVolume,
             BigInteger minimalHorizontal,
             BigInteger minimalVertical
     ) {
-        return new ConfigurationProvider.BlockLimits(
+        return new BlockLimits(
                 true, defaultLimit, limits, minimalVolume, minimalHorizontal, minimalVertical
         );
     }
 
-    private static ConfigurationProvider.BlockLimits blockLimits(
+    private static BlockLimits blockLimits(
             long minimalVolume, long minimalHorizontal, long minimalVertical, long groupLimit
     ) {
         return blockLimits(

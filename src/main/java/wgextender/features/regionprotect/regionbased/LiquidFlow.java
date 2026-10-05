@@ -27,12 +27,13 @@ import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
-import wgextender.features.ConfigurableListenerBase;
+import wgextender.config.section.Flow;
+import wgextender.features.ScopedListenerBase;
 import wgextender.utils.WGUtils;
 
-public final class LiquidFlow extends ConfigurableListenerBase<ConfigurationProvider.Flow> {
+public final class LiquidFlow extends ScopedListenerBase<Flow> {
     public LiquidFlow(@NotNull ConfigurationProvider cfgProvider) {
-        super(cfgProvider, ConfigurationProvider.Flow.SECTION);
+        super(cfgProvider, Flow.POINTER);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -55,6 +56,7 @@ public final class LiquidFlow extends ConfigurableListenerBase<ConfigurationProv
     }
 
     private void check(Block source, Block to, Cancellable event, boolean checkSource) {
+        var config = config(source.getWorld());
         if (switch (checkSource ? source.getType() : to.getType()) {
             case LAVA -> config.lava();
             case WATER -> config.water();
