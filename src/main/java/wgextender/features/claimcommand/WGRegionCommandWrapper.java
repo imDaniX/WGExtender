@@ -53,6 +53,7 @@ import wgextender.utils.command.CommandWrapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation") // WE's Command API, which is used by WG all over the place, is deprecated
 public final class WGRegionCommandWrapper extends CommandWrapper {
@@ -112,13 +113,17 @@ public final class WGRegionCommandWrapper extends CommandWrapper {
                         if (exceptions.size() == 1) {
                             throw exceptions.getFirst();
                         }
-                        CommandException ex = new CommandException();
-                        exceptions.forEach(ex::addSuppressed);
-                        throw ex;
+                        CommandException multiEx = new CommandException(exceptions.stream()
+                                .map(Exception::getMessage)
+                                .map(msg -> msg == null ? "?" : msg)
+                                .collect(Collectors.joining("; "))
+                        );
+                        exceptions.forEach(multiEx::addSuppressed);
+                        throw multiEx;
                     }
                 }
             } catch (CommandException ex) {
-                msg.sendMessage(sender, MKey.CLAIM__ERROR__FORMAT, ex.getMessage());
+                msg.sendMessage(sender, MKey.CLAIM__ERROR__FORMAT, ex.getMessage() == null ? "?" : ex.getMessage());
             }
             return true;
         } else {
