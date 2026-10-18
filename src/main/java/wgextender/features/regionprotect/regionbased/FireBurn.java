@@ -24,16 +24,18 @@ import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
-import wgextender.features.ConfigurableListenerBase;
+import wgextender.config.section.Fire;
+import wgextender.features.ScopedListenerBase;
 import wgextender.utils.WGUtils;
 
-public final class FireBurn extends ConfigurableListenerBase<ConfigurationProvider.Fire> {
+public final class FireBurn extends ScopedListenerBase<Fire> {
     public FireBurn(@NotNull ConfigurationProvider cfgProvider) {
-        super(cfgProvider, ConfigurationProvider.Fire.SECTION);
+        super(cfgProvider, Fire.POINTER);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBlockIgniteBySpread(BlockSpreadEvent event) {
+        var config = config(event.getBlock().getWorld());
         if (event.getNewState().getType() == Material.FIRE) {
             if (config.spreadToRegion()) {
                 if (!WGUtils.isInTheSameRegionOrWild(event.getSource().getLocation(), event.getBlock().getLocation())) {
@@ -51,7 +53,7 @@ public final class FireBurn extends ConfigurableListenerBase<ConfigurationProvid
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBlockBurn(BlockBurnEvent event) {
-        if (config.burn() && WGUtils.isInRegion(event.getBlock().getLocation())) {
+        if (config(event.getBlock().getWorld()).burn() && WGUtils.isInRegion(event.getBlock().getLocation())) {
             event.setCancelled(true);
         }
     }

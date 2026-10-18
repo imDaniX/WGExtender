@@ -49,21 +49,25 @@ public final class PapiIntegration extends PlaceholderExpansion implements Plugi
 
     @Override
     public @Nullable String onRequest(@Nullable OfflinePlayer offPlayer, @NotNull String paramsRaw) {
-        var reader = new ParamsReader(paramsRaw);
+        String params = paramsRaw.toLowerCase(Locale.ROOT);
 
-        return switch (reader.input) {
+        return switch (params) {
             case "context_helper" -> handleContextHelper(offPlayer);
             case "in_region" -> handleInRegion(offPlayer);
             default -> {
-                String next = reader.pop();
                 // TODO QoL: add claim count limit
-                if (next.equals("blocklimit") || (next.equals("limit") && reader.pop().equals("blocks"))) {
-                    yield handleBlockLimit(offPlayer, reader);
-                } else {
-                    yield null;
-                }
+                String rest = stripPrefix(params, "blocklimit");
+                if (rest == null) rest = stripPrefix(params, "limit_blocks");
+                yield rest != null ? handleBlockLimit(offPlayer, rest) : null;
             }
         };
+    }
+
+    private static @Nullable String stripPrefix(@NotNull String params, @NotNull String prefix) {
+        if (!params.startsWith(prefix)) return null;
+        String rest = params.substring(prefix.length());
+        if (rest.startsWith("_")) return rest.substring(1);
+        return rest.isEmpty() || rest.startsWith(",") ? rest : null;
     }
 
     private @Nullable String handleContextHelper(@Nullable OfflinePlayer offPlayer) {
@@ -86,30 +90,48 @@ public final class PapiIntegration extends PlaceholderExpansion implements Plugi
         }
     }
 
-    private @Nullable String handleBlockLimit(@Nullable OfflinePlayer offPlayer, @NotNull ParamsReader reader) {
+    private @Nullable String handleBlockLimit(@Nullable OfflinePlayer offPlayer, @NotNull String rest) {
         var handler = plugin.getBlockLimitsHandler();
-        return switch (reader.pop()) {
+        if (rest.startsWith("group_")) {
+            String groupRaw = rest.substring("group_".length());
+            if (groupRaw.isEmpty()) return null;
+
+            String groupName = groupRaw.indexOf('{') != -1
+                    ? PlaceholderAPI.setBracketPlaceholders(offPlayer, groupRaw)
+                    : groupRaw;
+
+            int groupCommaIndex = groupName.lastIndexOf(',');
+            return handler.groupBlockLimit(
+                    withoutWorld(groupName, groupCommaIndex),
+                    worldOf(groupName, groupCommaIndex, offPlayer)
+            ).toString();
+        }
+        int commaIndex = rest.lastIndexOf(',');
+        String world = worldOf(rest, commaIndex, offPlayer);
+        return switch (withoutWorld(rest, commaIndex)) {
             case "", "refresh" -> offPlayer instanceof Player player
-                    ? handler.refreshBlockLimit(player).toString()
+                    ? handler.refreshBlockLimit(player, world).toString()
                     : null;
             case "cached", "cache" -> offPlayer instanceof Player player
-                    ? handler.cachedBlockLimit(player).toString()
+                    ? handler.cachedBlockLimit(player, world).toString()
                     : null;
             case "calc" -> offPlayer != null
-                    ? handler.calculateBlockLimit(offPlayer).toString()
+                    ? handler.calculateBlockLimit(offPlayer, world).toString()
                     : null;
-            case "group" -> {
-                String groupRaw = reader.remaining();
-                if (groupRaw.isEmpty()) yield null;
-
-                String groupName = groupRaw.indexOf('{') != -1
-                        ? PlaceholderAPI.setBracketPlaceholders(offPlayer, groupRaw)
-                        : groupRaw;
-
-                yield handler.groupBlockLimit(groupName).toString();
-            }
             default -> null;
         };
+    }
+
+    private static @NotNull String withoutWorld(@NotNull String raw, int commaIndex) {
+        return commaIndex == -1 ? raw : raw.substring(0, commaIndex);
+    }
+
+    private static @Nullable String worldOf(@NotNull String raw, int commaIndex, @Nullable OfflinePlayer offPlayer) {
+        if (commaIndex == -1) {
+            return offPlayer instanceof Player player ? player.getWorld().getName() : null;
+        }
+        String world = raw.substring(commaIndex + 1);
+        return world.isEmpty() ? null : world;
     }
 
     @Override
@@ -120,26 +142,5 @@ public final class PapiIntegration extends PlaceholderExpansion implements Plugi
     @Override
     public void onEnable(@NotNull WGExtender plugin) {
         register();
-    }
-
-    private static class ParamsReader {
-        private final String input;
-        private int index;
-
-        ParamsReader(String input) {
-            this.input = input.toLowerCase(Locale.ROOT);
-            this.index = 0;
-        }
-
-        String pop() {
-            int end = input.indexOf('_', index);
-            String current = end == -1 ? input.substring(index) : input.substring(index, end);
-            index = end == -1 ? input.length() : end + 1;
-            return current.isEmpty() ? "" : current;
-        }
-
-        String remaining() {
-            return index >= input.length() ? "" : input.substring(index);
-        }
     }
 }

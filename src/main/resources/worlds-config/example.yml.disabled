@@ -1,0 +1,25 @@
+# Example of a per-world config. This file is disabled, as only '*.yml' files are loaded.
+# To make one, create '<world name>.yml' in this folder (e.g. 'world_nether.yml'), or rename this file
+#
+# The general config.yml is the base, so only specify what should differ in the world:
+# - Sections are merged key by key
+# - Values, including lists, replace the general ones
+# - An empty section ('key: {}') removes the key, so the default behavior is used
+# - 'messages', 'updater', 'misc.old-pvp-flags' and 'restrictcommands.recheck-ticks' are global-only
+#
+# Worlds without a config of their own use config.yml
+
+regionprotect:
+  explosion:
+    # Allow explosions to destroy blocks here
+    block: false
+  fire:
+    # Remove the whole section - the default (everything allowed) is used
+    spread: {}
+
+claim:
+  # Remove the block limits - the default (disabled) is used
+  blocklimits: {}
+
+restrictcommands:
+  enabled: false

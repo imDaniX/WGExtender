@@ -18,23 +18,24 @@ import org.bukkit.event.EventPriority;
 import org.jetbrains.annotations.NotNull;
 import wgextender.config.ConfigurationProvider;
 import wgextender.config.message.MKey;
-import wgextender.features.ConfigurableListenerBase;
+import wgextender.config.section.Misc;
+import wgextender.features.ScopedListenerBase;
 import wgextender.utils.WGUtils;
 
 import static wgextender.utils.WEUtils.weLocation;
 import static wgextender.utils.WGUtils.getWorldConfig;
 
-public final class PvPModeHandler extends ConfigurableListenerBase<ConfigurationProvider.Misc> {
+public final class PvPModeHandler extends ScopedListenerBase<Misc> {
     private static final String DENY_MESSAGE_KEY = "worldguard.region.lastMessage";
     private static final int LAST_MESSAGE_DELAY = 500;
 
     public PvPModeHandler(@NotNull ConfigurationProvider cfgProvider) {
-        super(cfgProvider, ConfigurationProvider.Misc.SECTION);
+        super(cfgProvider, Misc.POINTER);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onDisallowedPVP(DisallowedPVPEvent event) {
-        if (config.pvpMode() != State.ALLOW) return;
+        if (config(event.getAttacker().getWorld()).pvpMode() != State.ALLOW) return;
         // Entity is protected but the mode is pvp = ALLOW
 
         Player attacker = event.getAttacker();
@@ -55,7 +56,7 @@ public final class PvPModeHandler extends ConfigurableListenerBase<Configuration
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onDamageEntity(DamageEntityEvent event) {
-        if (config.pvpMode() != State.DENY) return;
+        if (config(event.getWorld()).pvpMode() != State.DENY) return;
         // Entity is damaged but the mode is pvp = DENY
 
         if (!getWorldConfig(event.getWorld()).useRegions) return;

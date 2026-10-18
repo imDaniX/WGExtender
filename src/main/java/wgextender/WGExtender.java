@@ -29,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnknownNullability;
 import wgextender.command.impl.WGExCommand;
 import wgextender.config.ConfigurationProvider;
+import wgextender.config.section.Features;
+import wgextender.config.section.Messages;
+import wgextender.config.section.Misc;
 import wgextender.external.updater.ModrinthUpdater;
 import wgextender.features.VersionHandler;
 import wgextender.features.claimcommand.BlockLimitsHandler;
@@ -109,7 +112,7 @@ public final class WGExtender extends JavaPlugin {
 
         injectables.add(new WGRegionCommandWrapper(this));
         injectables.add(new WEWandCommandWrapper(cfgProvider, weWand));
-        if (cfgProvider.miscCfg().oldPvpFlags()) {
+        if (cfgProvider.section(Features.POINTER).oldPvpFlags()) {
             logger().warn(
                     "Enabling the old-PvP flags. Do note that they're not supported, " +
                     "as their functionality implementation is very out of scope " +
@@ -200,7 +203,7 @@ public final class WGExtender extends JavaPlugin {
         metrics.addCustomChart(
                 new SimplePie(
                         "old_pvp_flags",
-                        () -> cfgProvider.miscCfg().oldPvpFlags() ? "enabled" : "disabled"
+                        () -> cfgProvider.section(Features.POINTER).oldPvpFlags() ? "enabled" : "disabled"
                 )
         );
 
@@ -208,7 +211,7 @@ public final class WGExtender extends JavaPlugin {
                 new SimplePie(
                         "pvp_mode",
                         () -> {
-                            var pvpMode = cfgProvider.miscCfg().pvpMode();
+                            var pvpMode = cfgProvider.section(Misc.POINTER).pvpMode();
                             return pvpMode == null ? "default" : pvpMode.name().toLowerCase(Locale.ROOT);
                         }
                 )
@@ -221,7 +224,7 @@ public final class WGExtender extends JavaPlugin {
                             Map<String, Map<String, Integer>> data = new HashMap<>();
                             Map<String, Integer> sub = new HashMap<>();
 
-                            var serializer = cfgProvider.messagesCfg().serializer();
+                            var serializer = cfgProvider.section(Messages.POINTER).serializer();
                             String category;
                             String value = switch (serializer) {
                                 case LEGACY, LEGACY_AMPERSAND, LEGACY_SECTION -> {

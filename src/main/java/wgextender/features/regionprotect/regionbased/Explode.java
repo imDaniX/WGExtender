@@ -29,22 +29,24 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import wgextender.config.ConfigurationProvider;
-import wgextender.features.ConfigurableListenerBase;
+import wgextender.config.section.Explosion;
+import wgextender.features.ScopedListenerBase;
 import wgextender.utils.WGUtils;
 
 import java.util.function.Predicate;
 
-public final class Explode extends ConfigurableListenerBase<ConfigurationProvider.Explosion> {
+public final class Explode extends ScopedListenerBase<Explosion> {
     public Explode(@NotNull ConfigurationProvider cfgProvider) {
-        super(cfgProvider, ConfigurationProvider.Explosion.SECTION);
+        super(cfgProvider, Explosion.POINTER);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onEntityExplode(EntityExplodeEvent event) {
+        var config = config(event.getEntity().getWorld());
         if (!config.block()) {
             return;
         }
-        Player source = findExplosionSource(event.getEntity());
+        Player source = findExplosionSource(config, event.getEntity());
         Predicate<Location> shouldProtectBlockPredicate;
         if (source != null) {
             boolean canBypass = WGUtils.canBypassProtection(source);
@@ -57,7 +59,7 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBlockExplode(BlockExplodeEvent event) {
-        if (!config.block()) {
+        if (!config(event.getBlock().getWorld()).block()) {
             return;
         }
         event.blockList().removeIf(block -> WGUtils.isInRegion(block.getLocation()));
@@ -65,6 +67,7 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onEntityDamageByExplosion(EntityDamageEvent event) {
+        var config = config(event.getEntity().getWorld());
         if (!config.entity()) {
             return;
         }
@@ -74,7 +77,7 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
                 return;
             }
             if (event instanceof EntityDamageByEntityEvent entityEvent) {
-                Player source = findExplosionSource(entityEvent.getDamager());
+                Player source = findExplosionSource(config, entityEvent.getDamager());
                 if (source == null || (!WGUtils.canBypassProtection(source) && !WGUtils.canBuild(source, location))) {
                     event.setCancelled(true);
                 }
@@ -85,7 +88,7 @@ public final class Explode extends ConfigurableListenerBase<ConfigurationProvide
     }
 
     // TODO Beds, anchors
-    private @Nullable Player findExplosionSource(@Nullable Entity exploded) {
+    private @Nullable Player findExplosionSource(@NotNull Explosion config, @Nullable Entity exploded) {
         return switch (exploded) {
             case TNTPrimed primed -> config.tntPrime()
                     ? primed.getSource() // TODO Dispensers?
